@@ -1,0 +1,21 @@
+uint8 CMD_SUB = 0
+uint8 CMD_STA = 1
+uint8 CMD_BUI = 2
+uint8 CMD_STO = 3
+uint8 CMD_REA = 4
+uint8 CMD_ZRO = 5
+uint8 CMD_CAL = 6
+uint8 CMD_CHK = 7
+
+uint8 MOD_PUB = 10
+uint8 MOD_TST = 11
+uint8 MOD_EST = 12
+uint8 MOD_SDY = 13
+uint8 MOD_SIN = 14
+uint8 MOD_TDY = 15
+uint8 MOD_SCA = 16
+
+---
+
+bool code
+string message

@@ -1,0 +1,16 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="frame_id"   default="wrist_frame"   doc="Frame ID for Wrench data"/>
+  <arg name="address"    default="192.168.1.1"   doc="The IP address of the EtherDAQ device" />
+  <arg name="rate"       default="500"           doc="The publish speed (l.t. 500 Hz) of the F/T informations. It also sets the EtherDAQ speed to the given value"/>
+  <arg name="filter"     default="4"             doc="Valid parameters: 0 = No filter; 1 = 500 Hz; 2 = 150 Hz; 3 = 50 Hz; 4 = 15 Hz; 5 = 5 Hz; 6 = 1.5 Hz"/>
+  
+	<node
+		pkg="optoforce_etherdaq_driver"
+		type="etherdaq_node"
+		name="etherdaq_node"
+		args="--address $(arg address) --rate $(arg rate) --filter $(arg filter) --frame_id $(arg frame_id)"
+	/>
+  
+</launch>

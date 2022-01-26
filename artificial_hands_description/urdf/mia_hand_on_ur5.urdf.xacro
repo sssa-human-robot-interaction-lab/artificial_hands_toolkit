@@ -1,0 +1,88 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_ur5_robot_gazebo">
+
+  <!-- Make use of UR5 macro -->
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur5_macro.xacro" />
+
+  <!-- Instantiate the UR5 Gazebo robot and pass it all the required arguments. -->
+  <xacro:ur5_robot prefix="" />
+
+  <!-- Arm base (orange block representing mount for ur5 or ur10 arm) -->
+  <xacro:include filename="$(find artificial_hands_description)/urdf/arm_base.urdf.xacro" />
+  
+  <!-- Attach arm to the arm base -->
+  <joint name="robot_fix" type="fixed">
+    <parent link="arm_base"/>
+    <child link="base_link"/>
+    <origin xyz="0 0 0.6" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Robitq FT300 -->
+  <xacro:include filename="$(find artificial_hands_description)/urdf/robotiq_ft300.urdf.xacro" />
+  
+  <!-- Attach Robotiq to arm tool0 -->
+  <xacro:robotiq_ft300 parent="tool0" prefix="">
+      <origin xyz="0 0 -0.004" rpy="0 0 -${pi/2}"/> 
+  </xacro:robotiq_ft300>
+
+  <!-- Enable joint feedback representing the ft_sensor-->
+  <gazebo reference="measurment_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+    <provideFeedback>true</provideFeedback>
+  </gazebo>
+  
+  <!-- The ft_sensor plugin -->
+  <gazebo>
+    <plugin name="gazebo_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+      <updateRate>500.0</updateRate>
+        <topicName>gazebo_ft_sensor</topicName>
+        <gaussianNoise>0.1</gaussianNoise>
+        <jointName>measurment_joint</jointName>
+    </plugin>
+  </gazebo>  
+
+  <!-- Mia hand on UR flange -->
+  <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand.urdf.xacro" />
+
+  <link name="URflange">
+    <inertial>
+      <origin xyz="0 0 0" rpy="0 0 0"/>
+      <mass value="0.001"/>
+      <inertia ixx="0.001" ixy="0" ixz="0" iyy="0.001" iyz="0" izz="0.001"/>
+    </inertial>
+    <visual name="UR_flange">
+      <origin xyz="-0.023781363 -0.039999999 0.03784062" rpy="2.879793167 -1.3e-08 1.570796371"/>
+      <geometry>
+        <mesh filename="package://mia_hand_description/meshes/stl/1.001.stl" scale="0.000999987 0.000999987 0.000999987"/>
+      </geometry>
+      <material name="DEFAULT_MTL.001"/>
+    </visual>
+  </link>
+
+  <joint name="j_URflange" type="fixed">
+    <origin xyz="0 -0.022566028 -0.000111314" rpy="-1.570796251 -1.570796251 0"/>
+    <parent link="palm"/>
+    <child link="URflange"/>
+  </joint>
+
+  <material name="DEFAULT_MTL.001">
+    <color rgba="0.640000019 0.640000019 0.640000019 1.0"/>
+  </material>
+
+  <gazebo reference="URflange">
+    <material>Gazebo/Grey</material>
+    <selfCollide>False</selfCollide>
+  </gazebo>
+
+  <!-- Make connection between robotiq_ft_sensor and mia hand -->
+  <joint name="mia_fix" type="fixed">
+    <origin xyz="0 0 0.022" rpy="${pi/2} 0 ${pi/2}"/>
+    <parent link="robotiq_ft_frame_id"/>
+    <child link="palm"/>
+  </joint>  
+  
+  <!-- Instantiate the Mia hand Gazebo robot and pass it all the required arguments. -->
+  <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand_gazebo.urdf.xacro" />
+  <xacro:mia_gazebo robotNamespace="" />
+
+</robot>

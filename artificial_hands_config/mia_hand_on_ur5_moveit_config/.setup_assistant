@@ -1,0 +1,11 @@
+moveit_setup_assistant_config:
+  URDF:
+    package: artificial_hands_description
+    relative_path: urdf/mia_hand_on_ur5.urdf.xacro
+    xacro_args: ""
+  SRDF:
+    relative_path: config/mia_hand_on_ur5_robot_gazebo.srdf
+  CONFIG:
+    author_name: penzo
+    author_email: penzo@todo.com
+    generated_timestamp: 1642678645
