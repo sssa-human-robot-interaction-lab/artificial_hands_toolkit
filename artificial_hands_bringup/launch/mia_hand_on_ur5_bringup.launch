@@ -17,6 +17,9 @@
     <!-- Spawn Mia hand controllers -->
     <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_pos_trajectory_controller" />
 
+    <!-- Spawn Mia hand stopped controllers -->
+    <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_vel_trajectory_controller" />
+
   </group>
 
   <group unless="$(arg sim)">
@@ -24,24 +27,25 @@
     <!-- Make use of UR5 bringup from ur_robot_driver-->
     <include file="$(find ur_robot_driver)/launch/ur5_bringup.launch" >
       <arg name="robot_ip" value="192.168.1.3" />
-      <arg name="kinematics_config" value="$(find artificial_hands_bringup)/config/ur5.192.168.1.3.yaml" />
+      <arg name="kinematics_config" value="$(find artificial_hands_bringup)/config/$(arg robot_ip)_192.168.1.3.yaml" />
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_ur5.launch.xml" />
+      <arg name="controllers" default="joint_state_controller pos_joint_traj_controller"/>
+      <arg name="stopped_controllers" default="scaled_pos_joint_traj_controller"/>
     </include>
 
-    <!-- <group ns="mia_hw"> -->
+    <group ns="mia_hand">
       <!-- Start the Mia hand control node -->
-      <!-- <param name="/Mia_COM_" type="int" value="0"/>
+      <param name="/Mia_COM_" type="int" value="0"/>
       <param name="/Mia_fs_" type="int" value="20"/>
-      <node name="mia_hand_robot_driver" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" />  -->
+      <node name="mia_hand_robot_driver" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" /> 
 
       <!-- Load Mia hand controllers to parameter server -->
-      <!-- <rosparam file="$(find mia_hand_ros_control)/config/mia_hand_hw_controllers.yaml" command="load"/>
-      <rosparam file="$(find mia_hand_ros_control)/config/mia_hand_hw_trajectory_controllers.yaml" command="load"/> -->
+      <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>
 
       <!-- Spawn Mia hand controllers -->
-      <!-- <node name="mia_hand_hw_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_hw_pos_trajectory_controller" />
-      <node name="mia_hw_joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen"  args="joint_state_controller" />
-    </group> -->
+      <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller" />
+      <node name="mia_hand_joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen"  args="joint_state_controller" />
+    </group>
 
   </group>
 

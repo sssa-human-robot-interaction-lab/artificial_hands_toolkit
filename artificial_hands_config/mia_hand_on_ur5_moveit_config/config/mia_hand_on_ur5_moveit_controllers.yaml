@@ -7,6 +7,14 @@ controller_list:
       - j_index_fle
       - j_mrl_fle
       - j_thumb_fle
+  - name: mia_hand_vel_trajectory_controller
+    action_ns: follow_joint_trajectory
+    type: FollowJointTrajectory
+    default: False
+    joints:
+      - j_index_fle
+      - j_mrl_fle
+      - j_thumb_fle
   - name: pos_joint_traj_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory

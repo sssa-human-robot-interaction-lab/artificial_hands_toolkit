@@ -107,6 +107,20 @@ namespace atk
   };
 
   /**
+   * @brief Sum two vector
+   * @return vec1 + vec2
+   */
+  static geometry_msgs::Vector3 sumVector3(geometry_msgs::Vector3 vec1, geometry_msgs::Vector3 vec2)
+  {
+    geometry_msgs::Vector3 vec;
+    vec.x = vec1.x + vec2.x;
+    vec.y = vec1.y + vec2.y;
+    vec.z = vec1.z + vec2.z;
+
+    return vec;
+  };
+
+  /**
    * @brief Subtract two vector
    * @return vec1 - vec2
    */
@@ -143,11 +157,7 @@ namespace atk
   }
 
   /**
-   * @brief Compare components of a vector with respect to a threshold vector
-   * @param th threshold vector
-   * @param vec vector to compare
-   * @param fth multiplication factor for the threshold vector
-   * @return True if for any i components th(i) l.t. vec(i)
+   * @brief Compute magnitude of vector
    */
   static double magnitudeVector3(geometry_msgs::Vector3 vec)
   {

@@ -160,6 +160,8 @@ namespace rosatk
             j_sub_ = subscribe(controller_, 1000, &HandoverWristNode::jDataCallback, this);	
             js_ = ros::topic::waitForMessage<sensor_msgs::JointState>(controller_);
             response.code = Interaction::Init(*js_,ft_->wrench);
+            Dynamics::SetOffset(Calibration::Get());
+            Detection::SetOffset(Calibration::Get());
             break; 
           case 1:
             ROS_INFO("Starting node loop (computation and publish).");
@@ -195,9 +197,9 @@ namespace rosatk
             break;
           case 7:
             ROS_INFO("Checking force/torque sensor calibration.");
-            double m = atk::magnitudeVector3(force_fir)/(Calibration::GetMass()*9.81);
-            ROS_INFO("Change on mass estimate: %.3f",m);
-            (m > 0.02 ? response.code = 1 : response.code = 0); //TO DO: very simple check, more robust approach shuild be considered
+            double m = 100*(atk::magnitudeVector3(force_fir)/(Calibration::GetMass()*9.81) - 1);
+            ROS_INFO("Change on mass estimate: %.1f %%",m);
+            (abs(m) > 10 ? response.code = 1 : response.code = 0); //TO DO: very simple check, more robust approach shuild be considered
             break;
           }   
           ROS_INFO("Executed command.");

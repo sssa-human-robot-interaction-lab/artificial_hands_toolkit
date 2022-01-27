@@ -45,8 +45,8 @@ namespace atk
        */
       void UpdateRaw(geometry_msgs::Wrench ft)
       {
-        force_raw = subtractVector3(subtractVector3(ft.force,zero_.force),bias_.force);
-        torque_raw = subtractVector3(subtractVector3(ft.torque,zero_.torque),bias_.torque);
+        force_raw = subtractVector3(subtractVector3(ft.force,bias_.force),zero_.force);
+        torque_raw = subtractVector3(subtractVector3(ft.torque,bias_.torque),zero_.torque);
       };
 
       /**
@@ -56,8 +56,8 @@ namespace atk
       bool Get()
       {
         geometry_msgs::Wrench ft = wrenchFromVector(Filter_t::Get());
-        force = subtractVector3(subtractVector3(ft.force,zero_.force),bias_.force);
-        torque = subtractVector3(subtractVector3(ft.torque,zero_.torque),bias_.torque);
+        force = subtractVector3(subtractVector3(ft.force,bias_.force),zero_.force);
+        torque = subtractVector3(subtractVector3(ft.torque,bias_.torque),zero_.torque);
         return true;
       };
 

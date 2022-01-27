@@ -1,0 +1,53 @@
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 50  
+  
+mia_hand_vel_trajectory_controller:
+  type: velocity_controllers/JointTrajectoryController
+  joints:
+    - j_index_fle
+    - j_mrl_fle
+    - j_thumb_fle
+
+  constraints:
+    goal_time: 4.0
+    stopped_velocity_tolerance: 1.0
+    j_index_fle:
+      goal: &goal_tv_constraint 0.5
+      trajectory: &trajectory_tv_constraint 1.0
+    j_mrl_fle:
+      goal: *goal_tv_constraint
+      trajectory: *trajectory_tv_constraint
+    j_thumb_fle:
+      goal: *goal_tv_constraint
+      trajectory: *trajectory_tv_constraint
+
+  gains:
+    j_index_fle:
+      p: &p 2.0
+      i: &i 0.1
+      d: &d 0.0
+      antiwindup: &aw false
+      i_clamp_max: &i_max 10.0
+      i_clamp_min: &i_min 0.0
+    j_mrl_fle:
+      p: *p
+      i: *i
+      d: *d
+      antiwindup: *aw
+      i_clamp_max: *i_max
+      i_clamp_min: *i_min
+    j_thumb_fle:
+      p: *p
+      i: *i
+      d: *d
+      antiwindup: *aw
+      i_clamp_max: *i_max
+      i_clamp_min: *i_min
+      
+  velocity_ff:
+    j_index_fle: &vff 2.0
+    j_mrl_fle: *vff
+    j_thumb_fle: *vff
+
+  stop_trajectory_duration: 1.0

@@ -1,6 +1,6 @@
 from cmath import pi
 from time import sleep
-from abc import ABC
+from abc import ABC, abstractmethod
 
 import rospy
 import smach
@@ -10,9 +10,8 @@ import moveit_commander.conversions as cv
 from artificial_hands_msgs.msg import *
 from artificial_hands_msgs.srv import WristCommand
 
-
-
 joint_home = [.0,-pi/2,pi/2,.0,pi/2,.0]
+""" Hardcoded joint angles for home position"""
 
 b = joint_home[0]
 s = joint_home[1]
@@ -27,6 +26,7 @@ calibration_joints = [[b,s,e,w1,w2,w3-pi],
                       [b,s,e,w1-pi/2,w2,w3+pi/2],
                       [b,s,e,w1+pi/2,w2,w3+pi/2],
                       [b,s,e,w1,w2,w3]]
+""" Hardcoded joint angles for fast calibration of force/torque """
 
 class atkRobot(ABC):
   """ Inherite of this abstract class provides a common arm and hand movegroup
@@ -39,46 +39,25 @@ class atkRobot(ABC):
       manipulator planning group commander
   hand : moveit_commander.MoveGroupCommander
       hand planning group commander
-  trig : bool
+  trigger : bool
       boolean representing release trigger from handover_wrist_node
 
   Methods
   -------
-  subscribe()
-      connect this class to the wrist_detection topic (published by handover_wrist_node)
-
-  unsubscribe()
-      disconnect this class from the wrist_detection topic
+  goHome()
+      move arm and hand to home positions
   
   wristCommand(service_name)
       forward a command to the handover_wrist_node (using its ros services)
   """
-  arm = moveit_commander.MoveGroupCommander("manipulator")
-  hand = moveit_commander.MoveGroupCommander("hand")
-  trig = False
+  arm = moveit_commander.MoveGroupCommander("manipulator")          # arm commander
+  hand = moveit_commander.MoveGroupCommander("hand")                # hand commander
 
   def goHome(self):
     self.arm.go(joint_home, wait=True)
     self.arm.stop()                                                 # calling stop() ensures that there is no residual movement
 
-  def subscribe(self):
-    self.sub= rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)
-    self.trig = False
-  
-  def unsubscribe(self):
-    self.sub.unregister()
-    self.trig = False
-
-  def detectionCallback(self,msg):
-    self.trig = msg.trigger
-
   def wristCommand(self,service_name):
-    """
-    Parameters
-    ----------
-    service_name : str
-        name of the ros service corresponding to the desired command
-    """
     cmd = rospy.ServiceProxy(service_name,WristCommand)
     return cmd().code
 
@@ -86,12 +65,12 @@ class GoToHome(smach.State,atkRobot):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home'])
-    # self.arm.set_max_velocity_scaling_factor(1)                       # move arm at maximum speed
+    self.arm.set_max_velocity_scaling_factor(.3)                      # set maximum speed
+
+  def execute(self, userdata):
     self.goHome()                                                     # ensure robot arm and hand strating at home position
     self.wristCommand("wrist_command/subscribe")                      # subscribe the handover_wrist_node
     self.wristCommand("wrist_command/start_loop")                     # start loop
-
-  def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_HOME')
     return 'at_home'
 
@@ -99,17 +78,13 @@ class CheckCalib(smach.State,atkRobot):
   """ From the home position, a check on calibration status is required """
   def __init__(self):
     super().__init__(outcomes=['calib','uncalib'])
-    self.eef_mass = 0                                                 # this will ensure calibration at startup
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
-    if self.eef_mass == 0.0:
+    if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 1 if eef mass estimate has changed, 0 otherwise)
       return 'uncalib'
     else:
-      if self.wristCommand("wrist_command/check_calibration") == 0:   # check calibration status (i.e. if eef mass estimate has changed)
-        return 'calib'
-      else:
-        return 'uncalib'
+      return 'calib'
 
 class DoCalib(smach.State,atkRobot):
   """ Do calibration as needed """
@@ -117,7 +92,7 @@ class DoCalib(smach.State,atkRobot):
     super().__init__(outcomes=['calib_done'])
 
   def execute(self, userdata):
-    rospy.loginfo('Executing state DO_CALIB')    
+    rospy.loginfo('Executing state DO_CALIB')                                          
     for joint_target in calibration_joints:
       self.addCalibrationPoint(joint_target)
     self.wristCommand("wrist_command/set_calibration")                 # estimate offset and calibrate the force/torque sensor
@@ -126,11 +101,13 @@ class DoCalib(smach.State,atkRobot):
   def addCalibrationPoint(self,joint_target):
     self.arm.go(joint_target, wait=True)                               # move the arm
     self.arm.stop()                                                    # prevent residual motion
+    sleep(.3)                                                          # wait a bit before starting to record
     self.wristCommand("wrist_mode/save_calibration")                   # set mode to record for force/torque sensor calibration
-    sleep(.5)                                                          # average calibration points over .5 seconds
+    sleep(.7)                                                          # average calibration points over .8 seconds
     self.wristCommand("wrist_mode/publish")                            # end of calibration point (stop record)   
 
 class GoToGraspPos(smach.State,atkRobot):
+  """ Move to grasp position """
   def __init__(self):
     super().__init__(outcomes=['ready_to_grasp'])
 
@@ -141,6 +118,7 @@ class GoToGraspPos(smach.State,atkRobot):
     return 'ready_to_grasp'
 
 class WaitForGrasp(smach.State,atkRobot):
+  """ Wait user input to close hand and grasp """
   def __init__(self):
     super().__init__(outcomes=['grasp','end'])
 
@@ -153,6 +131,7 @@ class WaitForGrasp(smach.State,atkRobot):
       return 'grasp'
 
 class Grasp(smach.State,atkRobot):
+  """ Do grasp action """
   def __init__(self):
     super().__init__(outcomes=['grasped'])
 
@@ -167,10 +146,7 @@ class GoToStart(smach.State,atkRobot):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_START')
-    self.wristCommand("wrist_mode/save_dynamics")                           # set mode to record dynamics
-    self.wristCommand("wrist_command/subscribe")                            # subscribe to js and ft topics
-    self.wristCommand("wrist_command/start_loop")                           # start node loop
-    
+    self.wristCommand("wrist_mode/save_dynamics")                           # set mode to record dynamics    
     lift_poses = []
     pos = cv.pose_to_list(self.arm.get_current_pose().pose)[0:3]            # get current position
     rot = self.arm.get_current_rpy()                                        # get current orientation
@@ -185,12 +161,11 @@ class GoToStart(smach.State,atkRobot):
       lift_poses.append(cv.list_to_pose(pose))
     (plan, fraction) = self.arm.compute_cartesian_path(lift_poses,0.01,0.0) # compute cartesian path
     self.arm.execute(plan, wait=True)                                       # execute
-    ############ go to start position
     return 'at_start'
 
 class PrepareToReach(smach.State,atkRobot):
   def __init__(self):
-    super().__init__(outcomes=['ready_to_go'])
+    super().__init__(outcomes=['ready_to_reach'])
 
   def execute(self, userdata):
     rospy.loginfo('Executing state PREPARE_TO_REACH')
@@ -200,27 +175,27 @@ class PrepareToReach(smach.State,atkRobot):
     self.wristCommand("wrist_command/subscribe")                # subscribe to js and ft topics
     self.wristCommand("wrist_command/start_loop")               # start node loop
     self.wristCommand("wrist_mode/save_interaction")            # save estimate error
-    return 'ready_to_go'
+    return 'ready_to_reach'
 
-class Go(smach.State,atkRobot):
+class StartToReach(smach.State,atkRobot):
   def __init__(self):
     super().__init__(outcomes=['ready_to_handover','end'])
 
   def execute(self, userdata):
-    rospy.loginfo('Executing state GO')
-    self.arm.go(joint_home,wait=True)    # start reaching
+    rospy.loginfo('Executing state START_TO_REACH')
+    self.arm.go(joint_home,wait=True)                           # start reaching
     return 'ready_to_handover'
 
-class Handover(smach.State,atkRobot):
+class ReachToHandover(smach.State,atkRobot):
   def __init__(self):
-    super().__init__(outcomes=['trig'])
+    super().__init__(outcomes=['handover'])
+    self.sub= rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)
+    self.trigger = False
 
   def execute(self, userdata):
-    rospy.loginfo('Executing state HANDOVER')
-    # while not self.trig:
-      ############ continue reaching, transition after rlease trigger (or final position reached)
-      # pass
-    return 'trig'
+    rospy.loginfo('Executing state REACH_TO_HANDOVER')
+    ############ continue reaching, transition after release trigger (or final position reached)
+    return 'handover'
 
 class StopAndRelease(smach.State,atkRobot):
   def __init__(self):
@@ -257,9 +232,9 @@ def main():
     smach.StateMachine.add('WAIT_FOR_GRASP', WaitForGrasp(), transitions={'grasp':'GRASP'})
     smach.StateMachine.add('GRASP', Grasp(), transitions={'grasped':'GO_TO_START'})
     smach.StateMachine.add('GO_TO_START', GoToStart(), transitions={'at_start':'PREPARE_TO_REACH'})
-    smach.StateMachine.add('PREPARE_TO_REACH', PrepareToReach(), transitions={'ready_to_go':'GO'})
-    smach.StateMachine.add('GO', Go(), transitions={'ready_to_handover':'HANDOVER'})
-    smach.StateMachine.add('HANDOVER', Handover(), transitions={'trig':'STOP_AND_RELEASE'})
+    smach.StateMachine.add('PREPARE_TO_REACH', PrepareToReach(), transitions={'ready_to_reach':'START_TO_REACH'})
+    smach.StateMachine.add('START_TO_REACH', StartToReach(), transitions={'ready_to_handover':'REACH_TO_HANDOVER'})
+    smach.StateMachine.add('REACH_TO_HANDOVER', ReachToHandover(), transitions={'handover':'STOP_AND_RELEASE'})
     smach.StateMachine.add('STOP_AND_RELEASE', StopAndRelease(), transitions={'released':'END'})
     smach.StateMachine.add('END', End(), transitions={'continue':'GO_TO_HOME'})
 

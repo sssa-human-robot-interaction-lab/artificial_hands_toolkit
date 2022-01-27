@@ -15,6 +15,7 @@ namespace atk
        */
       Calibration()
       {
+        for(int i = 0; i < 6; i++)phi_.push_back(0);
         x_.resize(6*10*1000);
         y_.resize(6*1000);
       };  
@@ -56,10 +57,15 @@ namespace atk
         for(int i = 0; i < 10; i++)l[i] = -inf;
         for(int i = 0; i < 10; i++)u[i] = inf;
         l[6] = 0;
+
         double* c = leastSquareFit(y_.size(),10,x_.data(),y_.data(),l,u);
         copyArray(&phi_,c,10);
+
         cal_str.str("");
         for(int i = 0; i < 10; i++)cal_str << phi_[i] << " ";
+        
+        x_.clear();
+        y_.clear();
         return true;
       }
 
@@ -80,7 +86,7 @@ namespace atk
        */
       double GetMass()
       {
-        return phi_[7];
+        return phi_[6];
       }
 
       std::stringstream cal_str;

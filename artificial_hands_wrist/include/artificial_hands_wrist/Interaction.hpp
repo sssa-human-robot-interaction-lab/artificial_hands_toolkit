@@ -27,6 +27,8 @@ namespace atk
       const char* robot_description="robot_description", const char* model_frame="world"):
       Dynamics(filter_length,controller_rate,target_frame)
       {
+        sensor_e_ = new atk::Sensor<atk::Filter>();
+        sensor_e_->SetFilter(10);
         resetVector3(&th_dyn_.force);
         resetVector3(&th_dyn_.torque);
       };
@@ -41,6 +43,9 @@ namespace atk
       {
         resetVector3(&force_e);
         resetVector3(&torque_e);
+        wrench_e_.force = force_e;
+        wrench_e_.torque = torque_e;
+        sensor_e_->Init(wrench_e_);
         return Dynamics::Init(js,ft) & Detection::Init(ft);
       };
 
@@ -58,6 +63,8 @@ namespace atk
         torque_iir = IIR::torque;
         force_raw = IIR::force_raw;
         torque_raw = IIR::torque_raw;
+        force_e = sensor_e_->force;
+        torque_e = sensor_e_->torque;
         return true;
       };
 
@@ -67,10 +74,12 @@ namespace atk
       void Estimate()
       {
         Dynamics::Estimate();
-        force_e = subtractVector3(force_fir,force_hat);
-        torque_e = subtractVector3(torque_fir,torque_hat);
-        absoluteVector3(&force_e);
-        absoluteVector3(&torque_e); 
+        wrench_e_.force = subtractVector3(force_fir,force_hat);
+        wrench_e_.torque = subtractVector3(torque_fir,torque_hat);
+        sensor_e_->Update(wrench_e_);
+        sensor_e_->Get();
+        absoluteVector3(&sensor_e_->force); //TO DO remove absolute value from here
+        absoluteVector3(&sensor_e_->torque); 
       };
 
       /**
@@ -79,8 +88,8 @@ namespace atk
       void SaveInteraction()
       {
         Estimate();
-        compareVector3(&th_dyn_.force,force_e);
-        compareVector3(&th_dyn_.torque,torque_e);
+        compareVector3(&th_dyn_.force,sensor_e_->force);
+        compareVector3(&th_dyn_.torque,sensor_e_->torque);
       };
 
       /**
@@ -121,6 +130,8 @@ namespace atk
       double factor_ = 2.0;
       geometry_msgs::Wrench th_det_;
       geometry_msgs::Wrench th_dyn_;
+      geometry_msgs::Wrench wrench_e_;
+      atk::Sensor<atk::Filter>* sensor_e_;
   };
 }
 
