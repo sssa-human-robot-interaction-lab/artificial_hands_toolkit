@@ -2,7 +2,7 @@ controller_list:
   - name: mia_hand_pos_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
-    default: True
+    default: False
     joints:
       - j_index_fle
       - j_mrl_fle
@@ -10,7 +10,7 @@ controller_list:
   - name: mia_hand_vel_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
-    default: False
+    default: True
     joints:
       - j_index_fle
       - j_mrl_fle

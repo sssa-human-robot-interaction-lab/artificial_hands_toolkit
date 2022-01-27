@@ -18,8 +18,9 @@
     <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_pos_trajectory_controller" />
 
     <!-- Spawn Mia hand stopped controllers -->
-    <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_vel_trajectory_controller" />
-
+    <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_vel_trajectory_controller 
+    j_index_fle_position_controller j_thumb_fle_position_controller j_mrl_fle_position_controller " />
+  
   </group>
 
   <group unless="$(arg sim)">
@@ -44,7 +45,14 @@
 
       <!-- Spawn Mia hand controllers -->
       <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller" />
+      
+      <!-- Spawn Mia hand stopped controllers -->
+      <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_pos_trajectory_controller 
+      j_index_fle_position_controller j_thumb_fle_position_controller j_mrl_fle_position_controller " />
+
+      <!-- Spawn Mia hand joint state controller -->
       <node name="mia_hand_joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen"  args="joint_state_controller" />
+
     </group>
 
   </group>
