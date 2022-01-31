@@ -31,6 +31,10 @@ namespace atk
        */
       bool Init(sensor_msgs::JointState js, geometry_msgs::Wrench ft) 
       {
+        x_.clear();
+        y_.clear();
+        V_.clear();
+        phi_.clear();
         return Kinematics::Init(js) & Sensor::Init(ft);
       };
 

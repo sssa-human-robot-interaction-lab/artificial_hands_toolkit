@@ -108,7 +108,7 @@ namespace rosatk
           Interaction::SaveInteraction();
           break;
         case 15:
-          Interaction::TriggerDynamics();
+          Interaction::TriggerDynamics(1.3);
           break;
         case 16:
           Calibration::AddEquation(force_fir,torque_fir,gravity); //TO DO: if Dynamics object can be inherited as virtual, no need to pass arguments here
@@ -132,6 +132,7 @@ namespace rosatk
           wr_msg_.wrench_hat.torque = torque_hat;
           wr_msg_.wrench_e.force = force_e;
           wr_msg_.wrench_e.torque = torque_e;
+          wr_msg_.wrench_th = th_dyn_; // only for debug
           wr_msg_.gravity = gravity;
           wr_msg_.phi = phi_str.str();
           wr_msg_.cal = cal_str.str();
@@ -197,7 +198,7 @@ namespace rosatk
             break;
           case 7:
             ROS_INFO("Checking force/torque sensor calibration.");
-            double m = 100*(atk::magnitudeVector3(force_fir)/(Calibration::GetMass()*9.81) - 1);
+            double m = 100*(atk::magnitudeVector3(force_iir)/(Calibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",m);
             (abs(m) > 10 ? response.code = 1 : response.code = 0); //TO DO: very simple check, more robust approach shuild be considered
             break;
@@ -246,7 +247,7 @@ namespace rosatk
       void jDataCallback(const sensor_msgs::JointState::ConstPtr& msg){Dynamics::Update(*msg,ft_->wrench);}
       
       bool publish_;
-      int mode_ = 11;
+      int mode_ = 10;
       double cycle_time_ = 0.0, cycle_count_ = 0.0;
       const char *sensor_, *controller_;
       ros::WallTimer wr_tim_, det_tim_;

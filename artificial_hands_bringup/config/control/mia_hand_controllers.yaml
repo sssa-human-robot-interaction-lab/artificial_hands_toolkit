@@ -3,80 +3,64 @@ joint_state_controller:
   publish_rate: 50  
 
 j_thumb_fle_position_controller:
-    type: velocity_controllers/JointPositionController
-    joint: j_thumb_fle
-    pid:
-      p: &p_tv_gain 2.0
-      i: &i_tv_gain 0.1
-      d: &d_tv_gain 0.0
-      antiwindup: &a_tv_value false
-      i_clamp_max: &i_max_tv_value 10.0
-      i_clamp_min: &i_min_tv_value 0.0
+  type: velocity_controllers/JointPositionController
+  joint: j_thumb_fle
+  pid: &pid_pv
+    p: &p_gain 4.0
+    i: &i_gain 0.01
+    d: &d_gain 0.0
+    antiwindup: &a_value false
+    i_clamp_max: &i_max_value 10.0
+    i_clamp_min: &i_min_value 0.0
     
 j_index_fle_position_controller:
   type: velocity_controllers/JointPositionController
   joint: j_index_fle
-  pid:
-    p: *p_tv_gain
-    i: *i_tv_gain
-    d: *d_tv_gain
-    antiwindup: *a_tv_value
-    i_clamp_max: *i_max_tv_value
-    i_clamp_min: *i_min_tv_value
+  pid: *pid_pv
   
 j_mrl_fle_position_controller:
   type: velocity_controllers/JointPositionController
   joint: j_mrl_fle
-  pid:
-    p: *p_tv_gain
-    i: *i_tv_gain
-    d: *d_tv_gain
-    antiwindup: *a_tv_value
-    i_clamp_max: *i_max_tv_value
-    i_clamp_min: *i_min_tv_value
+  pid: *pid_pv
+
+j_thumb_fle_velocity_controller:
+    type: velocity_controllers/JointVelocityController
+    joint: j_thumb_fle
+    
+j_index_fle_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: j_index_fle
+  
+j_mrl_fle_velocity_controller:
+  type: velocity_controllers/JointVelocityController
+  joint: j_mrl_fle
 
 mia_hand_vel_trajectory_controller:
   type: velocity_controllers/JointTrajectoryController
-  joints:
+  joints: &robot_joints
     - j_index_fle
     - j_mrl_fle
     - j_thumb_fle
 
-  constraints:
-    goal_time: 4.0
+  constraints: &tv_constraints
+    goal_time: 2.0
     stopped_velocity_tolerance: 1.0
-    j_index_fle:
-      goal: &goal_tv_constraint 0.5
-      trajectory: &trajectory_tv_constraint 1.0
-    j_mrl_fle:
-      goal: *goal_tv_constraint
-      trajectory: *trajectory_tv_constraint
-    j_thumb_fle:
-      goal: *goal_tv_constraint
-      trajectory: *trajectory_tv_constraint
+    j_index_fle: &j_tv_constraints
+      goal: 0.5
+      trajectory: 1.0
+    j_mrl_fle: *j_tv_constraints
+    j_thumb_fle: *j_tv_constraints
 
   gains:
-    j_index_fle:
-      p: *p_tv_gain
-      i: *i_tv_gain
-      d: *d_tv_gain
-      antiwindup: *a_tv_value
-      i_clamp_max: *i_max_tv_value
-      i_clamp_min: *i_min_tv_value
-    j_mrl_fle:
-      p: *p_tv_gain
-      i: *i_tv_gain
-      d: *d_tv_gain
-      antiwindup: *a_tv_value
-      i_clamp_max: *i_max_tv_value
-      i_clamp_min: *i_min_tv_value
-    j_thumb_fle:
-      p: *p_tv_gain
-      i: *i_tv_gain
-      d: *d_tv_gain
-      antiwindup: *a_tv_value
-      i_clamp_max: *i_max_tv_value
-      i_clamp_min: *i_min_tv_value
+    j_index_fle: &j_pid
+      p: *p_gain
+      i: *i_gain
+      d: *d_gain
+      antiwindup: *a_value
+      i_clamp_max: *i_max_value
+      i_clamp_min: *i_min_value
+    j_mrl_fle: *j_pid
+    j_thumb_fle: *j_pid
       
   velocity_ff:
     j_index_fle: &v_tv_value 2.0
@@ -86,23 +70,11 @@ mia_hand_vel_trajectory_controller:
   stop_trajectory_duration: 1.0
 
 mia_hand_pos_trajectory_controller:
-      type: position_controllers/JointTrajectoryController
-      joints:
-        - j_index_fle
-        - j_mrl_fle
-        - j_thumb_fle
+  type: position_controllers/JointTrajectoryController
+  joints: *robot_joints
+  constraints: *tv_constraints
+  stop_trajectory_duration: 1.0
 
-      constraints:
-        goal_time: 4.0
-        stopped_velocity_tolerance: 1.0
-        j_index_fle:
-          goal: &goal_tp_constraint 0.5
-          trajectory: &trajectory_tp_constraint 1.0
-        j_mrl_fle:
-          goal: *goal_tp_constraint
-          trajectory: *trajectory_tp_constraint
-        j_thumb_fle:
-          goal: *goal_tp_constraint
-          trajectory: *trajectory_tp_constraint
-
-      stop_trajectory_duration: 1.0
+mia_hand_joint_group_vel_controller:
+  type: velocity_controllers/JointGroupVelocityController
+  joints: *robot_joints

@@ -43,6 +43,8 @@ namespace atk
       {
         resetVector3(&force_e);
         resetVector3(&torque_e);
+        resetVector3(&th_dyn_.force);
+        resetVector3(&th_dyn_.torque);
         wrench_e_.force = force_e;
         wrench_e_.torque = torque_e;
         sensor_e_->Init(wrench_e_);
@@ -99,8 +101,8 @@ namespace atk
       void TriggerDynamics(double factor = 1.0)
       {
         Estimate();
-        th_dyn_.torque.z = torque_e.z; //removed too noisy torque on z axis from trigger
-        trigger = triggerOrVector3(th_dyn_.force,force_e,factor) | triggerOrVector3(th_dyn_.torque,torque_e,factor);
+        th_dyn_.torque.z = torque_e.z; //removed too sensible torque vector
+        trigger = triggerOrVector3(th_dyn_.force,sensor_e_->force,factor) | triggerOrVector3(th_dyn_.torque,torque_e,factor);
       };
 
       /**
@@ -120,6 +122,7 @@ namespace atk
       geometry_msgs::Vector3 torque_raw;
       geometry_msgs::Vector3 force_e;
       geometry_msgs::Vector3 torque_e;
+      geometry_msgs::Wrench th_dyn_; // only for debug
 
     private:
       
@@ -129,7 +132,7 @@ namespace atk
       double den_[3] = {1.0, -1.9749591089928671, 0.97527182944822877};
       double factor_ = 2.0;
       geometry_msgs::Wrench th_det_;
-      geometry_msgs::Wrench th_dyn_;
+      //geometry_msgs::Wrench th_dyn_;
       geometry_msgs::Wrench wrench_e_;
       atk::Sensor<atk::Filter>* sensor_e_;
   };
