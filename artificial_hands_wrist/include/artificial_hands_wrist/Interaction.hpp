@@ -48,6 +48,7 @@ namespace atk
         wrench_e_.force = force_e;
         wrench_e_.torque = torque_e;
         sensor_e_->Init(wrench_e_);
+        Detection::SetZero(false);
         return Dynamics::Init(js,ft) & Detection::Init(ft);
       };
 
@@ -104,15 +105,6 @@ namespace atk
         th_dyn_.torque.z = torque_e.z; //removed too sensible torque vector
         trigger = triggerOrVector3(th_dyn_.force,sensor_e_->force,factor) | triggerOrVector3(th_dyn_.torque,torque_e,factor);
       };
-
-      /**
-       * @brief Do zero of sensor readings
-       */
-      void DoZero()
-      {
-        Dynamics::Sensor::SetZero(true);
-        Detection::Sensor::SetZero(true);
-      }
 
       geometry_msgs::Vector3 force_fir;
       geometry_msgs::Vector3 torque_fir;

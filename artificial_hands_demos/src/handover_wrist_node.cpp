@@ -185,8 +185,8 @@ namespace rosatk
             ROS_INFO("Mean loop time %.6f sec.", cycle_time_/cycle_count_);
             break;
           case 5:
-            ROS_INFO("Setting zero on force/torque sensor.");
-            Interaction::DoZero();
+            ROS_INFO("Setting zero on force/torque sensor IIR filter.");
+            Detection::SetZero(true);
             break;
           case 6:
             ROS_INFO("Starting estimate of calibration parameters.");
