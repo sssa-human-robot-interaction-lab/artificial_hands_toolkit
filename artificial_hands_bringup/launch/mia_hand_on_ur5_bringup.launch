@@ -11,13 +11,14 @@
     </include>
 
     <!-- Load Mia hand controllers to parameter server -->
-    <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>
+    <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_trajectory_controllers.yaml" command="load"/>
+    <rosparam file="$(find mia_hand_gazebo)/config/gazebo_pid_thumb_opp.yaml" command="load"/>
 
     <!-- Spawn Mia hand controllers -->
-    <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_pos_trajectory_controller" />
+    <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller" />
 
     <!-- Spawn Mia hand stopped controllers -->
-    <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_vel_trajectory_controller" />
+    <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_pos_trajectory_controller" />
   
   </group>
 
