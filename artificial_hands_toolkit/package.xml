@@ -51,6 +51,12 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <exec_depend>artificial_hands_base</exec_depend>
+  <exec_depend>artificial_hands_bringup</exec_depend>
+  <exec_depend>artificial_hands_config</exec_depend>
+  <exec_depend>artificial_hands_demos</exec_depend>
+  <exec_depend>artificial_hands_description</exec_depend>
+  <exec_depend>artificial_hands_msgs</exec_depend>
+  <exec_depend>artificial_hands_wrist</exec_depend>
 
   <doc_depend>doxygen</doc_depend>
 
