@@ -23,8 +23,9 @@ namespace rosatk
   {
     
     public:
-      HandoverWristNode(bool publish, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame):  
+      HandoverWristNode(bool publish, double factor, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame):  
         publish_(publish),
+        factor_(factor),
         sensor_(sensor),
         controller_(controller),
         Interaction(filter, controller_rate, target_frame)
@@ -108,7 +109,7 @@ namespace rosatk
           Interaction::SaveInteraction();
           break;
         case 15:
-          Interaction::TriggerDynamics(1.3);
+          Interaction::TriggerDynamics(factor_);
           break;
         case 16:
           Calibration::AddEquation(force_fir,torque_fir,gravity); //TO DO: if Dynamics object can be inherited as virtual, no need to pass arguments here
@@ -248,7 +249,7 @@ namespace rosatk
       
       bool publish_;
       int mode_ = 10;
-      double cycle_time_ = 0.0, cycle_count_ = 0.0;
+      double cycle_time_ = 0.0, cycle_count_ = 0.0, factor_;
       const char *sensor_, *controller_;
       ros::WallTimer wr_tim_, det_tim_;
       ros::Publisher wr_pub_, det_pub_;
@@ -268,6 +269,7 @@ int main(int argc, char** argv)
   ros::init(argc, argv, "handover_wrist_node");
   
   bool publish;
+  double factor;
   int filter;
   int rate;
   std::string sensor;
@@ -279,6 +281,7 @@ int main(int argc, char** argv)
   desc.add_options()
     ("help", "display help")
     ("publish", po::value<bool>(&publish)->default_value(1), "set true for complete publishing of wrist state")
+    ("factor", po::value<double>(&factor)->default_value(2.0), "robustness of interaction trigger for dynamic handover (g.t. 1)")
     ("filter", po::value<int>(&filter)->default_value(20), "length of moving average filters (in samples)")
     ("rate", po::value<int>(&rate)->default_value(100), "rosnode internal rate (in Hertz)")
     ("sensor", po::value<std::string>(&sensor)->default_value("/ft_sensor"), "name of the rostopic published by F/T sensor") 
@@ -301,7 +304,7 @@ int main(int argc, char** argv)
   int joint_rate;
   ros::param::get(controller_rate,joint_rate);
   if(joint_rate < rate){rate = joint_rate; ROS_WARN("Required node rate was g.t. joint_state_controller publish rate, node rate lowered to %i Hz",rate);}
-  rosatk::HandoverWristNode hr_per_node = rosatk::HandoverWristNode(publish,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str());
+  rosatk::HandoverWristNode hr_per_node = rosatk::HandoverWristNode(publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str());
   ros::spin();
 
   return true;
