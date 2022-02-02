@@ -1,9 +1,7 @@
 from cmath import pi
 from time import sleep
-from abc import ABC, abstractmethod
+from abc import ABC
 from threading import Thread
-
-from rospkg import RosPack
 
 import rospy
 import smach
@@ -11,12 +9,22 @@ import moveit_commander
 import moveit_commander.conversions as cv
 from std_msgs.msg import Float64
 from rqt_controller_manager.controller_manager import *
+from std_srvs.srv import Empty
 
 from artificial_hands_msgs.msg import *
 from artificial_hands_msgs.srv import WristCommand
 
-joint_home = [.0,-pi/2,pi/2,.0,pi/2,.0]
+joint_home = [pi/2,-pi/2,pi/2,.0,pi/2,.0]
 """ Hardcoded arm joint angles for home position"""
+
+joint_grasp = [-pi/4,-pi/2,pi/2,.0,pi/2,.0]
+""" Hardcoded arm joint angles for home position"""
+
+joint_start = [1.57,-1.28,2.09,-0.8,1.57,0.0]
+""" Hardcoded arm joint angles for start position"""
+
+joint_reach = [pi,-pi/2,pi/2,.0,pi/2,.0]
+""" Hardcoded arm joint angles for reach position"""
 
 b = joint_home[0]
 s = joint_home[1]
@@ -53,6 +61,9 @@ class MiaHandCommander():
 
     self.index_vel = rospy.Publisher(ns+'/j_index_fle_velocity_controller/command',Float64,queue_size=1000)
     self.mrl_vel = rospy.Publisher(ns+'/j_mrl_fle_velocity_controller/command',Float64,queue_size=1000)
+
+    self.close_cyl_ser = rospy.Service('/close_cyl',Empty,self.close_cyl_callback)
+    self.open_cyl_ser = rospy.Service('/open_cyl',Empty,self.open_cyl_callback)
 
     self.j = Float64()
 
@@ -110,6 +121,14 @@ class MiaHandCommander():
     self.set_mrl_vel(0.0)
     sleep(1)
     self.switch_to_open()
+  
+  def open_cyl_callback(self,msg):
+    self.open_cyl()
+    return []
+
+  def close_cyl_callback(self,msg):
+    self.close_cyl()
+    return []
 
 class atkRobot(ABC):
   """ Inherite of this abstract class provides a common arm and hand movegroup
@@ -148,28 +167,48 @@ class GoToHome(smach.State,atkRobot):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
-    self.arm.set_max_velocity_scaling_factor(.2)                      # set maximum speed
+    self.arm.set_max_velocity_scaling_factor(.2)                                              # set maximum speed
+    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of backup trigger as start
+    self.trigger = False
+
+  def detectionCallback(self,msg):
+    self.trigger = msg.backtrig
 
   def execute(self, userdata):
-    rospy.loginfo("Executing state GO_TO_HOME -> PRESS ENTER TO START ('e' TO EXIT)")
-    c = input()
-    if c == "e":
-      return 'end'
-    else:
-      self.goHome()                                                     # ensure robot arm and hand strating at home position
-      self.wristCommand("wrist_command/subscribe")                      # subscribe the handover_wrist_node
-      self.wristCommand("wrist_command/start_loop")                     # start loop
-      rospy.loginfo('Executing state GO_TO_HOME')
-      return 'at_home'
+    self.wristCommand("wrist_command/subscribe")                      # subscribe the handover_wrist_node
+    self.wristCommand("wrist_command/start_loop")                     # start loop
+    sleep(1)
+    self.wristCommand("wrist_command/set_zero")                       # set zero of torque/sensor for static trigger                      
+    self.wristCommand("wrist_mode/trigger_static")                    # use static trigger as go command    
+    self.trigger = False
+    start_time =  rospy.Time.now()             
+    while self.trigger == False:   
+      if (rospy.Time.now() - start_time).to_sec() > 200:                                        # add a timeout (pause smach)
+        rospy.loginfo("State GO_TO_HOME paused -> PRESS ENTER TO RESUME ('e' TO EXIT)")
+        c = input()
+        if c == "e":
+          return 'end'
+        else:
+          start_time =  rospy.Time.now()
+      pass
+    self.hand.close_cyl()
+    self.wristCommand("wrist_mode/publish")
+    self.hand.open_cyl()
+    self.goHome()                                                     # ensure robot arm and hand strating at home position
+    rospy.loginfo('Executing state GO_TO_HOME')
+    return 'at_home'
 
 class CheckCalib(smach.State,atkRobot):
   """ From the home position, a check on calibration status is required """
   def __init__(self):
     super().__init__(outcomes=['calib','uncalib'])
+    self.calib = False
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
-    if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 1 if eef mass estimate has changed, 0 otherwise)
+    #if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 1 if eef mass estimate has changed, 0 otherwise)
+    if not self.calib:
+      self.calib = True                                                # do calibration only once
       return 'uncalib'
     else:
       return 'calib'
@@ -201,8 +240,8 @@ class GoToGraspPos(smach.State,atkRobot):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_GRASP_POS')
-    self.arm.go([1.57,-1.28,2.09,-0.8,1.57,0.0], wait=True)            # hardcoded grasp position
-    self.arm.stop() 
+    self.arm.go(joint_grasp, wait=True)                                # go to the grasp position
+    self.arm.stop()
     return 'ready_to_grasp'
 
 class WaitForGrasp(smach.State,atkRobot):
@@ -211,12 +250,8 @@ class WaitForGrasp(smach.State,atkRobot):
     super().__init__(outcomes=['grasp','home'])
 
   def execute(self, userdata):
-    rospy.loginfo("Executing state WAIT_FOR_GRASP -> PRESS ENTER TO CONTINUE ('h' TO RETURN TO HOME POSITION)")
-    c = input()
-    if c == "h":
-      return 'home'
-    else:
-      return 'grasp'
+    sleep(3)                                                           # wait a bit before trying to grasp the object
+    return 'grasp'
 
 class Grasp(smach.State,atkRobot):
   """ Do grasp action """
@@ -233,27 +268,23 @@ class GoToStart(smach.State,atkRobot):
     super().__init__(outcomes=['at_start','home'])
 
   def execute(self, userdata):
-    rospy.loginfo("Executing state GO_TO_START -> PRESS ENTER TO CONTINUE ('h' TO RETURN TO HOME POSITION)")
-    c = input()
-    if c == "h":
-      return 'home'
-    else:
-      self.wristCommand("wrist_mode/save_dynamics")                           # set mode to record dynamics    
-      lift_poses = []
-      pos = cv.pose_to_list(self.arm.get_current_pose().pose)[0:3]            # get current position
-      rot = self.arm.get_current_rpy()                                        # get current orientation
-      pose = pos + rot                                        
-      for k in range(1,10):           
-        pose[0] += 0.005                                                      # little displacement along world x
-        pose[1] += 0.005                                                      # little displacement along world y
-        pose[2] += 0.03                                                       # consistent lifting along world z
-        pose[3] += 0.05                                                       # little change in all orientations
-        pose[4] += 0.05                                                 
-        pose[5] += 0.05                                                 
-        lift_poses.append(cv.list_to_pose(pose))
-      (plan, fraction) = self.arm.compute_cartesian_path(lift_poses,0.01,0.0) # compute cartesian path
-      self.arm.execute(plan, wait=True)                                       # execute
-      return 'at_start'
+    self.arm.go(joint_start ,wait=True)                                     # move arm to a start point for lifting
+    self.wristCommand("wrist_mode/save_dynamics")                           # set mode to record dynamics    
+    lift_poses = []
+    pos = cv.pose_to_list(self.arm.get_current_pose().pose)[0:3]            # get current position
+    rot = self.arm.get_current_rpy()                                        # get current orientation
+    pose = pos + rot                                        
+    for k in range(1,10):           
+      pose[0] += 0.005                                                      # little displacement along world x
+      pose[1] += 0.005                                                      # little displacement along world y
+      pose[2] += 0.03                                                       # consistent lifting along world z
+      pose[3] += 0.05                                                       # little change in all orientations
+      pose[4] += 0.05                                                 
+      pose[5] += 0.05                                                 
+      lift_poses.append(cv.list_to_pose(pose))
+    (plan, fraction) = self.arm.compute_cartesian_path(lift_poses,0.01,0.0) # compute cartesian path
+    self.arm.execute(plan, wait=True)                                       # execute
+    return 'at_start'
 
 class PrepareToReach(smach.State,atkRobot):
   def __init__(self):
@@ -275,7 +306,7 @@ class StartToReach(smach.State,atkRobot):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state START_TO_REACH')
-    self.arm.go(joint_home,wait=False)                           # start reaching
+    self.arm.go(joint_reach,wait=False)                           # start reaching
     sleep(1)                                                     # wait a bit to be confident on estimate error
     self.wristCommand("wrist_mode/trigger_dynamics")             # enable trigger for dynamic handover
     return 'ready_to_handover'
@@ -297,6 +328,7 @@ class ReachToHandover(smach.State,atkRobot):
       t.start()                                                                            # start the thread 
     self.arm.stop()                                                                        # block arm motion
     self.wristCommand("wrist_command/stop_loop")                                           # stop node loop
+    sleep(2)
     return 'released'
   
   def detectionCallback(self,msg):
