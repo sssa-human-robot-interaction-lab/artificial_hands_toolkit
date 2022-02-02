@@ -1,4 +1,6 @@
 from cmath import pi
+from multiprocessing.connection import wait
+from shutil import move
 from time import sleep
 from abc import ABC
 from threading import Thread
@@ -14,17 +16,17 @@ from std_srvs.srv import Empty
 from artificial_hands_msgs.msg import *
 from artificial_hands_msgs.srv import WristCommand
 
-joint_home = [pi/2,-pi/2,pi/2,.0,pi/2,.0]
-""" Hardcoded arm joint angles for home position"""
-
-joint_grasp = [-pi/4,-pi/2,pi/2,.0,pi/2,.0]
-""" Hardcoded arm joint angles for home position"""
-
 joint_start = [1.57,-1.28,2.09,-0.8,1.57,0.0]
 """ Hardcoded arm joint angles for start position"""
 
+joint_grasp = joint_start #[-pi/4,-pi/2,pi/2,.0,pi/2,.0]
+""" Hardcoded arm joint angles for home position"""
+
 joint_reach = [pi,-pi/2,pi/2,.0,pi/2,.0]
 """ Hardcoded arm joint angles for reach position"""
+
+joint_home = joint_reach #[pi/2,-pi/2,pi/2,.0,pi/2,.0]
+""" Hardcoded arm joint angles for home position"""
 
 b = joint_home[0]
 s = joint_home[1]
@@ -40,6 +42,20 @@ calibration_joints = [[b,s,e,w1,w2,w3-pi],
                       [b,s,e,w1+pi/2,w2,w3+pi/2],
                       [b,s,e,w1,w2,w3]]
 """ Hardcoded arm joint angles for fast calibration of force/torque """
+
+class MiaHandMoveitCommander(moveit_commander.MoveGroupCommander):
+  def __init__(self,ns=''):
+      super().__init__("hand")
+
+  def open_cyl(self):
+    self.go([.4,.4,.2],wait=True)
+    self.stop()
+    sleep(1)
+
+  def close_cyl(self):
+    self.go([.99,1.02,.46],wait=True)
+    self.stop()
+    sleep(1)
 
 class MiaHandCommander():
   """ Simple commander for Mia hand: grasps using ROS control """
@@ -66,6 +82,8 @@ class MiaHandCommander():
     self.open_cyl_ser = rospy.Service('/open_cyl',Empty,self.open_cyl_callback)
 
     self.j = Float64()
+
+    self.switch_to_open()                                        
 
   def set_thu_pos(self,pos):
     self.j.data = pos
@@ -151,11 +169,11 @@ class atkRobot(ABC):
     forward a command to the handover_wrist_node (using its ros services)
   """
   arm = moveit_commander.MoveGroupCommander("manipulator")            # arm commander
-  hand = MiaHandCommander("mia_hand")                                 # temp hand commander (since move_group doesn't work properly for mia hand)
+  hand = MiaHandMoveitCommander()                                     # hand commander (useful now only for simulated hw)
+  # hand = MiaHandCommander("mia_hand")                                 # temp hand commander for real hw (since move_group doesn't work properly for mia hand)
 
   def goHome(self):
     self.arm.go(joint_home, wait=True)                                # get arm in home position
-    self.hand.switch_to_open()                                        # prepare mia hand to open grasp
     self.hand.open_cyl()                                              # get mia hand in home position
     self.arm.stop()                                                   # calling stop() ensures that there is no residual movement
 
@@ -177,23 +195,29 @@ class GoToHome(smach.State,atkRobot):
   def execute(self, userdata):
     self.wristCommand("wrist_command/subscribe")                      # subscribe the handover_wrist_node
     self.wristCommand("wrist_command/start_loop")                     # start loop
-    sleep(1)
-    self.wristCommand("wrist_command/set_zero")                       # set zero of torque/sensor for static trigger                      
-    self.wristCommand("wrist_mode/trigger_static")                    # use static trigger as go command    
-    self.trigger = False
-    start_time =  rospy.Time.now()             
-    while self.trigger == False:   
-      if (rospy.Time.now() - start_time).to_sec() > 200:                                        # add a timeout (pause smach)
-        rospy.loginfo("State GO_TO_HOME paused -> PRESS ENTER TO RESUME ('e' TO EXIT)")
-        c = input()
-        if c == "e":
-          return 'end'
-        else:
-          start_time =  rospy.Time.now()
-      pass
-    self.hand.close_cyl()
-    self.wristCommand("wrist_mode/publish")
-    self.hand.open_cyl()
+
+    rospy.loginfo("Executing state GO_TO_HOME -> PRESS ENTER TO CONTINUE ('e' TO EXIT)")
+    c = input()
+    if c == "e":
+      return 'end'
+    """ Uncomment this block (comment input above) for stat loop by touching the robotic hand """
+    # sleep(1)
+    # self.wristCommand("wrist_command/set_zero")                       # set zero of torque/sensor for static trigger                      
+    # self.wristCommand("wrist_mode/trigger_static")                    # use static trigger as go command    
+    # self.trigger = False
+    # start_time =  rospy.Time.now()             
+    # while self.trigger == False:   
+    #   if (rospy.Time.now() - start_time).to_sec() > 200:                                        # add a timeout (pause smach)
+    #     rospy.loginfo("State GO_TO_HOME paused -> PRESS ENTER TO RESUME ('e' TO EXIT)")
+    #     c = input()
+    #     if c == "e":
+    #       return 'end'
+    #     else:
+    #       start_time =  rospy.Time.now()
+    #   pass
+    # self.hand.close_cyl()
+    # self.wristCommand("wrist_mode/publish")
+
     self.goHome()                                                     # ensure robot arm and hand strating at home position
     rospy.loginfo('Executing state GO_TO_HOME')
     return 'at_home'
@@ -202,7 +226,7 @@ class CheckCalib(smach.State,atkRobot):
   """ From the home position, a check on calibration status is required """
   def __init__(self):
     super().__init__(outcomes=['calib','uncalib'])
-    self.calib = False
+    self.calib = True                                                  # set to true to ensure calibration at startup
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
@@ -306,7 +330,7 @@ class StartToReach(smach.State,atkRobot):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state START_TO_REACH')
-    self.arm.go(joint_reach,wait=False)                           # start reaching
+    self.arm.go(joint_reach,wait=False)                          # start reaching 
     sleep(1)                                                     # wait a bit to be confident on estimate error
     self.wristCommand("wrist_mode/trigger_dynamics")             # enable trigger for dynamic handover
     return 'ready_to_handover'
