@@ -2,26 +2,57 @@ joint_state_controller:
   type: joint_state_controller/JointStateController
   publish_rate: 50  
 
+j_index_fle: &index_vel_pid
+  p: &p_tvi_gain 4.2
+  i: &i_tvi_gain 1
+  d: &d_tvi_gain 0.24
+  antiwindup: &a_tvi_value true
+  i_clamp_max: &i_tvi_clamp_max_value 0.5
+  i_clamp_min: &i_tvi_clamp_min_value -3
+
+j_mrl_fle: &mrl_vel_pid
+  p: &p_tvm_gain 4.0
+  i: &i_tvm_gain 1.05
+  d: &d_tvm_gain 0.2
+  antiwindup: &a_tvm_value true
+  i_clamp_max: &i_tvm_clamp_max_value 0.5
+  i_clamp_min: &i_tvm_clamp_min_value -3
+  
+j_thumb_fle: &thumb_vel_pid
+  p: &p_tvt_gain 4.2
+  i: &i_tvt_gain 3
+  d: &d_tvt_gain 0.2
+  antiwindup: &a_tvt_value true
+  i_clamp_max: &i_tvt_clamp_max_value 00.5
+  i_clamp_min: &i_tvt_clamp_min_value -3
+
+constraints: &tv_constraints
+  goal_time: 4.0
+  stopped_velocity_tolerance: 1.0
+  j_index_fle:
+    goal: &goal_tp_constraint 0.5
+    trajectory: &trajectory_tp_constraint 1.0
+  j_mrl_fle:
+    goal: *goal_tp_constraint
+    trajectory: *trajectory_tp_constraint
+  j_thumb_fle:
+    goal: *goal_tp_constraint
+    trajectory: *trajectory_tp_constraint
+
 j_thumb_fle_position_controller:
   type: velocity_controllers/JointPositionController
   joint: j_thumb_fle
-  pid: &pid_pv
-    p: &p_gain 4.0
-    i: &i_gain 0.01
-    d: &d_gain 0.0
-    antiwindup: &a_value false
-    i_clamp_max: &i_max_value 10.0
-    i_clamp_min: &i_min_value 0.0
+  pid: *thumb_vel_pid
     
 j_index_fle_position_controller:
   type: velocity_controllers/JointPositionController
   joint: j_index_fle
-  pid: *pid_pv
+  pid: *index_vel_pid
   
 j_mrl_fle_position_controller:
   type: velocity_controllers/JointPositionController
   joint: j_mrl_fle
-  pid: *pid_pv
+  pid: *mrl_vel_pid
 
 j_thumb_fle_velocity_controller:
     type: velocity_controllers/JointVelocityController
@@ -41,27 +72,11 @@ mia_hand_vel_trajectory_controller:
     - j_index_fle
     - j_mrl_fle
     - j_thumb_fle
-
-  constraints: &tv_constraints
-    goal_time: 2.0
-    stopped_velocity_tolerance: 1.0
-    j_index_fle: &j_tv_constraints
-      goal: 0.5
-      trajectory: 1.0
-    j_mrl_fle: *j_tv_constraints
-    j_thumb_fle: *j_tv_constraints
-
+  constraints: *tv_constraints
   gains:
-    j_index_fle: &j_pid
-      p: *p_gain
-      i: *i_gain
-      d: *d_gain
-      antiwindup: *a_value
-      i_clamp_max: *i_max_value
-      i_clamp_min: *i_min_value
-    j_mrl_fle: *j_pid
-    j_thumb_fle: *j_pid
-      
+    j_index_fle: *index_vel_pid
+    j_mrl_fle: *mrl_vel_pid
+    j_thumb_fle: *thumb_vel_pid
   velocity_ff:
     j_index_fle: &v_tv_value 2.0
     j_mrl_fle: *v_tv_value
