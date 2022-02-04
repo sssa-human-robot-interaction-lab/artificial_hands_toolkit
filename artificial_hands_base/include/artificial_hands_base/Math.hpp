@@ -32,12 +32,25 @@ namespace atk
   /**
    * @brief Find max of vector absolute values
    * @param vec input vector
+   * @param n number of element to search 
    * @return Vector max value
    */
-  static double maxval(std::vector<double> vec, int len)
+  static double maxval(std::vector<double> vec, int n)
   {
-    double a = abs(*max_element(vec.begin(), vec.begin() + len));
-    double b = abs(*min_element(vec.begin(), vec.begin() + len));
+    double a = abs(*max_element(vec.begin(), vec.begin() + n));
+    double b = abs(*min_element(vec.begin(), vec.begin() + n));
+    return abs(std::max(a,b));
+  }
+
+  /**
+   * @brief Find max of vector absolute values
+   * @param vec input vector
+   * @return Vector max value
+   */
+  static double maxval(std::vector<double> vec)
+  {
+    double a = abs(*max_element(vec.begin(), vec.end()));
+    double b = abs(*min_element(vec.begin(), vec.end()));
     return abs(std::max(a,b));
   }
 
