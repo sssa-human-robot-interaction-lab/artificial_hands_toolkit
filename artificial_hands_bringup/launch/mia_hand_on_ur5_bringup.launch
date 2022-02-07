@@ -8,6 +8,7 @@
     <!-- Make use of UR5 bringup from ur_gazebo-->
     <include file="$(find ur_gazebo)/launch/ur5_bringup.launch" >
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_ur5.launch.xml" />
+      <!-- <arg name="controller_config_file" value="$(find ur_robot_driver)/config/ur5_controllers.yaml" /> -->
     </include>
 
     <!-- Load Mia hand controllers to parameter server -->
@@ -57,6 +58,12 @@
     </group>
 
   </group>
+
+  <!-- Load cartesian controllers to parameter server -->
+    <rosparam file="$(find artificial_hands_bringup)/config/control/cartesian_controllers.yaml" command="load"/>
+
+  <!-- Spawn stopped cartesian controller -->
+  <node name="cartesian_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped cartesian_motion_controller" />
 
   <!-- Load gui -->
   <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" />
