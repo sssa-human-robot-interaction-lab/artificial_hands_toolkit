@@ -35,6 +35,15 @@
       <origin xyz="0 0 -0.004" rpy="0 0 -${pi/2}"/> 
   </xacro:robotiq_ft300>
 
+  <!-- Move the sensor frame according to the real hw -->
+  <link name="ft_sensor_frame"/>
+
+  <joint name="ft_frame_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/> 
+    <parent link="robotiq_ft_frame_id"/>
+    <child link="ft_sensor_frame"/>
+  </joint>
+
   <!-- Enable joint feedback representing the ft_sensor-->
   <gazebo reference="measurment_joint">
     <preserveFixedJoint>true</preserveFixedJoint>
@@ -84,10 +93,10 @@
     <selfCollide>False</selfCollide>
   </gazebo>
 
-  <!-- Make connection between robotiq_ft_sensor and mia hand -->
+  <!-- Make connection between ft_sensor_frame and mia hand -->
   <joint name="mia_fix" type="fixed">
     <origin xyz="0 0 0.022" rpy="${pi/2} 0 ${pi/2}"/>
-    <parent link="robotiq_ft_frame_id"/>
+    <parent link="ft_sensor_frame"/>
     <child link="palm"/>
   </joint>  
   
