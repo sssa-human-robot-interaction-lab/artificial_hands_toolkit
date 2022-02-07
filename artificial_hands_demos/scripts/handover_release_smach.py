@@ -1,20 +1,15 @@
+#! /usr/bin/env python3
+
 from cmath import pi
-from multiprocessing.connection import wait
-from shutil import move
 from time import sleep
-from abc import ABC
 from threading import Thread
 
 import rospy
 import smach
-import moveit_commander
 import moveit_commander.conversions as cv
-from std_msgs.msg import Float64
-from rqt_controller_manager.controller_manager import *
-from std_srvs.srv import Empty
 
+import artificial_hands_py as pyatk
 from artificial_hands_msgs.msg import *
-from artificial_hands_msgs.srv import WristCommand
 
 joint_start = [1.57,-1.28,2.09,-0.8,1.57,0.0]
 """ Hardcoded arm joint angles for start position"""
@@ -43,151 +38,13 @@ calibration_joints = [[b,s,e,w1,w2,w3-pi],
                       [b,s,e,w1,w2,w3]]
 """ Hardcoded arm joint angles for fast calibration of force/torque """
 
-class MiaHandMoveitCommander(moveit_commander.MoveGroupCommander):
-  """ Simple commander for Mia hand: grasps using Moveit """
-  def __init__(self,ns=''):
-      super().__init__("hand")
 
-  def open_cyl(self):
-    self.go([.4,.4,.2],wait=True)
-    self.stop()
-    sleep(1)
-
-  def close_cyl(self):
-    self.go([.99,1.02,.46],wait=True)
-    self.stop()
-    sleep(1)
-
-class MiaHandCommander():
-  """ Simple commander for Mia hand: grasps using ROS control """
-
-  def __init__(self,ns=''):
-    ld_ser = rospy.ServiceProxy(ns+'/controller_manager/load_controller',LoadController)
-    ld_ser('j_index_fle_position_controller')
-    ld_ser('j_index_fle_velocity_controller')
-    ld_ser('j_thumb_fle_position_controller')
-    ld_ser('j_mrl_fle_position_controller')
-    ld_ser('j_mrl_fle_velocity_controller')
-
-    self.sw_ser = rospy.ServiceProxy(ns+'/controller_manager/switch_controller',SwitchController) 
-    self.sw_ser(['j_thumb_fle_position_controller','j_index_fle_velocity_controller','j_mrl_fle_velocity_controller'],['mia_hand_vel_trajectory_controller','mia_hand_pos_trajectory_controller'],1,False,5)
-    
-    self.thu_pos = rospy.Publisher(ns+'/j_thumb_fle_position_controller/command',Float64,queue_size=1000)
-    self.index_pos = rospy.Publisher(ns+'/j_index_fle_position_controller/command',Float64,queue_size=1000)
-    self.mrl_pos = rospy.Publisher(ns+'/j_mrl_fle_position_controller/command',Float64,queue_size=1000)
-
-    self.index_vel = rospy.Publisher(ns+'/j_index_fle_velocity_controller/command',Float64,queue_size=1000)
-    self.mrl_vel = rospy.Publisher(ns+'/j_mrl_fle_velocity_controller/command',Float64,queue_size=1000)
-
-    self.close_cyl_ser = rospy.Service('/close_cyl',Empty,self.close_cyl_callback)
-    self.open_cyl_ser = rospy.Service('/open_cyl',Empty,self.open_cyl_callback)
-
-    self.j = Float64()
-
-    self.switch_to_open()                                        
-
-  def set_thu_pos(self,pos):
-    self.j.data = pos
-    self.thu_pos.publish(self.j)
-  
-  def set_index_pos(self,pos):
-    self.j.data = pos
-    self.index_pos.publish(self.j)
-  
-  def set_mrl_pos(self,pos):
-    self.j.data = pos
-    self.mrl_pos.publish(self.j)
-  
-  def set_index_vel(self,vel):
-    self.j.data = vel
-    self.index_vel.publish(self.j)
-  
-  def set_mrl_vel(self,vel):
-    self.j.data = vel
-    self.mrl_vel.publish(self.j)
-  
-  def switch_to_open(self):
-    self.sw_ser(['j_index_fle_position_controller','j_mrl_fle_position_controller'],['j_index_fle_velocity_controller','j_mrl_fle_velocity_controller'],1,False,5)
-  
-  def switch_to_close(self):
-    self.sw_ser(['j_index_fle_velocity_controller','j_mrl_fle_velocity_controller'],['j_index_fle_position_controller','j_mrl_fle_position_controller'],1,False,5)
-  
-  def open_pin(self):
-    self.set_thu_pos(0.45)
-    self.set_index_pos(0.5)
-    sleep(2)
-    self.switch_to_close()
-    
-  def close_pin(self):
-    self.set_index_vel(1.0)
-    sleep(3)
-    self.set_index_vel(0.0)
-    sleep(1)
-    self.switch_to_open()
-
-  def open_cyl(self):
-    self.set_thu_pos(0.45)
-    self.set_index_pos(0.5)
-    self.set_mrl_pos(0.5)
-    sleep(2)
-    self.switch_to_close()
-    
-  def close_cyl(self):
-    self.set_index_vel(1.0)
-    self.set_mrl_vel(0.6)
-    sleep(3)
-    self.set_index_vel(0.0)
-    self.set_mrl_vel(0.0)
-    sleep(1)
-    self.switch_to_open()
-  
-  def open_cyl_callback(self,msg):
-    self.open_cyl()
-    return []
-
-  def close_cyl_callback(self,msg):
-    self.close_cyl()
-    return []
-
-class atkRobot(ABC):
-  """ Inherite of this abstract class provides a common arm and hand movegroup
-  commander, as well as to the handover_wrist_node
-
-  Attributes
-  ----------
-  arm : moveit_commander.MoveGroupCommander
-    manipulator planning group commander
-  hand : moveit_commander.MoveGroupCommander
-    hand planning group commander
-  trigger : bool
-    boolean representing release trigger from handover_wrist_node
-
-  Methods
-  -------
-  goHome()
-    move arm and hand to home positions
-  wristCommand(service_name)
-    forward a command to the handover_wrist_node (using its ros services)
-  """
-  arm = moveit_commander.MoveGroupCommander("manipulator")            # arm commander
-  hand = MiaHandMoveitCommander()                                     # hand commander (useful now only for simulated hw)
-  # hand = MiaHandCommander("mia_hand")                                 # temp hand commander for real hw (since move_group doesn't work properly for mia hand)
-
-  def goHome(self):
-    self.arm.go(joint_home, wait=True)                                # get arm in home position
-    self.hand.open_cyl()                                              # get mia hand in home position
-    self.arm.stop()                                                   # calling stop() ensures that there is no residual movement
-
-  def wristCommand(self,service_name):
-    res = rospy.ServiceProxy(service_name,WristCommand)
-    return res().success
-
-class GoToHome(smach.State,atkRobot):
+class GoToHome(smach.State,pyatk.RobotCommander):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
     self.arm.set_max_velocity_scaling_factor(.2)                                              # set maximum speed
-    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of backup trigger as start input
+    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of rostopic to check the backup trigger as start input
     self.trigger = False
 
   def detectionCallback(self,msg):
@@ -219,11 +76,13 @@ class GoToHome(smach.State,atkRobot):
     # self.hand.close_cyl()
     # self.wristCommand("wrist_mode/publish")
 
-    self.goHome()                                                     # ensure robot arm and hand strating at home position
+    self.arm.go(joint_home,wait=True)                                  # ensure robot arm and hand strating at home position
+    self.hand.open_cyl()                                               # get mia hand in home position
+    self.arm.stop()
     rospy.loginfo('Executing state GO_TO_HOME')
     return 'at_home'
 
-class CheckCalib(smach.State,atkRobot):
+class CheckCalib(smach.State,pyatk.RobotCommander):
   """ From the home position, a check on calibration status is required """
   def __init__(self):
     super().__init__(outcomes=['calib','uncalib'])
@@ -238,7 +97,7 @@ class CheckCalib(smach.State,atkRobot):
     else:
       return 'calib'
 
-class DoCalib(smach.State,atkRobot):
+class DoCalib(smach.State,pyatk.RobotCommander):
   """ Do calibration as needed """
   def __init__(self):
     super().__init__(outcomes=['calib_done'])
@@ -258,74 +117,62 @@ class DoCalib(smach.State,atkRobot):
     sleep(.7)                                                          # average calibration points over .8 seconds
     self.wristCommand("wrist_mode/publish")                            # end of calibration point (stop record)   
 
-class GoToGraspPos(smach.State,atkRobot):
+class GoToGraspPos(smach.State,pyatk.RobotCommander):
   """ Move to grasp position """
   def __init__(self):
     super().__init__(outcomes=['ready_to_grasp'])
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_GRASP_POS')
-    self.arm.go(joint_grasp, wait=True)                                # go to the grasp position
+    self.arm.go(joint_grasp, wait=True)                          # go to the grasp position
     self.arm.stop()
     return 'ready_to_grasp'
 
-class WaitForGrasp(smach.State,atkRobot):
+class WaitForGrasp(smach.State,pyatk.RobotCommander):
   """ Wait user input to close hand and grasp """
   def __init__(self):
     super().__init__(outcomes=['grasp','home'])
 
   def execute(self, userdata):
-    sleep(3)                                                           # wait a bit before trying to grasp the object
+    sleep(3)                                                    # wait a bit before trying to grasp the object
     return 'grasp'
 
-class Grasp(smach.State,atkRobot):
+class Grasp(smach.State,pyatk.RobotCommander):
   """ Do grasp action """
   def __init__(self):
     super().__init__(outcomes=['grasped'])
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GRASP')
-    self.hand.close_cyl()                                                   # close mia hand with a cylindrical grasp
+    self.hand.close_cyl()                                       # close mia hand with a cylindrical grasp
     return 'grasped'
 
-class GoToStart(smach.State,atkRobot):
+class DoObjectRecognition(smach.State,pyatk.RobotCommander):
+  """ Go to start position for lifting and recognizing the object """
   def __init__(self):
-    super().__init__(outcomes=['at_start','home'])
+    super().__init__(outcomes=['recog_done','home'])
+    self.arm.set_estimate_lift(0.1,0.1,0.4)                     # allow motion of 0.1 m in x-y, lift by 0.4 m
 
   def execute(self, userdata):
-    self.arm.go(joint_start ,wait=True)                                     # move arm to a start point for lifting
-    self.wristCommand("wrist_mode/save_dynamics")                           # set mode to record dynamics    
-    lift_poses = []
-    pos = cv.pose_to_list(self.arm.get_current_pose().pose)[0:3]            # get current position
-    rot = self.arm.get_current_rpy()                                        # get current orientation
-    pose = pos + rot                                        
-    for k in range(1,10):           
-      pose[0] += 0.005                                                      # little displacement along world x
-      pose[1] += 0.005                                                      # little displacement along world y
-      pose[2] += 0.03                                                       # consistent lifting along world z
-      pose[3] += 0.05                                                       # little change in all orientations
-      pose[4] += 0.05                                                 
-      pose[5] += 0.05                                                 
-      lift_poses.append(cv.list_to_pose(pose))
-    (plan, fraction) = self.arm.compute_cartesian_path(lift_poses,0.01,0.0) # compute cartesian path
-    self.arm.execute(plan, wait=True)                                       # execute
-    return 'at_start'
+    self.arm.go(joint_start ,wait=True)                         # move arm to a start configuration
+    self.wristCommand("wrist_mode/save_dynamics")               # start to record dynamics
+    self.arm.do_estimate_lift(3)                                # lift the object in 3s
+    self.wristCommand("wrist_command/stop_loop")                # stop node loop
+    self.wristCommand("wrist_command/build_model")              # estimate inertial model
+    return 'recog_done'
 
-class PrepareToReach(smach.State,atkRobot):
+class PrepareToReach(smach.State,pyatk.RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['ready_to_reach'])
 
   def execute(self, userdata):
     rospy.loginfo('Executing state PREPARE_TO_REACH')
-    self.wristCommand("wrist_command/stop_loop")                # stop node loop
-    self.wristCommand("wrist_command/build_model")              # estimate inertial model
-    self.wristCommand("wrist_mode/estimate_wrench")             # set mode to estimate forces
     self.wristCommand("wrist_command/subscribe")                # subscribe to js and ft topics
     self.wristCommand("wrist_command/start_loop")               # start node loop
-    self.wristCommand("wrist_mode/save_interaction")            # save estimate error
+    self.wristCommand("wrist_mode/save_interaction")            # save estimate error on interaction forces
     return 'ready_to_reach'
 
-class StartToReach(smach.State,atkRobot):
+class StartToReach(smach.State,pyatk.RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['ready_to_handover','end'])
 
@@ -336,10 +183,10 @@ class StartToReach(smach.State,atkRobot):
     self.wristCommand("wrist_mode/trigger_dynamics")             # enable trigger for dynamic handover
     return 'ready_to_handover'
 
-class ReachToHandover(smach.State,atkRobot):
+class ReachToHandover(smach.State,pyatk.RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['released'])
-    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)  # using a ros subscriber to check trigger
+    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback) # make use of a ros subscriber to check trigger
     self.trigger = False 
 
   def execute(self, userdata):
@@ -371,8 +218,8 @@ def main():
     smach.StateMachine.add('DO_CALIB', DoCalib(), transitions={'calib_done':'GO_TO_GRASP_POS'})
     smach.StateMachine.add('GO_TO_GRASP_POS', GoToGraspPos(), transitions={'ready_to_grasp':'WAIT_FOR_GRASP'})
     smach.StateMachine.add('WAIT_FOR_GRASP', WaitForGrasp(), transitions={'grasp':'GRASP','home':'GO_TO_HOME'})
-    smach.StateMachine.add('GRASP', Grasp(), transitions={'grasped':'GO_TO_START'})
-    smach.StateMachine.add('GO_TO_START', GoToStart(), transitions={'at_start':'PREPARE_TO_REACH','home':'GO_TO_HOME'})
+    smach.StateMachine.add('GRASP', Grasp(), transitions={'grasped':'DO_OBJECT_RECOGNITION'})
+    smach.StateMachine.add('DO_OBJECT_RECOGNITION', DoObjectRecognition(), transitions={'recog_done':'PREPARE_TO_REACH','home':'GO_TO_HOME'})
     smach.StateMachine.add('PREPARE_TO_REACH', PrepareToReach(), transitions={'ready_to_reach':'START_TO_REACH'})
     smach.StateMachine.add('START_TO_REACH', StartToReach(), transitions={'ready_to_handover':'REACH_TO_HANDOVER'})
     smach.StateMachine.add('REACH_TO_HANDOVER', ReachToHandover(), transitions={'released':'GO_TO_HOME'})
