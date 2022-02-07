@@ -5,7 +5,7 @@
   <arg name="debug" default="false" />
 
   <!-- Remap Mia hand hw controllers -->
-  <remap unless="$(arg sim)" from="/mia_hw/mia_hand_hw_pos_trajectory_controller" to="/mia_hand_pos_trajectory_controller" />
+  <remap unless="$(arg sim)" from="/mia_hand/mia_hand_vel_trajectory_controller" to="/mia_hand_vel_trajectory_controller" />
 
   <!-- Launch moveit -->
   <include file="$(find mia_hand_on_ur5_moveit_config)/launch/move_group.launch">

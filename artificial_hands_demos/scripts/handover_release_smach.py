@@ -44,6 +44,7 @@ calibration_joints = [[b,s,e,w1,w2,w3-pi],
 """ Hardcoded arm joint angles for fast calibration of force/torque """
 
 class MiaHandMoveitCommander(moveit_commander.MoveGroupCommander):
+  """ Simple commander for Mia hand: grasps using Moveit """
   def __init__(self,ns=''):
       super().__init__("hand")
 
@@ -179,14 +180,14 @@ class atkRobot(ABC):
 
   def wristCommand(self,service_name):
     res = rospy.ServiceProxy(service_name,WristCommand)
-    return res().code
+    return res().success
 
 class GoToHome(smach.State,atkRobot):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
     self.arm.set_max_velocity_scaling_factor(.2)                                              # set maximum speed
-    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of backup trigger as start
+    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of backup trigger as start input
     self.trigger = False
 
   def detectionCallback(self,msg):
@@ -200,7 +201,7 @@ class GoToHome(smach.State,atkRobot):
     c = input()
     if c == "e":
       return 'end'
-    """ Uncomment this block (comment input above) for stat loop by touching the robotic hand """
+    """ Uncomment this block (comment input above) to start loop by touching the robotic hand """
     # sleep(1)
     # self.wristCommand("wrist_command/set_zero")                       # set zero of torque/sensor for static trigger                      
     # self.wristCommand("wrist_mode/trigger_static")                    # use static trigger as go command    
@@ -230,7 +231,7 @@ class CheckCalib(smach.State,atkRobot):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
-    #if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 1 if eef mass estimate has changed, 0 otherwise)
+    #if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 0 if calibration needed, 1 otherwise)
     if not self.calib:
       self.calib = True                                                # do calibration only once
       return 'uncalib'
