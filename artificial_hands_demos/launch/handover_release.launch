@@ -19,9 +19,9 @@
   <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
 
   <!-- Run the handover wrist node -->
-  <node pkg="artificial_hands_demos" type="handover_wrist_node" name="handover_wrist_node" output="screen"/>
+  <!-- <node pkg="artificial_hands_demos" type="handover_wrist_node" name="handover_wrist_node" output="screen"/> -->
 
   <!-- Run the handover state machine -->
-  <node pkg="artificial_hands_demos" type="handover_release_smach.py" name="handover_release_smach" output="screen"/>
+  <!-- <node pkg="artificial_hands_demos" type="handover_release_smach.py" name="handover_release_smach" output="screen"/> -->
 
 </launch>

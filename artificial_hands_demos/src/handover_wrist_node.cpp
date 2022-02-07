@@ -30,7 +30,7 @@ namespace rosatk
         controller_(controller),
         Interaction(filter, controller_rate, target_frame)
       {
-        ROS_INFO("Starting FIR filters with length %i samples.",filter);
+        ROS_INFO("Starting FIR filters with length %i samples.",filter); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
         if(publish)wr_pub_ = advertise<artificial_hands_msgs::WristStamped>("wrist_data",1000);
@@ -79,6 +79,7 @@ namespace rosatk
       void detectionTimerCallback(const ros::WallTimerEvent& event)
       {	
         Detection::TriggerStatic();
+        ROS_INFO("%s",det_str.str().c_str());
         det_tim_.stop();
       }
 
@@ -137,12 +138,13 @@ namespace rosatk
           wr_msg_.gravity = gravity;
           wr_msg_.phi = phi_str.str();
           wr_msg_.cal = cal_str.str();
+          wr_msg_.det = det_str.str();
           wr_pub_.publish(wr_msg_);
         }
         
-        det_msg_.pretrig = Interaction::pretrig;
-        det_msg_.trigger = Interaction::trigger;
-        det_msg_.backtrig = Interaction::backtrig;
+        det_msg_.pretrig = pretrig;
+        det_msg_.trigger = trigger;
+        det_msg_.backtrig = backtrig;
         det_pub_.publish(det_msg_);
         cycle_count_ += 1.0;
         cycle_time_ += (ros::WallTime::now() - start_).toSec();
@@ -150,7 +152,7 @@ namespace rosatk
 
       bool command(int command, cmd::Response& response)
       {
-        response.code = 0;
+        response.success = 1;
         if(command < 10)
         {
           switch(command)
@@ -161,7 +163,7 @@ namespace rosatk
             ft_ = ros::topic::waitForMessage<geometry_msgs::WrenchStamped>(sensor_);
             j_sub_ = subscribe(controller_, 1000, &HandoverWristNode::jDataCallback, this);	
             js_ = ros::topic::waitForMessage<sensor_msgs::JointState>(controller_);
-            response.code = Interaction::Init(*js_,ft_->wrench);
+            response.success = Interaction::Init(*js_,ft_->wrench);
             Dynamics::SetOffset(Calibration::Get());
             Detection::SetOffset(Calibration::Get());
             break; 
@@ -201,7 +203,7 @@ namespace rosatk
             ROS_INFO("Checking force/torque sensor calibration.");
             double m = 100*(atk::magnitudeVector3(force_iir)/(Calibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",m);
-            (abs(m) > 10 ? response.code = 1 : response.code = 0); //TO DO: very simple check, more robust approach shuild be considered
+            (abs(m) > 10 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;
           }   
           ROS_INFO("Executed command.");
@@ -237,6 +239,7 @@ namespace rosatk
           }
           ROS_INFO("%s",msg.c_str());
           response.message = "Mode changed.";
+          response.success = 1;
         }
           return true;
       }

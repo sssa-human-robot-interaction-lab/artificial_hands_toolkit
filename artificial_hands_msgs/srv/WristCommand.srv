@@ -17,5 +17,5 @@ uint8 MOD_SCA = 16
 
 ---
 
-bool code
+bool success
 string message

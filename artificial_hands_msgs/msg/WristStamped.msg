@@ -11,3 +11,4 @@ geometry_msgs/Wrench wrench_th
 geometry_msgs/Vector3 gravity
 string cal
 string phi
+string det

@@ -1,13 +1,5 @@
 controller_list:
-  - name: mia_hand_pos_trajectory_controller
-    action_ns: follow_joint_trajectory
-    type: FollowJointTrajectory
-    default: False
-    joints:
-      - j_index_fle
-      - j_mrl_fle
-      - j_thumb_fle
-  - name: mia_hand_vel_trajectory_controller
+  - name: mia_hand/mia_hand_vel_trajectory_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory
     default: True

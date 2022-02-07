@@ -78,9 +78,9 @@ mia_hand_vel_trajectory_controller:
     j_mrl_fle: *mrl_vel_pid
     j_thumb_fle: *thumb_vel_pid
   velocity_ff:
-    j_index_fle: &v_tv_value 2.0
-    j_mrl_fle: *v_tv_value
-    j_thumb_fle: *v_tv_value
+        j_index_fle: 1.4
+        j_mrl_fle: 1.7
+        j_thumb_fle: 1.4
 
   stop_trajectory_duration: 1.0
 
