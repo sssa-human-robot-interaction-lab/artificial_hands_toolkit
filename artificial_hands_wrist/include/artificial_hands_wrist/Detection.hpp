@@ -25,6 +25,8 @@ namespace atk
         t_mag_std_.reserve(buf);
         t_summ_sk_.reserve(buf);
         for(int i = 0; i < 3; i++)v_[i].reserve(buf);
+        d_fi_.reserve(buf);
+        d_fi_.push_back(.0);
         Sensor::SetFilter(num_,den_,order_,chann_);
         assignVector3(&th_det_.torque,0.01); //not assigning threshold for force since is not used for trigger (torque is far more sensible)
       };
@@ -42,6 +44,9 @@ namespace atk
         addElement(&t_summ_,t_summ_.back() + t_mag_.back());
         addElement(&t_mag_std_,stddev(t_mag_));
         addElement(&t_summ_sk_,skewness(t_summ_));
+
+        addElement(&d_fi_,magnitudeVector3(force)-f_mag_);
+        f_mag_ = magnitudeVector3(force);
 
         geometry_msgs::Vector3 v = force_raw;
         assignVector3(&xy_,v.x,v.y,.0);
@@ -82,22 +87,23 @@ namespace atk
         GetZero(&zero_);
         double r = peakrto(subtractVector(t_mag_,magnitudeVector3(zero_.torque)));
         if(r < rto_ && d < dev_)trigger = true; 
-        std::cout << std::endl;
-        std::cout << "Rto: " << r << " / " << rto_ << std::endl;
-        std::cout << "Dev: " << d << " / " << dev_ << std::endl;
+        det_str.str("");
+        det_str << "Rto: " << r << "/" << rto_ << " Dev: " << d << "/" << dev_;
+        det_str << " dFImax: " << maxval(d_fi_) << " Trig: " << (int)(trigger | backtrig);
       };
 
       bool trigger = false;
       bool pretrig = false;
       bool backtrig = false;
+      std::stringstream det_str;
       
     private:
 
       int th_, order_ = 3, chann_ = 6;
-      double rto_, dev_, factor_, t_dev_th_, t_sk_th_;
+      double rto_, dev_, factor_, t_dev_th_, t_sk_th_, f_mag_;
       double num_[3] = {0.0099537574599431831, -0.019594794464524581, 0.0099537574599431831};
       double den_[3] = {1.0, -1.9749591089928671, 0.97527182944822877};
-      std::vector<double> t_mag_, t_summ_, t_mag_std_, t_summ_sk_;
+      std::vector<double> t_mag_, t_summ_, t_mag_std_, t_summ_sk_, d_fi_;
       std::vector<std::vector<double>> v_{3};
       geometry_msgs::Vector3 xy_, xz_, yz_;
       geometry_msgs::Wrench zero_, th_det_;
