@@ -135,7 +135,8 @@ include_directories(
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-add_executable(handover_wrist_node src/handover_wrist_node.cpp)
+add_executable(wrist_node src/wrist_node.cpp)
+add_executable(frame_kinematics_node src/frame_kinematics_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
@@ -145,10 +146,12 @@ add_executable(handover_wrist_node src/handover_wrist_node.cpp)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-add_dependencies(handover_wrist_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(wrist_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(frame_kinematics_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(handover_wrist_node ${catkin_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(wrist_node ${catkin_LIBRARIES} ${catkin_LIBRARIES})
+target_link_libraries(frame_kinematics_node ${catkin_LIBRARIES} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -161,6 +164,7 @@ target_link_libraries(handover_wrist_node ${catkin_LIBRARIES} ${catkin_LIBRARIES
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/handover_release_smach.py
+  scripts/fake_ft_sensor_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

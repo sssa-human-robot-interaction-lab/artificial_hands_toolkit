@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="true" />
+
+  <!-- Load real or simulated (Gazebo) hardware -->
+  <include file="$(find artificial_hands_bringup)/launch/mia_hand_on_ur5_bringup.launch" pass_all_args="true"/>
+  
+  <!-- Load moveit planning and execution interface -->
+  <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
+
+  <!-- Run the frame kinematics node -->
+  <node pkg="artificial_hands_demos" type="frame_kinematics_node" name="frame_kinematics_node" output="screen" args="--rate 100"/>
+
+</launch>
