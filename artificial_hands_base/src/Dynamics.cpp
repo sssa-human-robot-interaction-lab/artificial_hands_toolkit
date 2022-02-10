@@ -30,21 +30,21 @@ namespace atk
   void Dynamics::GetCoefficients()
   {
 
-    double wx = -velocity.angular.x;
-    double wy = -velocity.angular.y;
-    double wz = -velocity.angular.z;
+    double wx = -twist_velocity.angular.x;
+    double wy = -twist_velocity.angular.y;
+    double wz = -twist_velocity.angular.z;
 
     double wx2 = pow(wx,2);
     double wy2 = pow(wy,2);
     double wz2 = pow(wz,2);
 
-    double ax = -acceleration.linear.x;
-    double ay = -acceleration.linear.y;
-    double az = -acceleration.linear.z;
+    double ax = -twist_acceleration.linear.x;
+    double ay = -twist_acceleration.linear.y;
+    double az = -twist_acceleration.linear.z;
 
-    double ex = -acceleration.angular.x;
-    double ey = -acceleration.angular.y;
-    double ez = -acceleration.angular.z;
+    double ex = -twist_acceleration.angular.x;
+    double ey = -twist_acceleration.angular.y;
+    double ez = -twist_acceleration.angular.z;
 
     double gx = -gravity.x;
     double gy = -gravity.y;

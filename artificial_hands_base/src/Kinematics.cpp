@@ -86,8 +86,8 @@ namespace atk
     }
 
     Eigen::VectorXd vel_vec = jac.data*j_arr_vel.qdot.data;
-
-    Transform6d(vel_vec,&velocity,rotation_);
+    tf::twistEigenToMsg(vel_vec,velocity);
+    Transform6d(vel_vec,&twist_velocity,rotation_);
 
     KDL::Jacobian jac_dot(6);
     if(dot_solver_->JntToJacDot(j_arr_vel,jac_dot))
@@ -97,8 +97,8 @@ namespace atk
     }
 
     Eigen::VectorXd acc_vec = jac.data*j_arr_acc.qdotdot.data + jac_dot.data*j_arr_acc.qdot.data;
-
-    Transform6d(acc_vec,&acceleration,rotation_);
+    tf::twistEigenToMsg(acc_vec,acceleration);
+    Transform6d(acc_vec,&twist_acceleration,rotation_);
     
     return true;
 

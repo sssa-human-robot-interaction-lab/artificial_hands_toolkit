@@ -20,6 +20,8 @@ namespace atk
     geometry_msgs::Twist position;
     geometry_msgs::Twist velocity;
     geometry_msgs::Twist acceleration;
+    geometry_msgs::Twist twist_velocity;
+    geometry_msgs::Twist twist_acceleration;
   };
 
   /**
