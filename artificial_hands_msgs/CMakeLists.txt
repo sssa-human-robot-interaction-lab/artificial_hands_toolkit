@@ -50,13 +50,18 @@ find_package(catkin REQUIRED COMPONENTS
 ## Generate messages in the 'msg' folder
 add_message_files(
   FILES
+  FrameKinematics.msg
+  FrameKinematicsStamped.msg
+  Wrist.msg
   WristStamped.msg
+  Detection.msg
   DetectionStamped.msg
 )
 
 ## Generate services in the 'srv' folder
 add_service_files(
   FILES
+  FrameKinematicsCommand.srv
   WristCommand.srv
 )
 

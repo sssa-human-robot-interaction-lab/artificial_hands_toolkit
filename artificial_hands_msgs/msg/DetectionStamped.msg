@@ -1,4 +1,2 @@
 std_msgs/Header header
-bool pretrig
-bool trigger
-bool backtrig
+artificial_hands_msgs/Detection detection

@@ -1,0 +1,13 @@
+uint8 CMD_SUB = 0
+uint8 CMD_STA = 1
+uint8 CMD_STO = 2
+uint8 CMD_REA = 3
+
+uint8 MOD_PUB = 10
+
+uint8 MAC_STA = 20
+
+---
+
+bool success
+string message
