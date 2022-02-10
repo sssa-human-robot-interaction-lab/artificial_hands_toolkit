@@ -124,8 +124,8 @@ namespace rosatk
           wr_msg_.wrist.frame_kinematics.position = position; 
           wr_msg_.wrist.frame_kinematics.velocity = velocity; 
           wr_msg_.wrist.frame_kinematics.acceleration = acceleration;
-          wr_msg_.wrist.frame_kinematics.twist_velocity = velocity; 
-          wr_msg_.wrist.frame_kinematics.twist_acceleration = acceleration;
+          wr_msg_.wrist.frame_kinematics.twist_velocity = twist_velocity; 
+          wr_msg_.wrist.frame_kinematics.twist_acceleration = twist_acceleration;
           wr_msg_.wrist.wrench_fir.force = force_fir;
           wr_msg_.wrist.wrench_fir.torque = torque_fir;
           wr_msg_.wrist.wrench_iir.force = force_iir;

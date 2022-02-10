@@ -65,8 +65,8 @@ namespace rosatk
           loop_msg_.frame_kinematics.position = position; 
           loop_msg_.frame_kinematics.velocity = velocity; 
           loop_msg_.frame_kinematics.acceleration = acceleration;
-          loop_msg_.frame_kinematics.twist_velocity = velocity; 
-          loop_msg_.frame_kinematics.twist_acceleration = acceleration;
+          loop_msg_.frame_kinematics.twist_velocity = twist_velocity; 
+          loop_msg_.frame_kinematics.twist_acceleration = twist_acceleration;
           loop_pub_.publish(loop_msg_);
         }
         
