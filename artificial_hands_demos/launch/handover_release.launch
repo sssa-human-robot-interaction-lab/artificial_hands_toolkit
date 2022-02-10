@@ -2,15 +2,26 @@
 <launch>
 
   <arg name="sim" default="true" />
+  <arg name="fake_ft" default="false" />
 
-  <!-- Remap force/torque sensor -->
+  <!-- Remap simulated force/torque sensor if needed-->
   <remap if="$(arg sim)" from="/gazebo_ft_sensor" to="/ft_sensor"/>
-  <remap unless="$(arg sim)" from="/ethdaq_data" to="/ft_sensor"/>
+  
+  <!-- Load real or fake ft sensor if needed -->
+  <group unless="$(arg sim)"/>
 
-  <!-- Load real ft sensor if needed -->
-  <include unless="$(arg sim)" file="$(find artificial_hands_bringup)/launch/onrobot_ft_sensor_bringup.launch">
-    <arg name="frame_id" value="ft_sensor_frame"/>
-  </include>
+    <!-- Load fake ft sensor -->
+    <node if="$(arg fake_ft)" pkg="artificial_hands_demos" type="fake_ft_sensor_node.py" name="fake_ft_sensor_node" output="screen"/>
+    
+    <!-- Remap real ft sensor -->
+    <remap unless="$(arg fake_ft)" from="/ethdaq_data" to="/ft_sensor"/>
+
+    <!-- Load real ft sensor -->
+    <include unless="$(arg fake_ft)" file="$(find artificial_hands_bringup)/launch/onrobot_ft_sensor_bringup.launch">
+      <arg name="frame_id" value="ft_sensor_frame"/>
+    </include>
+
+  </group>
 
   <!-- Load real or simulated (Gazebo) hardware -->
   <include file="$(find artificial_hands_bringup)/launch/mia_hand_on_ur5_bringup.launch" pass_all_args="true"/>
@@ -18,10 +29,10 @@
   <!-- Load moveit planning and execution interface -->
   <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
 
-  <!-- Run the handover wrist node -->
-  <node pkg="artificial_hands_demos" type="handover_wrist_node" name="handover_wrist_node" output="screen"/>
+  <!-- Run the wrist node -->
+  <node pkg="artificial_hands_demos" type="wrist_node" name="wrist_node" output="screen" args="--rate 100"/>
 
   <!-- Run the handover state machine -->
-  <!-- <node pkg="artificial_hands_demos" type="handover_release_smach.py" name="handover_release_smach" output="screen"/> -->
+  <node pkg="artificial_hands_demos" type="handover_release_smach.py" name="handover_release_smach" output="screen"/>
 
 </launch>
