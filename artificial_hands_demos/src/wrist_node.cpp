@@ -18,42 +18,44 @@ namespace rosatk
 {
 
   using cmd = artificial_hands_msgs::WristCommand;
-  
-  class HandoverWristNode: public ros::NodeHandle, public atk::Interaction, virtual public atk::Calibration
+  //TO DO make use of frame_kinematics_node
+  class WristNode: public ros::NodeHandle, public atk::Interaction, virtual public atk::Calibration
   {
     
     public:
-      HandoverWristNode(bool publish, double factor, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame):  
+      WristNode(bool publish, double factor, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame, const char* model_frame):  
         publish_(publish),
         factor_(factor),
         sensor_(sensor),
         controller_(controller),
-        Interaction(filter, controller_rate, target_frame)
+        Interaction(filter, controller_rate, target_frame, "manipulator", "robot_description", model_frame)
       {
         ROS_INFO("Starting FIR filters with length %i samples.",filter); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
+        ROS_INFO("Using reference frame %s.",model_frame);
         if(publish)wr_pub_ = advertise<artificial_hands_msgs::WristStamped>("wrist_data",1000);
         det_pub_ = advertise<artificial_hands_msgs::DetectionStamped>("wrist_detection",1000);
-        wr_tim_ = createWallTimer(ros::WallDuration(1.0/(double)rate),&HandoverWristNode::loopTimerCallback, this, false, false);
-        det_tim_ = createWallTimer(ros::WallDuration(0.1),&HandoverWristNode::detectionTimerCallback, this, false, false);
+        wr_tim_ = createWallTimer(ros::WallDuration(1.0/(double)rate),&WristNode::loopTimerCallback, this, false, false);
+        det_tim_ = createWallTimer(ros::WallDuration(0.1),&WristNode::detectionTimerCallback, this, false, false);
+        wr_msg_.header.frame_id = target_frame;
         ROS_INFO("Starting node services.");
-        cmd_0_ = advertiseService("wrist_command/subscribe", &HandoverWristNode::subscribeCommand, this);
-        cmd_1_ = advertiseService("wrist_command/start_loop", &HandoverWristNode::startLoopCommand, this);
-        cmd_2_ = advertiseService("wrist_command/build_model", &HandoverWristNode::buildModelCommand, this);
-        cmd_3_ = advertiseService("wrist_command/stop_loop", &HandoverWristNode::stopLoopCommand, this);
-        cmd_4_ = advertiseService("wrist_command/read_loop_time", &HandoverWristNode::readLoopTimeCommand, this);
-        cmd_5_ = advertiseService("wrist_command/set_zero", &HandoverWristNode::setZeroCommand, this);  
-        cmd_6_ = advertiseService("wrist_command/set_calibration", &HandoverWristNode::calibrateCommand, this); 
-        cmd_7_ = advertiseService("wrist_command/check_calibration", &HandoverWristNode::checkCalibrationCommand, this);   
+        cmd_0_ = advertiseService("wrist_command/subscribe", &WristNode::subscribeCommand, this);
+        cmd_1_ = advertiseService("wrist_command/start_loop", &WristNode::startLoopCommand, this);
+        cmd_2_ = advertiseService("wrist_command/build_model", &WristNode::buildModelCommand, this);
+        cmd_3_ = advertiseService("wrist_command/stop_loop", &WristNode::stopLoopCommand, this);
+        cmd_4_ = advertiseService("wrist_command/read_loop_time", &WristNode::readLoopTimeCommand, this);
+        cmd_5_ = advertiseService("wrist_command/set_zero", &WristNode::setZeroCommand, this);  
+        cmd_6_ = advertiseService("wrist_command/set_calibration", &WristNode::calibrateCommand, this); 
+        cmd_7_ = advertiseService("wrist_command/check_calibration", &WristNode::checkCalibrationCommand, this);   
         
-        mod_10_ = advertiseService("wrist_mode/publish", &HandoverWristNode::publishDynamicsMode, this);
-        mod_11_ = advertiseService("wrist_mode/trigger_static", &HandoverWristNode::triggerStaticMode, this);
-        mod_12_ = advertiseService("wrist_mode/estimate_wrench", &HandoverWristNode::estimateWrenchMode, this);
-        mod_13_ = advertiseService("wrist_mode/save_dynamics", &HandoverWristNode::saveDynamicsMode, this);
-        mod_14_ = advertiseService("wrist_mode/save_interaction", &HandoverWristNode::saveInteractionMode, this);
-        mod_15_ = advertiseService("wrist_mode/trigger_dynamics", &HandoverWristNode::triggerDynamicsMode, this);
-        mod_16_ = advertiseService("wrist_mode/save_calibration", &HandoverWristNode::saveCalibrationMode, this);
+        mod_10_ = advertiseService("wrist_mode/publish", &WristNode::publisherMode, this);
+        mod_11_ = advertiseService("wrist_mode/trigger_static", &WristNode::triggerStaticMode, this);
+        mod_12_ = advertiseService("wrist_mode/estimate_wrench", &WristNode::estimateWrenchMode, this);
+        mod_13_ = advertiseService("wrist_mode/save_dynamics", &WristNode::saveDynamicsMode, this);
+        mod_14_ = advertiseService("wrist_mode/save_interaction", &WristNode::saveInteractionMode, this);
+        mod_15_ = advertiseService("wrist_mode/trigger_dynamics", &WristNode::triggerDynamicsMode, this);
+        mod_16_ = advertiseService("wrist_mode/save_calibration", &WristNode::saveCalibrationMode, this);
         ROS_INFO("Node ready to take command.");
       }
 
@@ -68,7 +70,7 @@ namespace rosatk
       bool calibrateCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_CAL,response);}
       bool checkCalibrationCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_CHK,response);}
 
-      bool publishDynamicsMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_PUB,response);}
+      bool publisherMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_PUB,response);}
       bool triggerStaticMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_TST,response);} 
       bool estimateWrenchMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_EST,response);}
       bool saveDynamicsMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_SDY,response);}
@@ -86,8 +88,6 @@ namespace rosatk
       void loopTimerCallback(const ros::WallTimerEvent& event)
       {
         start_ = ros::WallTime::now();
-        det_msg_.header.seq = (int)cycle_count_;
-        det_msg_.header.stamp.fromNSec(start_.toNSec());
 
         Interaction::Get();
         switch(mode_)
@@ -121,30 +121,33 @@ namespace rosatk
         {
           wr_msg_.header.seq = (int)cycle_count_;
           wr_msg_.header.stamp.fromNSec(start_.toNSec());
-          wr_msg_.position = position; 
-          wr_msg_.velocity = velocity; 
-          wr_msg_.acceleration = acceleration;
-          wr_msg_.wrench_fir.force = force_fir;
-          wr_msg_.wrench_fir.torque = torque_fir;
-          wr_msg_.wrench_iir.force = force_iir;
-          wr_msg_.wrench_iir.torque = torque_iir;
-          wr_msg_.wrench_raw.force = force_raw;
-          wr_msg_.wrench_raw.torque = torque_raw;
-          wr_msg_.wrench_hat.force = force_hat;
-          wr_msg_.wrench_hat.torque = torque_hat;
-          wr_msg_.wrench_e.force = force_e;
-          wr_msg_.wrench_e.torque = torque_e;
-          wr_msg_.wrench_th = th_dyn_; // only for debug
-          wr_msg_.gravity = gravity;
-          wr_msg_.phi = phi_str.str();
-          wr_msg_.cal = cal_str.str();
-          wr_msg_.det = det_str.str();
+          wr_msg_.wrist.frame_kinematics.position = position; 
+          wr_msg_.wrist.frame_kinematics.velocity = velocity; 
+          wr_msg_.wrist.frame_kinematics.acceleration = acceleration;
+          wr_msg_.wrist.frame_kinematics.twist_velocity = velocity; 
+          wr_msg_.wrist.frame_kinematics.twist_acceleration = acceleration;
+          wr_msg_.wrist.wrench_fir.force = force_fir;
+          wr_msg_.wrist.wrench_fir.torque = torque_fir;
+          wr_msg_.wrist.wrench_iir.force = force_iir;
+          wr_msg_.wrist.wrench_iir.torque = torque_iir;
+          wr_msg_.wrist.wrench_raw.force = force_raw;
+          wr_msg_.wrist.wrench_raw.torque = torque_raw;
+          wr_msg_.wrist.wrench_hat.force = force_hat;
+          wr_msg_.wrist.wrench_hat.torque = torque_hat;
+          wr_msg_.wrist.wrench_e.force = force_e;
+          wr_msg_.wrist.wrench_e.torque = torque_e;
+          wr_msg_.wrist.wrench_th = th_dyn_; // only for debug
+          wr_msg_.wrist.gravity = gravity;
+          wr_msg_.wrist.phi = phi_str.str();
+          wr_msg_.wrist.cal = cal_str.str();
+          wr_msg_.wrist.det = det_str.str();
           wr_pub_.publish(wr_msg_);
         }
         
-        det_msg_.pretrig = pretrig;
-        det_msg_.trigger = trigger;
-        det_msg_.backtrig = backtrig;
+        det_msg_.header = wr_msg_.header;
+        det_msg_.detection.pretrig = pretrig;
+        det_msg_.detection.trigger = trigger;
+        det_msg_.detection.backtrig = backtrig;
         det_pub_.publish(det_msg_);
         cycle_count_ += 1.0;
         cycle_time_ += (ros::WallTime::now() - start_).toSec();
@@ -159,9 +162,9 @@ namespace rosatk
           {
           case 0:
             ROS_INFO("Subscribing to sensor and joint state topic (%s,%s).",sensor_,controller_);
-            ft_sub_ = subscribe(sensor_, 1000, &HandoverWristNode::ftDataCallback, this);
+            ft_sub_ = subscribe(sensor_, 1000, &WristNode::ftDataCallback, this);
             ft_ = ros::topic::waitForMessage<geometry_msgs::WrenchStamped>(sensor_);
-            j_sub_ = subscribe(controller_, 1000, &HandoverWristNode::jDataCallback, this);	
+            j_sub_ = subscribe(controller_, 1000, &WristNode::jDataCallback, this);	
             js_ = ros::topic::waitForMessage<sensor_msgs::JointState>(controller_);
             response.success = Interaction::Init(*js_,ft_->wrench);
             Dynamics::SetOffset(Calibration::Get());
@@ -269,7 +272,7 @@ namespace rosatk
 
 int main(int argc, char** argv)
 {
-  ros::init(argc, argv, "handover_wrist_node");
+  ros::init(argc, argv, "wrist_node");
   
   bool publish;
   double factor;
@@ -279,11 +282,12 @@ int main(int argc, char** argv)
   std::string controller;
   std::string controller_rate;
   std::string target_frame;
+  std::string model_frame;
 
   po::options_description desc("Options");
   desc.add_options()
     ("help", "display help")
-    ("publish", po::value<bool>(&publish)->default_value(1), "set true for complete publishing of wrist state")
+    ("publish", po::value<bool>(&publish)->default_value(1), "set true to advertise a WristStamped publisher")
     ("factor", po::value<double>(&factor)->default_value(2.0), "robustness of interaction trigger for dynamic handover (g.t. 1)")
     ("filter", po::value<int>(&filter)->default_value(20), "length of moving average filters (in samples)")
     ("rate", po::value<int>(&rate)->default_value(100), "rosnode internal rate (in Hertz)")
@@ -291,6 +295,7 @@ int main(int argc, char** argv)
     ("controller", po::value<std::string>(&controller)->default_value("/joint_states"), "name of the rostopic published by joint_state_controller") 
     ("controller_rate", po::value<std::string>(&controller_rate)->default_value("/joint_state_controller/publish_rate"), "rosparam name of the publish rate in joint_state_controller") 
     ("target_frame", po::value<std::string>(&target_frame)->default_value("ft_sensor_frame"), "wrist F/T sensor frame id") 
+    ("model_frame", po::value<std::string>(&model_frame)->default_value("world"), "fixed reference frame of the robot model") 
     ;
   po::positional_options_description p;
   p.add("filter",  1);
@@ -307,7 +312,7 @@ int main(int argc, char** argv)
   int joint_rate;
   ros::param::get(controller_rate,joint_rate);
   if(joint_rate < rate){rate = joint_rate; ROS_WARN("Required node rate was g.t. joint_state_controller publish rate, node rate lowered to %i Hz",rate);}
-  rosatk::HandoverWristNode hr_per_node = rosatk::HandoverWristNode(publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str());
+  rosatk::WristNode hr_per_node = rosatk::WristNode(publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str(),model_frame.c_str());
   ros::spin();
 
   return true;
