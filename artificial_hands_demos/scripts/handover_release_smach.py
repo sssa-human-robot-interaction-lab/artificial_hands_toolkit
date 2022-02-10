@@ -11,7 +11,7 @@ import moveit_commander.conversions as cv
 import artificial_hands_py as pyatk
 from artificial_hands_msgs.msg import *
 
-joint_start = [1.57,-1.28,2.09,-0.8,1.57,0.0]
+joint_start = [pi/4,-1.28,2.09,-0.8,pi/2,.0]
 """ Hardcoded arm joint angles for start position"""
 
 joint_grasp = joint_start #[-pi/4,-pi/2,pi/2,.0,pi/2,.0]
@@ -47,35 +47,35 @@ class GoToHome(smach.State,pyatk.RobotCommander):
     self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of rostopic to check the backup trigger as start input
     self.trigger = False
 
+  def waitForDetection(self):
+    sleep(1)
+    self.wristCommand("wrist_command/set_zero")                       # set zero of torque/sensor for static trigger                      
+    self.wristCommand("wrist_mode/trigger_static")                    # make use of static trigger as go command    
+    self.trigger = False
+    start_time =  rospy.Time.now()             
+    while self.trigger == False:   
+      if (rospy.Time.now() - start_time).to_sec() > 200:              # add a timeout (pause smach)
+        rospy.loginfo("State GO_TO_HOME paused -> PRESS ENTER TO RESUME ('e' TO EXIT)")
+        c = input()
+        if c == "e":
+          return 'end'
+        else:
+          start_time =  rospy.Time.now()
+      pass
+    self.hand.close_cyl()
+    self.wristCommand("wrist_mode/publish")
+
   def detectionCallback(self,msg):
-    self.trigger = msg.backtrig
+    self.trigger = msg.detection.backtrig
 
   def execute(self, userdata):
     self.wristCommand("wrist_command/subscribe")                      # subscribe the handover_wrist_node
     self.wristCommand("wrist_command/start_loop")                     # start loop
-
     rospy.loginfo("Executing state GO_TO_HOME -> PRESS ENTER TO CONTINUE ('e' TO EXIT)")
     c = input()
     if c == "e":
       return 'end'
-    """ Uncomment this block (comment input above) to start loop by touching the robotic hand """
-    # sleep(1)
-    # self.wristCommand("wrist_command/set_zero")                       # set zero of torque/sensor for static trigger                      
-    # self.wristCommand("wrist_mode/trigger_static")                    # use static trigger as go command    
-    # self.trigger = False
-    # start_time =  rospy.Time.now()             
-    # while self.trigger == False:   
-    #   if (rospy.Time.now() - start_time).to_sec() > 200:                                        # add a timeout (pause smach)
-    #     rospy.loginfo("State GO_TO_HOME paused -> PRESS ENTER TO RESUME ('e' TO EXIT)")
-    #     c = input()
-    #     if c == "e":
-    #       return 'end'
-    #     else:
-    #       start_time =  rospy.Time.now()
-    #   pass
-    # self.hand.close_cyl()
-    # self.wristCommand("wrist_mode/publish")
-
+    #self.waitForDetection()                                           # Uncomment this function (comment input) to start loop by touching the robotic hand
     self.arm.go(joint_home,wait=True)                                  # ensure robot arm and hand strating at home position
     self.hand.open_cyl()                                               # get mia hand in home position
     self.arm.stop()
@@ -102,13 +102,6 @@ class DoCalib(smach.State,pyatk.RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['calib_done'])
 
-  def execute(self, userdata):
-    rospy.loginfo('Executing state DO_CALIB')                                          
-    for joint_target in calibration_joints:
-      self.addCalibrationPoint(joint_target)
-    self.wristCommand("wrist_command/set_calibration")                 # estimate offset and calibrate the force/torque sensor
-    return 'calib_done'
-
   def addCalibrationPoint(self,joint_target):
     self.arm.go(joint_target, wait=True)                               # move the arm
     self.arm.stop()                                                    # prevent residual motion
@@ -116,6 +109,13 @@ class DoCalib(smach.State,pyatk.RobotCommander):
     self.wristCommand("wrist_mode/save_calibration")                   # set mode to record for force/torque sensor calibration
     sleep(.7)                                                          # average calibration points over .8 seconds
     self.wristCommand("wrist_mode/publish")                            # end of calibration point (stop record)   
+
+  def execute(self, userdata):
+    rospy.loginfo('Executing state DO_CALIB')                                          
+    for joint_target in calibration_joints:
+      self.addCalibrationPoint(joint_target)
+    self.wristCommand("wrist_command/set_calibration")                 # estimate offset and calibrate the force/torque sensor
+    return 'calib_done'
 
 class GoToGraspPos(smach.State,pyatk.RobotCommander):
   """ Move to grasp position """
@@ -151,7 +151,7 @@ class DoObjectRecognition(smach.State,pyatk.RobotCommander):
   """ Go to start position for lifting and recognizing the object """
   def __init__(self):
     super().__init__(outcomes=['recog_done','home'])
-    self.arm.set_estimate_lift(0.1,0.1,0.4)                     # allow motion of 0.1 m in x-y, lift by 0.4 m
+    self.arm.set_estimate_lift(.1,.1,.4,.2,.2,.2)               # allow displacement of .1 m in x-y, lift by .4 m, rotation of .2 rad on x-y-z
 
   def execute(self, userdata):
     self.arm.go(joint_start ,wait=True)                         # move arm to a start configuration
@@ -189,6 +189,9 @@ class ReachToHandover(smach.State,pyatk.RobotCommander):
     self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback) # make use of a ros subscriber to check trigger
     self.trigger = False 
 
+  def detectionCallback(self,msg):
+    self.trigger = msg.detection.backtrig
+
   def execute(self, userdata):
     self.trigger = False                                                                   # reset the trigger
     rospy.loginfo('Executing state REACH_TO_HANDOVER') 
@@ -202,10 +205,7 @@ class ReachToHandover(smach.State,pyatk.RobotCommander):
     self.wristCommand("wrist_command/stop_loop")                                           # stop node loop
     sleep(2)
     return 'released'
-  
-  def detectionCallback(self,msg):
-    self.trigger = msg.trigger
-        
+     
 def main():
 
   rospy.init_node("handover_release_smach",)
