@@ -203,7 +203,8 @@ namespace rosatk
             Detection::SetOffset(Calibration::Get());
             break;
           case 7:
-            ROS_INFO("Checking force/torque sensor calibration.");
+            ROS_INFO("Checking force/torque sensor calibration (unsetting zero).");
+            Detection::SetZero(false);
             double m = 100*(atk::magnitudeVector3(force_iir)/(Calibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",m);
             (abs(m) > 10 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered

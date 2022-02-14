@@ -40,7 +40,7 @@
       <!-- Start the Mia hand control node -->
       <param name="/Mia_COM_" type="int" value="0"/>
       <param name="/Mia_fs_" type="int" value="20"/>
-      <!-- <node name="mia_hand_robot_driver" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" />  -->
+      <node name="mia_hand_robot_driver" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" /> 
 
       <!-- Load Mia hand controllers to parameter server -->
       <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>

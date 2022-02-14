@@ -8,7 +8,7 @@
   <remap if="$(arg sim)" from="/gazebo_ft_sensor" to="/ft_sensor"/>
   
   <!-- Load real or fake ft sensor if needed -->
-  <group unless="$(arg sim)"/>
+  <group unless="$(arg sim)">
 
     <!-- Load fake ft sensor -->
     <node if="$(arg fake_ft)" pkg="artificial_hands_demos" type="fake_ft_sensor_node.py" name="fake_ft_sensor_node" output="screen"/>
@@ -29,10 +29,13 @@
   <!-- Load moveit planning and execution interface -->
   <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
 
+  <!-- rviz -->
+  <node pkg="rviz" type="rviz" name="rviz_demo_config" output="screen" args="-d $(find artificial_hands_demos)/cfg/demo_config.rviz"/>
+
   <!-- Run the wrist node -->
   <node pkg="artificial_hands_demos" type="wrist_node" name="wrist_node" output="screen" args="--rate 100"/>
 
   <!-- Run the handover state machine -->
-  <node pkg="artificial_hands_demos" type="handover_release_smach.py" name="handover_release_smach" output="screen"/>
+  <!-- <node pkg="artificial_hands_demos" type="handover_release_smach.py" name="handover_release_smach" output="screen"/> -->
 
 </launch>

@@ -11,16 +11,16 @@ import moveit_commander.conversions as cv
 import artificial_hands_py as pyatk
 from artificial_hands_msgs.msg import *
 
-joint_start = [pi/4,-1.28,2.09,-0.8,pi/2,.0]
+joint_start = [pi/2,-1.28,2.09,-0.8,pi/2,.0]
 """ Hardcoded arm joint angles for start position"""
 
-joint_grasp = joint_start #[-pi/4,-pi/2,pi/2,.0,pi/2,.0]
+joint_grasp = joint_start
 """ Hardcoded arm joint angles for home position"""
 
-joint_reach = [pi,-pi/2,pi/2,.0,pi/2,.0]
+joint_reach = [.0,-pi/2,pi/2,.0,pi/2,.0]
 """ Hardcoded arm joint angles for reach position"""
 
-joint_home = joint_reach #[pi/2,-pi/2,pi/2,.0,pi/2,.0]
+joint_home = joint_reach
 """ Hardcoded arm joint angles for home position"""
 
 b = joint_home[0]
@@ -43,9 +43,15 @@ class GoToHome(smach.State,pyatk.RobotCommander):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
-    self.arm.set_max_velocity_scaling_factor(.2)                                              # set maximum speed
+    self.arm.set_max_velocity_scaling_factor(.1)                                              # set maximum speed
     self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of rostopic to check the backup trigger as start input
     self.trigger = False
+  
+  def waitForEnter(self):
+    rospy.loginfo("Executing state GO_TO_HOME -> PRESS ENTER TO CONTINUE ('e' TO EXIT)")
+    c = input()
+    if c == "e":
+      return 'end'
 
   def waitForDetection(self):
     sleep(1)
@@ -69,13 +75,10 @@ class GoToHome(smach.State,pyatk.RobotCommander):
     self.trigger = msg.detection.backtrig
 
   def execute(self, userdata):
-    self.wristCommand("wrist_command/subscribe")                      # subscribe the handover_wrist_node
-    self.wristCommand("wrist_command/start_loop")                     # start loop
-    rospy.loginfo("Executing state GO_TO_HOME -> PRESS ENTER TO CONTINUE ('e' TO EXIT)")
-    c = input()
-    if c == "e":
-      return 'end'
-    #self.waitForDetection()                                           # Uncomment this function (comment input) to start loop by touching the robotic hand
+    self.wristCommand("wrist_command/subscribe")                       # subscribe the handover_wrist_node
+    self.wristCommand("wrist_command/start_loop")                      # start loop
+    # self.waitForEnter()
+    self.waitForDetection()                                            # use this function (comment waitForEnter) to start loop by touching the robotic hand
     self.arm.go(joint_home,wait=True)                                  # ensure robot arm and hand strating at home position
     self.hand.open_cyl()                                               # get mia hand in home position
     self.arm.stop()
@@ -86,16 +89,16 @@ class CheckCalib(smach.State,pyatk.RobotCommander):
   """ From the home position, a check on calibration status is required """
   def __init__(self):
     super().__init__(outcomes=['calib','uncalib'])
-    self.calib = True                                                  # set to true to ensure calibration at startup
+    self.calib = False                                                  # set to true to ensure calibration at startup
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
-    #if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 0 if calibration needed, 1 otherwise)
+    # if self.wristCommand("wrist_command/check_calibration"):          # check calibration status (i.e. return 0 if calibration needed, 1 otherwise)
     if not self.calib:
       self.calib = True                                                # do calibration only once
-      return 'uncalib'
-    else:
       return 'calib'
+    else:
+      return 'uncalib'
 
 class DoCalib(smach.State,pyatk.RobotCommander):
   """ Do calibration as needed """
@@ -151,12 +154,12 @@ class DoObjectRecognition(smach.State,pyatk.RobotCommander):
   """ Go to start position for lifting and recognizing the object """
   def __init__(self):
     super().__init__(outcomes=['recog_done','home'])
-    self.arm.set_estimate_lift(.1,.1,.4,.2,.2,.2)               # allow displacement of .1 m in x-y, lift by .4 m, rotation of .2 rad on x-y-z
+    self.arm.set_estimate_lift(1.4,1.9,.05,.2,.05,.1,.1,.1)     # ATTENTION displacement (in metres) are expressed in the target frame
 
   def execute(self, userdata):
     self.arm.go(joint_start ,wait=True)                         # move arm to a start configuration
     self.wristCommand("wrist_mode/save_dynamics")               # start to record dynamics
-    self.arm.do_estimate_lift(3)                                # lift the object in 3s
+    self.arm.do_estimate_lift()                                 # lift the object with predefined motion
     self.wristCommand("wrist_command/stop_loop")                # stop node loop
     self.wristCommand("wrist_command/build_model")              # estimate inertial model
     return 'recog_done'
@@ -190,7 +193,7 @@ class ReachToHandover(smach.State,pyatk.RobotCommander):
     self.trigger = False 
 
   def detectionCallback(self,msg):
-    self.trigger = msg.detection.backtrig
+    self.trigger = msg.detection.trigger
 
   def execute(self, userdata):
     self.trigger = False                                                                   # reset the trigger
