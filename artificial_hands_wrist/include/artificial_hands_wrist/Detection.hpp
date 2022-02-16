@@ -84,13 +84,22 @@ namespace atk
       {
         double d = .0;
         for(int i = 0; i < 3; i++)d = std::max(d, stddev(v_[i]));
-        GetZero(&zero_);
+        Sensor::GetZero(&zero_);
         double r = peakrto(subtractVector(t_mag_,magnitudeVector3(zero_.torque)));
         if(r < rto_ && d < dev_)trigger = true; 
         det_str.str("");
         det_str << "Rto: " << r << "/" << rto_ << " Dev: " << d << "/" << dev_;
         det_str << " dFImax: " << maxval(d_fi_) << " Trig: " << (int)(trigger | backtrig);
       };
+
+      /**
+       * @brief Get maximum derivative of interaction forces
+       * @return Maximum force derivative from IIR filter
+       */
+      double GetdFiMax()
+      {
+        return maxval(d_fi_);
+      }
 
       bool trigger = false;
       bool pretrig = false;
@@ -100,7 +109,7 @@ namespace atk
     private:
 
       int th_, order_ = 3, chann_ = 6;
-      double rto_, dev_, factor_, t_dev_th_, t_sk_th_, f_mag_;
+      double rto_, dev_, factor_, t_dev_th_, t_sk_th_, f_mag_ = .0;
       double num_[3] = {0.0099537574599431831, -0.019594794464524581, 0.0099537574599431831};
       double den_[3] = {1.0, -1.9749591089928671, 0.97527182944822877};
       std::vector<double> t_mag_, t_summ_, t_mag_std_, t_summ_sk_, d_fi_;
