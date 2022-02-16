@@ -12,9 +12,6 @@
 
     <!-- Load fake ft sensor -->
     <node if="$(arg fake_ft)" pkg="artificial_hands_demos" type="fake_ft_sensor_node.py" name="fake_ft_sensor_node" output="screen"/>
-    
-    <!-- Remap real ft sensor -->
-    <remap unless="$(arg fake_ft)" from="/ethdaq_data" to="/ft_sensor"/>
 
     <!-- Load real ft sensor -->
     <include unless="$(arg fake_ft)" file="$(find artificial_hands_bringup)/launch/onrobot_ft_sensor_bringup.launch">
