@@ -3,13 +3,24 @@
 from cmath import pi
 from time import sleep
 from threading import Thread
+from abc import ABC
 
-import rospy
-import smach
-import moveit_commander.conversions as cv
+import rospy, smach
 
-import artificial_hands_py as pyatk
+from artificial_hands_py import MiaHandCommander
+from artificial_hands_py import HarmonicArmCommander
+from artificial_hands_msgs.srv import *
 from artificial_hands_msgs.msg import *
+
+class RobotCommander(ABC):
+  """ Purpose of this abstract class is to provied to each smach state class
+  an interface to arm and hand commanders and proxy to wrist_node services """
+  arm = HarmonicArmCommander()
+  hand = MiaHandCommander("mia_hand")
+
+  def wristCommand(self,service_name):
+    res = rospy.ServiceProxy(service_name,WristCommand)
+    return res().success
 
 joint_start = [pi/2,-1.28,2.09,-0.8,pi/2,.0]
 """ Hardcoded arm joint angles for start position"""
@@ -39,12 +50,12 @@ calibration_joints = [[b,s,e,w1,w2,w3-pi],
 """ Hardcoded arm joint angles for fast calibration of force/torque """
 
 
-class GoToHome(smach.State,pyatk.RobotCommander):
+class GoToHome(smach.State,RobotCommander):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
-    self.arm.set_max_velocity_scaling_factor(.1)                                              # set maximum speed
-    self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of rostopic to check the backup trigger as start input
+    self.arm.set_max_velocity_scaling_factor(.1)                                         # set maximum speed
+    sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback)    # make use of rostopic to check the backup trigger as start input
     self.trigger = False
   
   def waitForEnter(self):
@@ -77,15 +88,15 @@ class GoToHome(smach.State,pyatk.RobotCommander):
   def execute(self, userdata):
     self.wristCommand("wrist_command/subscribe")                       # subscribe the handover_wrist_node
     self.wristCommand("wrist_command/start_loop")                      # start loop
-    # self.waitForEnter()
-    self.waitForDetection()                                            # use this function (comment waitForEnter) to start loop by touching the robotic hand
+    self.waitForEnter()
+    # self.waitForDetection()                                            # use this function (comment waitForEnter) to start loop by touching the robotic hand
     self.arm.go(joint_home,wait=True)                                  # ensure robot arm and hand strating at home position
-    self.hand.open_cyl()                                               # get mia hand in home position
+    self.hand.open()                                                   # get mia hand in home position
     self.arm.stop()
     rospy.loginfo('Executing state GO_TO_HOME')
     return 'at_home'
 
-class CheckCalib(smach.State,pyatk.RobotCommander):
+class CheckCalib(smach.State,RobotCommander):
   """ From the home position, a check on calibration status is required """
   def __init__(self):
     super().__init__(outcomes=['calib','uncalib'])
@@ -100,7 +111,7 @@ class CheckCalib(smach.State,pyatk.RobotCommander):
     else:
       return 'uncalib'
 
-class DoCalib(smach.State,pyatk.RobotCommander):
+class DoCalib(smach.State,RobotCommander):
   """ Do calibration as needed """
   def __init__(self):
     super().__init__(outcomes=['calib_done'])
@@ -120,7 +131,7 @@ class DoCalib(smach.State,pyatk.RobotCommander):
     self.wristCommand("wrist_command/set_calibration")                 # estimate offset and calibrate the force/torque sensor
     return 'calib_done'
 
-class GoToGraspPos(smach.State,pyatk.RobotCommander):
+class GoToGraspPos(smach.State,RobotCommander):
   """ Move to grasp position """
   def __init__(self):
     super().__init__(outcomes=['ready_to_grasp'])
@@ -131,7 +142,7 @@ class GoToGraspPos(smach.State,pyatk.RobotCommander):
     self.arm.stop()
     return 'ready_to_grasp'
 
-class WaitForGrasp(smach.State,pyatk.RobotCommander):
+class WaitForGrasp(smach.State,RobotCommander):
   """ Wait user input to close hand and grasp """
   def __init__(self):
     super().__init__(outcomes=['grasp','home'])
@@ -140,7 +151,7 @@ class WaitForGrasp(smach.State,pyatk.RobotCommander):
     sleep(3)                                                    # wait a bit before trying to grasp the object
     return 'grasp'
 
-class Grasp(smach.State,pyatk.RobotCommander):
+class Grasp(smach.State,RobotCommander):
   """ Do grasp action """
   def __init__(self):
     super().__init__(outcomes=['grasped'])
@@ -150,7 +161,7 @@ class Grasp(smach.State,pyatk.RobotCommander):
     self.hand.close_cyl()                                       # close mia hand with a cylindrical grasp
     return 'grasped'
 
-class DoObjectRecognition(smach.State,pyatk.RobotCommander):
+class DoObjectRecognition(smach.State,RobotCommander):
   """ Go to start position for lifting and recognizing the object """
   def __init__(self):
     super().__init__(outcomes=['recog_done','home'])
@@ -164,7 +175,7 @@ class DoObjectRecognition(smach.State,pyatk.RobotCommander):
     self.wristCommand("wrist_command/build_model")              # estimate inertial model
     return 'recog_done'
 
-class PrepareToReach(smach.State,pyatk.RobotCommander):
+class PrepareToReach(smach.State,RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['ready_to_reach'])
 
@@ -175,7 +186,7 @@ class PrepareToReach(smach.State,pyatk.RobotCommander):
     self.wristCommand("wrist_mode/save_interaction")            # save estimate error on interaction forces
     return 'ready_to_reach'
 
-class StartToReach(smach.State,pyatk.RobotCommander):
+class StartToReach(smach.State,RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['ready_to_handover','end'])
 
@@ -186,7 +197,7 @@ class StartToReach(smach.State,pyatk.RobotCommander):
     self.wristCommand("wrist_mode/trigger_dynamics")             # enable trigger for dynamic handover
     return 'ready_to_handover'
 
-class ReachToHandover(smach.State,pyatk.RobotCommander):
+class ReachToHandover(smach.State,RobotCommander):
   def __init__(self):
     super().__init__(outcomes=['released'])
     self.sub = rospy.Subscriber("wrist_detection",DetectionStamped,self.detectionCallback) # make use of a ros subscriber to check trigger
@@ -198,7 +209,7 @@ class ReachToHandover(smach.State,pyatk.RobotCommander):
   def execute(self, userdata):
     self.trigger = False                                                                   # reset the trigger
     rospy.loginfo('Executing state REACH_TO_HANDOVER') 
-    t = Thread(target = self.hand.open_cyl)                                                # instantiate a separate thread for mia hand open command
+    t = Thread(target = self.hand.open)                                                    # instantiate a separate thread for mia hand open command
     start_time =  rospy.Time.now()
     while not self.trigger and (rospy.Time.now() - start_time).to_sec() < 10:              # set also a timeout                                              
       pass                                                                                 # wait for trigger to occur
