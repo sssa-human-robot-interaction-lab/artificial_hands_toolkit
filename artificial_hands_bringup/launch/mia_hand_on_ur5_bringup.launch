@@ -37,19 +37,22 @@
     </include>
 
     <group ns="mia_hand">
-      <!-- Start the Mia hand control node -->
-      <param name="/Mia_COM_" type="int" value="0"/>
-      <param name="/Mia_fs_" type="int" value="20"/>
-      <node name="mia_hand_robot_driver" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" /> 
+      <!-- Start the control node -->
+      <node name="Mia_hw_node" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" >
+        <param name="Mia_COM_" type="int" value="$(arg Mia_COM_)"/> <!-- private param so as to match to the namespace used-->
+        <param name="Mia_fs_" type="int" value="$(arg Mia_fs_)"/> <!-- private param so as to match to the namespace used-->
+      </node>
 
-      <!-- Load Mia hand controllers to parameter server -->
+      	<!-- Load joint controller configurations from YAML file to parameter server -->
+      <rosparam file="$(find mia_hand_ros_control)/config/mia_hand_hw_controllers.yaml" command="load"/>
+      <rosparam file="$(find mia_hand_ros_control)/config/mia_hand_hw_trajectory_controllers.yaml" command="load"/>
       <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>
 
       <!-- Spawn Mia hand controllers -->
-      <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller" />
+      <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_hw_vel_trajectory_controller" />
       
       <!-- Spawn Mia hand stopped controllers -->
-      <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_pos_trajectory_controller" />
+      <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_joint_group_vel_controller" />
 
       <!-- Spawn Mia hand joint state controller -->
       <node name="mia_hand_joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen"  args="joint_state_controller" />
