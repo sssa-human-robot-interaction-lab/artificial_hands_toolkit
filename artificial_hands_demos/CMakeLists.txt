@@ -108,6 +108,7 @@ catkin_package(
  CATKIN_DEPENDS
  artificial_hands_wrist
  artificial_hands_msgs
+ artificial_hands_py
 #  DEPENDS system_lib
 )
 

@@ -52,6 +52,7 @@
 
   <depend>artificial_hands_wrist</depend>
   <depend>artificial_hands_msgs</depend>
+  <depend>artificial_hands_py</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
