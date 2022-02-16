@@ -4,17 +4,16 @@ from cmath import pi
 from time import sleep
 from abc import ABC
 import numpy as np
-from threading import Thread
 
 import rospy, tf2_ros, tf2_geometry_msgs
 import tf.transformations as ts
 import moveit_commander
 import moveit_commander.conversions as cv
-from std_msgs.msg import Float64
-from std_srvs.srv import Empty
-from geometry_msgs.msg import PoseStamped
-from rqt_controller_manager.controller_manager import *
+from std_msgs.msg import Float64MultiArray
 from cartesian_control_msgs.msg import *
+from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
+from sensor_msgs.msg import JointState
+from rqt_controller_manager.controller_manager import *
 
 from artificial_hands_msgs.msg import *
 from artificial_hands_msgs.srv import WristCommand
@@ -23,108 +22,66 @@ class MiaHandCommander():
   """ Simple commander for Mia hand: grasps using ROS control """
 
   def __init__(self,ns=''):
+
+    self.traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
+    self.vel_ctrl = 'mia_hand_joint_group_vel_controller'
+
     ld_ser = rospy.ServiceProxy(ns+'/controller_manager/load_controller',LoadController)
-    ld_ser('j_index_fle_position_controller')
-    ld_ser('j_index_fle_velocity_controller')
-    ld_ser('j_thumb_fle_position_controller')
-    ld_ser('j_mrl_fle_position_controller')
-    ld_ser('j_mrl_fle_velocity_controller')
+    ld_ser(self.traj_ctrl)
+    ld_ser(self.vel_ctrl)
 
     self.sw_ser = rospy.ServiceProxy(ns+'/controller_manager/switch_controller',SwitchController) 
-    self.sw_ser(['j_thumb_fle_position_controller','j_index_fle_velocity_controller','j_mrl_fle_velocity_controller'],['mia_hand_vel_trajectory_controller','mia_hand_pos_trajectory_controller'],1,False,5)
+    self.traj_pub = rospy.Publisher(ns+'/'+self.traj_ctrl+'/command',JointTrajectory,queue_size=1000)
+    self.vel_pub = rospy.Publisher(ns+'/'+self.vel_ctrl+'/command',Float64MultiArray,queue_size=1000)
+
+    sub = rospy.Subscriber(ns+"/joint_states",JointState,self.joint_states_callback)
     
-    self.thu_pos = rospy.Publisher(ns+'/j_thumb_fle_position_controller/command',Float64,queue_size=1000)
-    self.index_pos = rospy.Publisher(ns+'/j_index_fle_position_controller/command',Float64,queue_size=1000)
-    self.mrl_pos = rospy.Publisher(ns+'/j_mrl_fle_position_controller/command',Float64,queue_size=1000)
-
-    self.index_vel = rospy.Publisher(ns+'/j_index_fle_velocity_controller/command',Float64,queue_size=1000)
-    self.mrl_vel = rospy.Publisher(ns+'/j_mrl_fle_velocity_controller/command',Float64,queue_size=1000)
-
-    self.close_cyl_ser = rospy.Service('/close_cyl',Empty,self.close_cyl_callback)
-    self.open_cyl_ser = rospy.Service('/open_cyl',Empty,self.open_cyl_callback)
-
-    self.j = Float64()
-
-    self.switch_to_open()                                        
-
-  def set_thu_pos(self,pos):
-    self.j.data = pos
-    self.thu_pos.publish(self.j)
+    self.pos = [.0,.0,.0]
+    self.joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']
   
-  def set_index_pos(self,pos):
-    self.j.data = pos
-    self.index_pos.publish(self.j)
-  
-  def set_mrl_pos(self,pos):
-    self.j.data = pos
-    self.mrl_pos.publish(self.j)
-  
-  def set_index_vel(self,vel):
-    self.j.data = vel
-    self.index_vel.publish(self.j)
-  
-  def set_mrl_vel(self,vel):
-    self.j.data = vel
-    self.mrl_vel.publish(self.j)
-  
-  def switch_to_open(self):
-    self.sw_ser(['j_index_fle_position_controller','j_mrl_fle_position_controller'],['j_index_fle_velocity_controller','j_mrl_fle_velocity_controller'],1,False,5)
-  
-  def switch_to_close(self):
-    self.sw_ser(['j_index_fle_velocity_controller','j_mrl_fle_velocity_controller'],['j_index_fle_position_controller','j_mrl_fle_position_controller'],1,False,5)
-  
-  def open_pin(self):
-    self.set_thu_pos(0.45)
-    self.set_index_pos(0.5)
-    sleep(2)
-    self.switch_to_close()
-    
-  def close_pin(self):
-    self.set_index_vel(1.0)
-    sleep(3)
-    self.set_index_vel(0.0)
-    sleep(1)
-    self.switch_to_open()
+  def joint_states_callback(self,msg):
+    robot_joints = msg.name
+    c = 0
+    for j in self.joint_names:
+      self.pos[c] = msg.position[robot_joints.index(j)]    
+      c += 1  
 
-  def open_cyl(self):
-    self.set_thu_pos(0.45)
-    self.set_index_pos(0.5)
-    self.set_mrl_pos(0.5)
-    sleep(2)
-    self.switch_to_close()
-    
-  def close_cyl(self):
-    self.set_index_vel(1.0)
-    self.set_mrl_vel(0.6)
-    sleep(3)
-    self.set_index_vel(0.0)
-    self.set_mrl_vel(0.0)
-    sleep(1)
-    self.switch_to_open()
-  
-  def open_cyl_callback(self,msg):
-    self.open_cyl()
-    return []
+  def switch_to_vel_ctrl(self): 
+    self.sw_ser([self.vel_ctrl],[self.traj_ctrl],1,False,5)  
 
-  def close_cyl_callback(self,msg):
-    self.close_cyl()
-    return []
-
-class MiaHandMoveitCommander(moveit_commander.MoveGroupCommander):
-  """ Simple commander for Mia hand: grasps using Moveit """
-  def __init__(self,ns=''):
-    super().__init__("hand")
-
-  def open_cyl(self):
-    self.go([.4,.4,.2],wait=True)
-    self.stop()
-    sleep(1)
+  def switch_to_traj_ctrl(self): 
+    self.sw_ser([self.traj_ctrl],[self.vel_ctrl],1,False,5)                             
 
   def close_cyl(self):
-    self.go([.99,1.02,.46],wait=True)
-    self.stop()
-    sleep(1)
-
+    cmd = JointTrajectory()
+    cmd.joint_names = self.joint_names
+    cmd.points = [JointTrajectoryPoint()]
+    cmd.points[0].positions = [1.3,1.3,0.3]
+    cmd.points[0].velocities = [.0,.0,.0]
+    cmd.points[0].time_from_start = rospy.Time.from_sec(1.5)
+    self.traj_pub.publish(cmd)
+  
+  def open(self,vel):
+    j_vel = Float64MultiArray()
+    j_vel.data = [-vel,-vel,-vel/2]
+    j_is_open = [False,False,False]
+    j_limit_open = [.4,.34,.1]
+    rate = rospy.Rate(50)
+    start = rospy.Time.now()
+    while True and (rospy.Time.now() - start).to_sec() < 10:
+      for c in range(0,3):
+        j_is_open[c] = self.pos[c] < j_limit_open[c]
+        if j_is_open[c]:
+          j_vel.data[c] = .0
+      self.vel_pub.publish(j_vel) 
+      rate.sleep()
+      if all(j_is_open):
+        break     
+      
+  def rest(self):
+    j_vel = Float64MultiArray()
+    j_vel.data = [.0,.0,.0]
+    self.vel_pub.publish(j_vel)
 
 class ArmCommander(moveit_commander.MoveGroupCommander):
   """ Simple robitc commander for Mia hand: grasps using Moveit """
@@ -312,8 +269,7 @@ class RobotCommander(ABC):
   scene = moveit_commander.PlanningSceneInterface()
 
   arm = ArmCommander()
-  # hand = MiaHandMoveitCommander()                                     # hand commander (useful now only for simulated hw)
-  hand = MiaHandCommander("mia_hand")                                 # temp hand commander for real hw (since move_group doesn't work properly for mia hand)
+  hand = MiaHandCommander("mia_hand")                                 # hand commander for real hw (since hand move_group has to be perfected)
 
   def wristCommand(self,service_name):
     res = rospy.ServiceProxy(service_name,WristCommand)
