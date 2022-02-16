@@ -4,6 +4,18 @@
 
 namespace py = pybind11;
 
+void cArrayFromPyList(double* c_array, py::list py_list)
+{
+  int len = py::len(py_list);
+  for(int i = 0; i < len; i++)c_array[i] = py_list[i].cast<double>();
+}
+
+void cArrayToPyList(double* c_array, py::list py_list)
+{
+  int len = py::len(py_list);
+  for(int i = 0; i < len; i++)py_list[i] = c_array[i];
+}
+
 class pyDetection: public atk::Detection
 {
   public:
@@ -29,17 +41,50 @@ class pyDetection: public atk::Detection
 
   private:
 
-    void cArrayFromPyList(double* c_array, py::list py_list)
-    {
-      int len = py::len(py_list);
-      for(int i = 0; i < len; i++)c_array[i] = py_list[i].cast<double>();
-    }
-
     std::vector<double> ft_;
     double ft_array_[6];
     
 };
 
+class pyFilter: public atk::Filter
+{
+  public:
+
+    pyFilter(int len=20): 
+      len_(len),
+      Filter(len)
+    {
+      f_array_ = new double[len];
+      for(int i = 0; i < len; i++)f_list_.append(.0);
+    }
+
+    void Init(py::list f_list)
+    {
+      cArrayFromPyList(f_array_,f_list);
+      atk::copyArray(&f_,f_array_,len_);
+      atk::Filter::Init(f_);
+    }
+
+    void Update(py::list f_list)
+    {
+      cArrayFromPyList(f_array_,f_list);
+      atk::copyArray(&f_,f_array_,len_);
+      atk::Filter::Update(f_);
+    }
+
+    py::list Get()
+    {
+      cArrayToPyList(atk::Filter::Get().data(),f_list_);
+      return f_list_;
+    }
+  
+  private:
+
+    py::list f_list_;
+    std::vector<double> f_;
+    double* f_array_;
+    const double len_;
+};
 
 PYBIND11_MODULE(pyatk, m) {
 
@@ -58,4 +103,13 @@ PYBIND11_MODULE(pyatk, m) {
   .def_readwrite("pretrig",&pyDetection::pretrig)
   .def_readwrite("trigger",&pyDetection::trigger)
   .def_readwrite("backtrig",&pyDetection::backtrig);
+
+  py::class_<atk::Filter>(m, "atkFilter");
+
+  py::class_<pyFilter,atk::Filter>(m, "Filter")
+  .def(py::init<int>())
+  .def("init",&pyFilter::Init)
+  .def("update",&pyFilter::Update)
+  .def("get",&pyFilter::Get);
+
 }
