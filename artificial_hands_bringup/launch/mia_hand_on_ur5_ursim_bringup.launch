@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="rviz" default="true" />
+
+  <!-- Make use of the normal bringup -->
+  <include file="$(find artificial_hands_bringup)/launch/mia_hand_on_ur5_bringup.launch">
+    <arg name="sim" default="false" />
+    <arg name="robot_ip" default="192.168.1.52"/>
+  
+    <arg name="Mia_COM_" default='52' doc="Int number of the Mia hand COM port" />
+    <arg name="Mia_fs_" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
+    <arg name="Mia_hw_sim" default="true" doc="set to true to simulate mia hand hardware interface (requires to emulate a serial port)" />
+  
+  </include>
+
+  <!-- Namespace of the simulated mia_hand -->
+  <arg name="mia_hand_sim_namespace" default="mia_hand_sim" />
+
+  <group ns="$(arg mia_hand_sim_namespace)">
+
+    <!-- Parameters for mia hand simulation in gazebo -->
+    <arg name="mia_gazebo_hw_interface" value="PositionJointInterface"/>
+
+    <!-- Load a separate URDF for mia hand simulation in gazebo -->
+    <param name="robot_description" command="$(find xacro)/xacro --inorder '$(find mia_hand_description)/urdf/mia_hand_launch.urdf.xacro'
+      hw_interface_thumb_fle:=$(arg mia_gazebo_hw_interface)
+      hw_interface_index_fle:=$(arg mia_gazebo_hw_interface)
+      hw_interface_mrl_fle:=$(arg mia_gazebo_hw_interface)
+      robotNamespace:=$(arg mia_hand_sim_namespace)" />
+
+    <!-- Load Mia hand controllers to parameter server -->
+    <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_controllers.yaml" command="load"/>
+    <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_trajectory_controllers.yaml" command="load"/>
+    <rosparam file="$(find mia_hand_gazebo)/config/gazebo_pid_thumb_opp.yaml" command="load"/>
+
+    <!-- Spawn Mia hand controllers -->
+    <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller" />
+
+    <!-- Spawn Mia hand stopped controllers -->
+    <node name="mia_hand_trajectory_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_pos_trajectory_controller" />
+
+    <!-- Spawn Mia hand joint state controller -->
+    <node name="mia_hand_joint_state_controller_spawner" pkg="controller_manager" type="spawner" output="screen"  args="joint_state_controller" />
+
+    <!-- Load node for remapping of the thumb opposition -->
+    <node name="remap_mia_joint_states" pkg="mia_hand_description" type="remap_mia_joint_states"/>
+
+  </group>
+
+  <!-- Start Gazebo and load the empty world if requested to do so -->
+  <include file="$(find gazebo_ros)/launch/empty_world.launch">
+    <arg name="gui" default="false"/>
+  </include>
+
+  <!-- Spawn the model loaded earlier in the simulation just started -->
+  <node name="spawn_gazebo_model" pkg="gazebo_ros" type="spawn_model"
+    args="
+      -urdf
+      -param /$(arg mia_hand_sim_namespace)/robot_description
+      -model $(arg mia_hand_sim_namespace)
+      -robot_namespace $(arg mia_hand_sim_namespace)"
+    output="screen" respawn="false" />
+
+  <!-- Load publisher to remap joint state from the simulated hand to the one on the robot arm -->
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" ns="mia_hand">
+    <remap from="/mia_hand/joint_states" to="/mia_hand_sim/miaviz_joint_states"/>
+  </node>
+
+  <!-- rviz -->
+  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz_demo_config" output="screen" args="-d $(find artificial_hands_demos)/cfg/demo_config.rviz"/>
+  
+</launch>
