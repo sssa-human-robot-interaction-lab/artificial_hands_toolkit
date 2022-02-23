@@ -93,10 +93,10 @@
     <selfCollide>False</selfCollide>
   </gazebo>
 
-  <!-- Make connection between ft_sensor_frame and mia hand -->
+  <!-- Make connection between robotiq_ft_sensor and mia hand -->
   <joint name="mia_fix" type="fixed">
     <origin xyz="0 0 0.022" rpy="${pi/2} 0 ${pi/2}"/>
-    <parent link="ft_sensor_frame"/>
+    <parent link="robotiq_ft_frame_id"/>
     <child link="palm"/>
   </joint>  
   

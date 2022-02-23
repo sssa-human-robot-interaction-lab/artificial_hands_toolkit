@@ -1,25 +1,3 @@
-#################################
-# PID parameters for pose seeking
-#################################
-
-# Maximum value of error integral for all PID controllers
-windup_limit: 0.05
-
-# PID gains
-x_proportional_gain: 1.5
-y_proportional_gain: 1.5
-z_proportional_gain: 1.5
-x_integral_gain: 0.0
-y_integral_gain: 0.0
-z_integral_gain: 0.0
-x_derivative_gain: 0.0
-y_derivative_gain: 0.0
-z_derivative_gain: 0.0
-
-angular_proportional_gain: 0.5
-angular_integral_gain: 0.0
-angular_derivative_gain: 0.0
-
 ###############################################
 # Modify all parameters related to servoing here
 ###############################################
@@ -37,25 +15,25 @@ low_pass_filter_coeff: 2.  # Larger --> trust the filtered data more, trust the 
 
 ## Properties of outgoing commands
 publish_period: 0.008  # 1/Nominal publish rate [seconds]
-low_latency_mode: false  # Set this to true to publish as soon as an incoming Twist command is received (publish_period is ignored)
+low_latency_mode: true  # Set this to true to publish as soon as an incoming Twist command is received (publish_period is ignored)
 
 # What type of topic does your robot driver expect?
 # Currently supported are std_msgs/Float64MultiArray (for ros_control JointGroupVelocityController or JointGroupPositionController)
 # or trajectory_msgs/JointTrajectory (for Universal Robots and other non-ros_control robots)
-command_out_type: trajectory_msgs/JointTrajectory
+command_out_type: std_msgs/Float64MultiArray
 
 # What to publish? Can save some bandwidth as most robots only require positions or velocities
-publish_joint_positions: true
+publish_joint_positions: false
 publish_joint_velocities: true
-publish_joint_accelerations: true
+publish_joint_accelerations: false
 
 ## MoveIt properties
 move_group_name:  manipulator  # Often 'manipulator' or 'arm'
 planning_frame: world  # The MoveIt planning frame. Often 'base_link' or 'world'
 
 ## Other frames
-ee_frame_name: tool0  # The name of the end effector link, used to return the EE pose
-robot_link_command_frame:  tool0  # commands must be given in the frame of a robot link. Usually either the base or end effector
+ee_frame_name: ft_sensor_frame  # The name of the end effector link, used to return the EE pose
+robot_link_command_frame: ft_sensor_frame  # commands must be given in the frame of a robot link. Usually either the base or end effector
 
 ## Stopping behaviour
 incoming_command_timeout:  0.1  # Stop servoing if X seconds elapse without a new command
@@ -69,11 +47,11 @@ hard_stop_singularity_threshold: 30 # Stop when the condition number hits this
 joint_limit_margin: 0.1 # added as a buffer to joint limits [radians]. If moving quickly, make this larger.
 
 ## Topic names
-cartesian_command_in_topic: servo_frame/command  # Topic for incoming Cartesian twist commands
-joint_command_in_topic: servo_joint/command # Topic for incoming joint angle commands
+cartesian_command_in_topic: /servo_twist_controller/command  # Topic for incoming Cartesian twist commands
+joint_command_in_topic: /servo_joint_controller/command # Topic for incoming joint angle commands
 joint_topic: joint_states
 status_topic: status # Publish status to this topic
-command_out_topic: servo_joint_traj/command # Publish outgoing commands here
+command_out_topic: /joint_group_vel_controller/command # Publish outgoing commands here
 
 ## Collision checking for the entire robot body
 check_collisions: true # Check collisions?
@@ -86,5 +64,5 @@ collision_check_type: threshold_distance
 self_collision_proximity_threshold: 0.01 # Start decelerating when a self-collision is this far [m]
 scene_collision_proximity_threshold: 0.05 # Start decelerating when a scene collision is this far [m]
 # Parameters for "stop_distance"-type collision checking
-collision_distance_safety_factor: 1 # Must be >= 1. A large safety factor is recommended to account for latency
+collision_distance_safety_factor: 1000 # Must be >= 1. A large safety factor is recommended to account for latency
 min_allowable_collision_distance: 0.01 # Stop if a collision is closer than this [m]

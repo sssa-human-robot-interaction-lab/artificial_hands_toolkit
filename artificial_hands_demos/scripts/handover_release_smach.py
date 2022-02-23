@@ -8,14 +8,14 @@ from abc import ABC
 import rospy, smach
 
 from artificial_hands_py import MiaHandCommander
-from artificial_hands_py import HarmonicArmCommander
+from artificial_hands_py import HarmonicServoCommander
 from artificial_hands_msgs.srv import *
 from artificial_hands_msgs.msg import *
 
 class RobotCommander(ABC):
   """ Purpose of this abstract class is to provied to each smach state class
   an interface to arm and hand commanders and proxy to wrist_node services """
-  arm = HarmonicArmCommander()
+  arm = HarmonicServoCommander()
   hand = MiaHandCommander("mia_hand")
 
   def wristCommand(self,service_name):
