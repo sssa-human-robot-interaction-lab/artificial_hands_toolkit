@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="true" />
+  <arg name="servo_server" default="false" />
+
+   <arg name="debug" default="false" />
+
+  <!-- Remap Mia hand hw controllers -->
+  <remap unless="$(arg sim)" from="/mia_hand/mia_hand_vel_trajectory_controller" to="/mia_hand_vel_trajectory_controller" />
+
+  <!-- Launch moveit -->
+  <include file="$(find mia_hand_on_ur5_moveit_config)/launch/move_group.launch">
+    <arg name="debug" default="$(arg debug)" />
+    <arg name="moveit_controller_manager" default="mia_hand_on_ur5" />
+  </include>
+
+  <!-- Load moveit servo server for mia_hand_on_ur5 robot (if needed)-->
+  <node if="$(arg servo_server)" name="mia_hand_on_ur5_servo_server" pkg="moveit_servo" type="servo_server" output="screen" >
+    <rosparam command="load" file="$(find mia_hand_on_ur5_moveit_config)/config/mia_hand_on_ur5_moveit_servo_config.yaml" />
+  </node>
+
+</launch>

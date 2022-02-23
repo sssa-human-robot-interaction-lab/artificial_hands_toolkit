@@ -1,9 +1,11 @@
 from math import floor
+from time import sleep
 import numpy as np
 from cmath import pi
 
 import rospy
 import moveit_commander
+from std_msgs.msg import Float64MultiArray
 from geometry_msgs.msg import Pose, TwistStamped
 from trajectory_msgs.msg import JointTrajectory
 
@@ -24,8 +26,10 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
   ----------
   j_traj_ctlr : str
     name of ROS joint controller for trajectory planning and excution
-  servo_ctrl : dict
-    name of ROS joint controller to feedforward servo command
+  j_servo_ctrl : dict
+    name of ROS joint controller to feedforward output from moveit servo_server
+  servo_pub : rospy.Publisher
+    rostopic publisher to feedforward input to moveit servo_server
   dt : float
     servo trajectory time discretization
 
@@ -37,11 +41,12 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
   """
 
   j_traj_ctrl = 'pos_joint_traj_controller'
-  servo_ctrl = 'servo_twist_controller'
+  j_servo_ctrl = 'joint_group_vel_controller'
+  eef_frame_servo = 'servo_twist_controller'
   dt = 0.002
 
   def __init__(self,ns=''):
-    super().__init__(ns,{self.j_ctrl : JointTrajectory, self.servo_ctrl : TwistStamped})
+    super().__init__(ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.eef_frame_servo : TwistStamped})
     super(ControllerManagerBase,self).__init__('manipulator') 
 
   def servo_delta(self, goal_time : float, delta_pose : Pose = Pose(), delta_pose_2 : Pose = Pose()):
@@ -65,7 +70,7 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
           y = np.append(y,0)
         return y
     
-    self.switch_to_controller(self.j_group_ctrl)
+    self.switch_to_controller(self.j_servo_ctrl)
 
     servo_x = np.ndarray.tolist(harmonic_vel(delta_pose.position.x,goal_time) + biharmonic_vel_2(delta_pose_2.position.x,goal_time))
     servo_y = np.ndarray.tolist(harmonic_vel(delta_pose.position.y,goal_time) + biharmonic_vel_2(delta_pose_2.position.y,goal_time))
@@ -82,7 +87,7 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
       servo_cmd.header.seq = 0
       servo_cmd.header.stamp.secs = 1000000
 
-      self.controller_command(servo_cmd)
+      self.servo_command(self.eef_frame_servo,servo_cmd)
 
       servo_rate.sleep()
     

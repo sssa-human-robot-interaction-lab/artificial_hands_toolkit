@@ -11,6 +11,8 @@ class ControllerManagerBase:
     proxy to controller_manager/switch_controller
   ctrl_dict : dict
     dictionaries of command publisher for a given controller
+  servo_dict : dict
+    dictionaries of command publisher for a given servo topic
   ctrl : str
     name of the active controller
 
@@ -23,11 +25,12 @@ class ControllerManagerBase:
     forward command to the active controller
   """
 
-  def __init__(self,ns : str, ctrl_dict : dict) -> None:  
+  def __init__(self,ns : str, ctrl_dict : dict, servo_dict : dict = None) -> None:  
     ls_ser = rospy.ServiceProxy(ns+'/controller_manager/list_controllers',ListControllers)
     ld_ser = rospy.ServiceProxy(ns+'/controller_manager/load_controller',LoadController)
     self.sw_ser = rospy.ServiceProxy(ns+'/controller_manager/switch_controller',SwitchController) 
     self.ctrl_dict = {}
+    self.servo_dict ={}
     self.ctrl = ''
     
     ls_ctrl = ls_ser()
@@ -41,6 +44,10 @@ class ControllerManagerBase:
       if not c:
         ld_ser(y)
 
+    if servo_dict is not None:
+      for y in servo_dict.keys():
+        self.servo_dict[y] = rospy.Publisher(ns+'/'+y+'/command',servo_dict[y],queue_size=1000)
+
   def switch_to_controller(self,start_ctrl : str) -> None:
     self.ctrl = start_ctrl
     stop_ctrl = self.ctrl_dict.keys() - start_ctrl
@@ -48,3 +55,6 @@ class ControllerManagerBase:
   
   def controller_command(self,cmd) -> None:
     self.ctrl_dict[self.ctrl].publish(cmd)
+  
+  def servo_command(self,servo,cmd) -> None:
+    self.servo_dict[servo].publish(cmd)
