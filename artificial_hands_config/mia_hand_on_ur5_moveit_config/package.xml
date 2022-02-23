@@ -3,10 +3,10 @@
   <name>mia_hand_on_ur5_moveit_config</name>
   <version>0.3.0</version>
   <description>
-     An automatically generated package with all the configuration and launch files for using the mia_hand_on_ur5_robot_gazebo with the MoveIt Motion Planning Framework
+     An automatically generated package with all the configuration and launch files for using the mia_hand_on_ur5 with the MoveIt Motion Planning Framework
   </description>
-  <author email="penzo@todo.com">penzo</author>
-  <maintainer email="penzo@todo.com">penzo</maintainer>
+  <author email="penzo@todo.todo">penzo</author>
+  <maintainer email="penzo@todo.todo">penzo</maintainer>
 
   <license>BSD</license>
 

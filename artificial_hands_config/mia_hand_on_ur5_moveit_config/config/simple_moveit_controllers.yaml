@@ -1,12 +1,4 @@
 controller_list:
-  - name: hand_controller
-    action_ns: follow_joint_trajectory
-    type: FollowJointTrajectory
-    default: True
-    joints:
-      - j_index_fle
-      - j_mrl_fle
-      - j_thumb_fle
   - name: manipulator_controller
     action_ns: follow_joint_trajectory
     type: FollowJointTrajectory

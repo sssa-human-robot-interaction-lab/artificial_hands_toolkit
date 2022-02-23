@@ -1,10 +1,4 @@
 controller_list:
-  - name: fake_hand_controller
-    type: $(arg fake_execution_type)
-    joints:
-      - j_index_fle
-      - j_mrl_fle
-      - j_thumb_fle
   - name: fake_manipulator_controller
     type: $(arg fake_execution_type)
     joints:

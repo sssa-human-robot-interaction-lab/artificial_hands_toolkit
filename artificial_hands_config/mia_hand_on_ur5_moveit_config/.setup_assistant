@@ -4,8 +4,8 @@ moveit_setup_assistant_config:
     relative_path: urdf/mia_hand_on_ur5.urdf.xacro
     xacro_args: ""
   SRDF:
-    relative_path: config/mia_hand_on_ur5_robot_gazebo.srdf
+    relative_path: config/mia_hand_on_ur5.srdf
   CONFIG:
     author_name: penzo
-    author_email: penzo@todo.com
-    generated_timestamp: 1644255181
+    author_email: penzo@todo.todo
+    generated_timestamp: 1645614173
