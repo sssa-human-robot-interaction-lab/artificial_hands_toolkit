@@ -27,8 +27,8 @@ namespace atk
    * @brief Alglib ls fitting
    * @param rows number of equations
    * @param cols number of coefficients to fit
-   * @param x array of x sets
-   * @param y array of y = f(x) values
+   * @param x array of x sets (x11, ... , x1n; ... ; xn1, ... , xnn)
+   * @param y array of y = f(x) values (y1; ... ; yn)
    * @param l array of lower bounds for coefficients
    * @param u array of upper bounds for coefficients
    * @note The x array should be formed appending blocks of x sets and each set must

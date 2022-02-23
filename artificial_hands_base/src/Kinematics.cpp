@@ -2,12 +2,12 @@
 
 namespace atk
 {
-  Kinematics::Kinematics(int filter_length, const double loop_rate, const char* target_frame, const char* planning_group,
+  Kinematics::Kinematics(int filter_length, const double loop_rate, const char* target_frame, const char* srdf_group,
     const char* robot_description, const char* model_frame):
     loop_rate_(loop_rate),
     target_frame_(target_frame),
     robot_description_(robot_description),
-    planning_group_(planning_group),
+    srdf_group_(srdf_group),
     model_frame_(model_frame),
     Filter(filter_length)
   {
@@ -15,7 +15,7 @@ namespace atk
     robot_model_loader::RobotModelLoader robot_model_loader(robot_description_);
     const moveit::core::RobotModelPtr& kinematic_model = robot_model_loader.getModel();
 
-    joint_model_group_ = kinematic_model->getJointModelGroup(planning_group_);
+    joint_model_group_ = kinematic_model->getJointModelGroup(srdf_group_);
     kinematic_state_ = new moveit::core::RobotState(kinematic_model);
 
     KDL::Tree robot_kin;

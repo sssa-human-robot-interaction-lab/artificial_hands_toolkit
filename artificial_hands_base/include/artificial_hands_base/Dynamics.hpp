@@ -20,7 +20,7 @@ namespace atk
        * @param robot_description name of XML robot description
        * @param model_frame absolute frame for the planning group
        */
-      Dynamics(int filter_length, const double controller_rate, const char* target_frame, const char* planning_group="manipulator", 
+      Dynamics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", 
       const char* robot_description="robot_description", const char* model_frame="world");
 
       /**

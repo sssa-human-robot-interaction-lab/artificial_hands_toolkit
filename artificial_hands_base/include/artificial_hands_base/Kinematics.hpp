@@ -75,7 +75,7 @@ namespace atk
     private:
 
       const char* robot_description_;
-      const char* planning_group_;
+      const char* srdf_group_;
       const char* target_frame_;
       const char* model_frame_;
       const double loop_rate_;

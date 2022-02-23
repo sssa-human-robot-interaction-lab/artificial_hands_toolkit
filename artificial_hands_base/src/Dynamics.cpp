@@ -2,9 +2,9 @@
 
 namespace atk
 {
-  Dynamics::Dynamics(int filter_length, const double controller_rate, const char* target_frame, const char* planning_group,
+  Dynamics::Dynamics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group,
     const char* robot_description, const char* model_frame):
-  Kinematics(filter_length,controller_rate, target_frame, planning_group, robot_description, model_frame)
+  Kinematics(filter_length,controller_rate, target_frame, srdf_group, robot_description, model_frame)
   {
     Sensor::SetFilter(filter_length);
 

@@ -23,9 +23,9 @@ namespace atk
        * @param robot_description name of XML robot description
        * @param model_frame absolute frame for the planning group
        */
-      Interaction(int filter_length, const double controller_rate, const char* target_frame, const char* planning_group="manipulator", 
+      Interaction(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", 
       const char* robot_description="robot_description", const char* model_frame="world"):
-      Dynamics(filter_length,controller_rate,target_frame,planning_group,robot_description,model_frame)
+      Dynamics(filter_length,controller_rate,target_frame,srdf_group,robot_description,model_frame)
       {
         sensor_e_ = new atk::Sensor<atk::Filter>();
         sensor_e_->SetFilter(10);
