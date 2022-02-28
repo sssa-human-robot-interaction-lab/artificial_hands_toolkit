@@ -43,7 +43,7 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
   j_traj_ctrl = 'pos_joint_traj_controller'
   j_servo_ctrl = 'joint_group_vel_controller'
   eef_frame_servo = 'servo_twist_controller'
-  dt = 0.002
+  dt = 0.001
 
   def __init__(self,ns=''):
     super().__init__(ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.eef_frame_servo : TwistStamped})
@@ -53,7 +53,7 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
 
     def harmonic_vel(h : float, ts : float):
       t = np.arange(0,ts,self.dt)
-      y = -h/ts*(1 - np.cos(2*pi*t/ts))
+      y = h/ts*(1 - np.cos(2*pi*t/ts))
       return y
 
     def biharmonic_vel(h : float, ts : float):
@@ -63,14 +63,13 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
 
     def biharmonic_vel_2(h : float, ts : float):
         y_ = biharmonic_vel(h,ts/2)
-        if np.size(y_) % 2 != 0:
-          y = np.append(y_,-1*np.flip(y_[:-1]))
-        else:
-          y = np.append(y_,-1*np.flip(y_[:-1]))
-          y = np.append(y,0)
+        y = np.append(y_,-1*np.flip(y_[:-1]))
         return y
     
     self.switch_to_controller(self.j_servo_ctrl)
+
+    if goal_time/self.dt % 2 == 0:
+      goal_time += self.dt
 
     servo_x = np.ndarray.tolist(harmonic_vel(delta_pose.position.x,goal_time) + biharmonic_vel_2(delta_pose_2.position.x,goal_time))
     servo_y = np.ndarray.tolist(harmonic_vel(delta_pose.position.y,goal_time) + biharmonic_vel_2(delta_pose_2.position.y,goal_time))
@@ -85,7 +84,8 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
       servo_cmd.twist.linear.z = servo_z[c]
 
       servo_cmd.header.seq = 0
-      servo_cmd.header.stamp.secs = 1000000
+      servo_cmd.header.stamp = rospy.Time.now()
+      servo_cmd.header.stamp.secs += 1
 
       self.servo_command(self.eef_frame_servo,servo_cmd)
 
