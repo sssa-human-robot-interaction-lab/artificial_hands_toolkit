@@ -56,8 +56,8 @@
       <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>
 
       <!-- Spawn Mia hand controllers -->
-      <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller">
-        <remap from="mia_hand_vel_trajectory_controller" to="mia_hand_vel_trajectory_controller" />
+      <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_hw_vel_trajectory_controller">
+        <remap from="mia_hand_hw_vel_trajectory_controller" to="mia_hand_vel_trajectory_controller" />
       </node>
       
       <!-- Spawn Mia hand stopped controllers -->
