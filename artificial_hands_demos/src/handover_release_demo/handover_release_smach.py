@@ -7,7 +7,7 @@ class GoToHome(smach.State,RobotCommander):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
-    self.arm.set_max_velocity_scaling_factor(.25)                 # set maximum speed (be careful exceeding .2)
+    self.arm.set_max_velocity_scaling_factor(.1)                  # set maximum speed (be careful exceeding .2)
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_HOME')
@@ -26,7 +26,7 @@ class CheckCalib(smach.State,RobotCommander):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
-    # TO DO add check calibration here
+    self.wrist.calib = self.wrist.wristCommand("wrist_command/check_calibration")
     if self.wrist.calib:
       return 'calib'
     return 'uncalib'
@@ -34,22 +34,16 @@ class CheckCalib(smach.State,RobotCommander):
 class DoCalib(smach.State,RobotCommander):
   """ Do calibration as needed """
   def __init__(self):
-    super().__init__(outcomes=['calib_done','end'])   
+    super().__init__(outcomes=['calib_done','return_to_home'])   
 
   def execute(self, userdata):
-    rospy.loginfo('Executing state DO_CALIB') 
-    self.wrist.wristCommand("wrist_mode/publish")  
-    self.wrist.wristCommand("wrist_command/stop_loop")
-    self.wrist.wristCommand("wrist_command/subscribe") 
-    self.wrist.wristCommand("wrist_command/start_loop")                                   
-    self.longCalib()                                             # execute fast calibration procedure
-    self.wrist.wristCommand("wrist_command/set_calibration")     # estimate offset and calibrate the force/torque sensor
-    self.wrist.wristCommand("wrist_command/stop_loop")
-    self.wrist.wristCommand("wrist_command/subscribe") 
-    self.wrist.wristCommand("wrist_command/start_loop")    
-    self.fastCalib()                                             # execute long calibration procedure
-    self.wrist.wristCommand("wrist_command/set_calibration")     # estimate offset and calibrate the force/torque sensor
-    return 'end'
+    rospy.loginfo('Executing state DO_CALIB')  
+    self.arm.set_max_velocity_scaling_factor(.25)                                              
+    self.longCalib()                                              # execute fast calibration procedure
+    self.arm.set_max_velocity_scaling_factor(.1)
+    self.wrist.wristCommand("wrist_command/estimate_calibration") # solve for calibration offsets
+    self.wrist.wristCommand("wrist_command/set_calibration")      # make use of calibration result
+    return 'return_to_home'
 
 class GoToGraspPos(smach.State,RobotCommander):
   """ Move to grasp position """
@@ -103,12 +97,13 @@ class PrepareToReach(smach.State,RobotCommander):
     rospy.loginfo('Executing state PREPARE_TO_REACH')
     self.wrist.wristCommand("wrist_command/subscribe")           # subscribe to js and ft topics
     self.wrist.wristCommand("wrist_command/start_loop")          # start node loop
+    self.wrist.wristCommand("wrist_command/set_calibration")     # make use of previous calibration
     self.wrist.wristCommand("wrist_mode/save_interaction")       # save estimate error on interaction forces
     return 'ready_to_reach'
 
 class StartToReach(smach.State,RobotCommander):
   def __init__(self):
-    super().__init__(outcomes=['ready_to_handover','end'])
+    super().__init__(outcomes=['ready_to_handover'])
 
   def execute(self, userdata):
     rospy.loginfo('Executing state START_TO_REACH')
@@ -119,7 +114,7 @@ class StartToReach(smach.State,RobotCommander):
 
 class ReachToHandover(smach.State,RobotCommander):
   def __init__(self):
-    super().__init__(outcomes=['released'])
+    super().__init__(outcomes=['return_to_home'])
 
   def execute(self, userdata):                                                                   
     rospy.loginfo('Executing state REACH_TO_HANDOVER')                                                     
@@ -128,7 +123,7 @@ class ReachToHandover(smach.State,RobotCommander):
       self.hand_async_open.start()                              # eventually open hand in separate thread
     self.arm.stop()                                             # then stop the arm motion                                                                                                           
     sleep(2)                                                    # wait a bit before restart
-    return 'released'
+    return 'return_to_home'
      
 def main():
 
@@ -139,14 +134,14 @@ def main():
   with sm:
     smach.StateMachine.add('GO_TO_HOME', GoToHome(), transitions={'at_home':'CHECK_CALIB'})
     smach.StateMachine.add('CHECK_CALIB', CheckCalib(), transitions={'uncalib':'DO_CALIB','calib':'GO_TO_GRASP_POS'})
-    smach.StateMachine.add('DO_CALIB', DoCalib(), transitions={'calib_done':'GO_TO_GRASP_POS'})
+    smach.StateMachine.add('DO_CALIB', DoCalib(), transitions={'calib_done':'GO_TO_GRASP_POS','return_to_home':'GO_TO_HOME'})
     smach.StateMachine.add('GO_TO_GRASP_POS', GoToGraspPos(), transitions={'ready_to_grasp':'WAIT_FOR_GRASP'})
     smach.StateMachine.add('WAIT_FOR_GRASP', WaitForGrasp(), transitions={'grasp':'GRASP','home':'GO_TO_HOME'})
     smach.StateMachine.add('GRASP', Grasp(), transitions={'grasped':'DO_OBJECT_RECOGNITION'})
     smach.StateMachine.add('DO_OBJECT_RECOGNITION', DoObjectRecognition(), transitions={'recog_done':'PREPARE_TO_REACH','home':'GO_TO_HOME'})
     smach.StateMachine.add('PREPARE_TO_REACH', PrepareToReach(), transitions={'ready_to_reach':'START_TO_REACH'})
     smach.StateMachine.add('START_TO_REACH', StartToReach(), transitions={'ready_to_handover':'REACH_TO_HANDOVER'})
-    smach.StateMachine.add('REACH_TO_HANDOVER', ReachToHandover(), transitions={'released':'GO_TO_HOME'})
+    smach.StateMachine.add('REACH_TO_HANDOVER', ReachToHandover(), transitions={'return_to_home':'GO_TO_HOME'})
 
   outcome = sm.execute()
   

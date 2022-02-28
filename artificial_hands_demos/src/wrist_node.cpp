@@ -16,7 +16,6 @@ namespace po = boost::program_options;
 
 namespace rosatk
 {
-
   using cmd = artificial_hands_msgs::WristCommand;
   //TO DO make use of frame_kinematics_node
   class WristNode: public ros::NodeHandle, public atk::Interaction, virtual public atk::Calibration
@@ -46,8 +45,9 @@ namespace rosatk
         cmd_3_ = advertiseService("wrist_command/stop_loop", &WristNode::stopLoopCommand, this);
         cmd_4_ = advertiseService("wrist_command/read_loop_time", &WristNode::readLoopTimeCommand, this);
         cmd_5_ = advertiseService("wrist_command/set_zero", &WristNode::setZeroCommand, this);  
-        cmd_6_ = advertiseService("wrist_command/set_calibration", &WristNode::calibrateCommand, this); 
-        cmd_7_ = advertiseService("wrist_command/check_calibration", &WristNode::checkCalibrationCommand, this);   
+        cmd_6_ = advertiseService("wrist_command/estimate_calibration", &WristNode::estimateCalibrationCommand, this); 
+        cmd_7_ = advertiseService("wrist_command/check_calibration", &WristNode::checkCalibrationCommand, this);  
+        cmd_8_ = advertiseService("wrist_command/set_calibration", &WristNode::setCalibrationCommand, this);   
         
         mod_10_ = advertiseService("wrist_mode/publish", &WristNode::publisherMode, this);
         mod_11_ = advertiseService("wrist_mode/trigger_static", &WristNode::triggerStaticMode, this);
@@ -67,8 +67,9 @@ namespace rosatk
       bool stopLoopCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_STO,response);}
       bool readLoopTimeCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_REA,response);}
       bool setZeroCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_ZRO,response);}
-      bool calibrateCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_CAL,response);}
+      bool estimateCalibrationCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_CAL,response);}
       bool checkCalibrationCommand(cmd::Request& request, cmd::Response& response){return command(cmd::Request::CMD_CHK,response);}
+      bool setCalibrationCommand(cmd::Request& request, cmd::Response& response){return command(8,response);}
 
       bool publisherMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_PUB,response);}
       bool triggerStaticMode(cmd::Request& request, cmd::Response& response){return command(cmd::Request::MOD_TST,response);} 
@@ -113,7 +114,7 @@ namespace rosatk
           Interaction::TriggerDynamics(factor_);
           break;
         case 16:
-          Calibration::AddEquation(force_fir,torque_fir,gravity); //TO DO: if Dynamics object can be inherited as virtual, no need to pass arguments here
+          Calibration::AddEquation(force_fir,torque_fir,gravity,twist_acceleration.linear); //TO DO: if Dynamics object can be inherited as virtual, no need to pass arguments here
           break;
         }
 
@@ -167,8 +168,6 @@ namespace rosatk
             j_sub_ = subscribe(controller_, 1000, &WristNode::jDataCallback, this);	
             js_ = ros::topic::waitForMessage<sensor_msgs::JointState>(controller_);
             response.success = Interaction::Init(*js_,ft_->wrench);
-            Dynamics::SetOffset(Calibration::Get());
-            Detection::SetOffset(Calibration::Get());
             break; 
           case 1:
             ROS_INFO("Starting node loop (computation and publish).");
@@ -198,16 +197,18 @@ namespace rosatk
             ROS_INFO("Starting estimate of calibration parameters.");
             Calibration::Solve();
             ROS_INFO("%s",cal_str.str().c_str());
+            break;
+          case 7:
+            ROS_INFO("Checking force/torque sensor calibration.");
+            Detection::SetOffset(Calibration::Get());
+            c_mass_ = 100*(atk::magnitudeVector3(force_iir)/(Calibration::GetMass()*9.81) - 1);
+            ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
+            (abs(c_mass_) > 10 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
+            break;
+          case 8:
             ROS_INFO("Setting offset on force/torque sensor.");
             Dynamics::SetOffset(Calibration::Get());
             Detection::SetOffset(Calibration::Get());
-            break;
-          case 7:
-            ROS_INFO("Checking force/torque sensor calibration (unsetting zero).");
-            Detection::SetZero(false);
-            double m = 100*(atk::magnitudeVector3(force_iir)/(Calibration::GetMass()*9.81) - 1);
-            ROS_INFO("Change on mass estimate: %.1f %%",m);
-            (abs(m) > 10 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;
           }   
           ROS_INFO("Executed command.");
@@ -256,7 +257,7 @@ namespace rosatk
       
       bool publish_;
       int mode_ = 10;
-      double cycle_time_ = 0.0, cycle_count_ = 0.0, factor_;
+      double cycle_time_ = 0.0, cycle_count_ = 0.0, factor_, c_mass_;
       const char *sensor_, *controller_;
       ros::WallTimer wr_tim_, det_tim_;
       ros::Publisher wr_pub_, det_pub_;
@@ -266,7 +267,7 @@ namespace rosatk
       artificial_hands_msgs::DetectionStamped det_msg_;
       geometry_msgs::WrenchStampedConstPtr ft_;
       sensor_msgs::JointStateConstPtr js_;
-      ros::ServiceServer cmd_0_, cmd_1_, cmd_2_, cmd_3_, cmd_4_, cmd_5_, cmd_6_, cmd_7_;
+      ros::ServiceServer cmd_0_, cmd_1_, cmd_2_, cmd_3_, cmd_4_, cmd_5_, cmd_6_, cmd_7_, cmd_8_;
       ros::ServiceServer mod_10_, mod_11_, mod_12_, mod_13_, mod_14_, mod_15_, mod_16_;
   };
 }
