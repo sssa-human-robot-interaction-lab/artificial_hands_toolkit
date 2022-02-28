@@ -62,13 +62,12 @@
                     <color rgba="0.4 0.4 0.4 1.0"/>
                 </material>
             </visual>
-
-            <!-- <collision>
+            <collision>
                 <origin xyz="0 0 0" rpy="0 0 0" />
                 <geometry>
-                    <mesh filename="package://robotiq_ft_sensor/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
+                    <mesh filename="package://artificial_hands_description/meshes/collision/mountings/robotiq_ft300-G-062-COUPLING_G-50-4M6-1D6_20181119.STL"/>
                 </geometry>
-            </collision> -->
+            </collision>
         </link>
 
          <!-- Connect force sensor with mounting/coupling plate -->

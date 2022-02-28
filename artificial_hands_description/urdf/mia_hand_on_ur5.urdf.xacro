@@ -66,6 +66,13 @@
       </geometry>
       <material name="DEFAULT_MTL.001"/>
     </visual>
+    <collision name="UR_flange">
+      <origin xyz="-0.023781363 -0.039999999 0.03784062" rpy="2.879793167 -1.3e-08 1.570796371"/>
+      <geometry>
+        <mesh filename="package://mia_hand_description/meshes/stl/1.001.stl" scale="0.000999987 0.000999987 0.000999987"/>
+      </geometry>
+      <material name="DEFAULT_MTL.001"/>
+    </collision>
   </link>
 
   <joint name="j_URflange" type="fixed">
