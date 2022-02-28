@@ -7,7 +7,7 @@ class GoToHome(smach.State,RobotCommander):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
-    self.arm.set_max_velocity_scaling_factor(.1)                  # set maximum speed (be careful exceeding .2)
+    self.arm.set_max_velocity_scaling_factor(.25)                 # set maximum speed (be careful exceeding .2)
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_HOME')
@@ -34,14 +34,22 @@ class CheckCalib(smach.State,RobotCommander):
 class DoCalib(smach.State,RobotCommander):
   """ Do calibration as needed """
   def __init__(self):
-    super().__init__(outcomes=['calib_done'])   
+    super().__init__(outcomes=['calib_done','end'])   
 
   def execute(self, userdata):
-    rospy.loginfo('Executing state DO_CALIB')                                          
-    for joint_target in calibration_joints:                      # go through all calibration points
-      self.addCalibrationPoint(joint_target)                     # add a calibration point
-    self.wrist.wristCommand("wrist_command/set_calibration")           # estimate offset and calibrate the force/torque sensor
-    return 'calib_done'
+    rospy.loginfo('Executing state DO_CALIB') 
+    self.wrist.wristCommand("wrist_mode/publish")  
+    self.wrist.wristCommand("wrist_command/stop_loop")
+    self.wrist.wristCommand("wrist_command/subscribe") 
+    self.wrist.wristCommand("wrist_command/start_loop")                                   
+    self.longCalib()                                             # execute fast calibration procedure
+    self.wrist.wristCommand("wrist_command/set_calibration")     # estimate offset and calibrate the force/torque sensor
+    self.wrist.wristCommand("wrist_command/stop_loop")
+    self.wrist.wristCommand("wrist_command/subscribe") 
+    self.wrist.wristCommand("wrist_command/start_loop")    
+    self.fastCalib()                                             # execute long calibration procedure
+    self.wrist.wristCommand("wrist_command/set_calibration")     # estimate offset and calibrate the force/torque sensor
+    return 'end'
 
 class GoToGraspPos(smach.State,RobotCommander):
   """ Move to grasp position """
@@ -81,7 +89,8 @@ class DoObjectRecognition(smach.State,RobotCommander):
   def execute(self, userdata):
     self.arm.go(joint_start ,wait=True)                          # move arm to the start configuration
     self.wrist.wristCommand("wrist_mode/save_dynamics")          # start to record dynamics
-    self.arm.servo_delta(goal_time,goal,goal_2)                  # lift the object enforcing linear acceleration
+    sleep(1)
+    # self.arm.servo_delta(goal_time,goal,goal_2)                  # lift the object enforcing linear acceleration
     self.wrist.wristCommand("wrist_command/stop_loop")           # stop node loop
     self.wrist.wristCommand("wrist_command/build_model")         # estimate inertial model
     return 'recog_done'

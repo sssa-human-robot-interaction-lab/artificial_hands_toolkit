@@ -30,14 +30,15 @@ class RobotCommander(ABC):
   hand commanders and to wrist_node services and publishers"""
 
   arm = HarmonicServoCommander()
-  hand = MiaHandCommander()
+  hand = MiaHandCommander('mia_hand')
   hand_async_open = Thread(target = hand.open)
   wrist = WristInterface()
 
   def goHome(self):
     self.arm.go(joint_home,wait=True)
     self.hand.open()                                                   
-    self.arm.stop()                                                    
+    self.arm.stop() 
+    sleep(1)                                                   
 
   def waitForTouchEnter(self,state):
     """ Just wait for user to touch the hand"""
@@ -73,12 +74,26 @@ class RobotCommander(ABC):
     while not self.wrist.detection.trigger and (rospy.Time.now() - start_time).to_sec() < timeout:                                                         
       pass  
 
-  def addCalibrationPoint(self,joint_target):
-    """ Move arm in joint configuration and save mesurments for further calibration """
-    self.arm.go(joint_target, wait=True)                               
-    self.arm.stop()                                                    
-    sleep(.3)                                                          
-    self.wrist.wristCommand("wrist_mode/save_calibration")                   
-    sleep(.7)                                                          
-    self.wrist.wristCommand("wrist_mode/publish")                                                                                                         
+  def longCalib(self):
+    for joint_target in calibration_joints:
+      """ Move arm in joint configuration and save mesurments for further calibration """
+      self.arm.go(joint_target, wait=True)                               
+      self.arm.stop()                                                    
+      sleep(.3)                                                          
+      self.wrist.wristCommand("wrist_mode/save_calibration")                   
+      sleep(.7)                                                          
+      self.wrist.wristCommand("wrist_mode/publish") 
+
+  def fastCalib(self):
+    self.arm.go(joint_calib,wait=True)
+    self.wrist.wristCommand("wrist_mode/save_calibration")  
+    goal_accel = -0.5
+    goal_time = 1 
+    goal = Pose()
+    goal_2 = Pose()
+    goal_2.position.x = goal_accel*pow(goal_time/2,2)/9.9
+    goal_2.position.y = goal_2.position.x
+    goal_2.position.z = goal_2.position.x
+    self.arm.servo_delta(goal_time, delta_pose = goal, delta_pose_2 = goal_2) 
+    sleep(.1)                                                                                                        
   
