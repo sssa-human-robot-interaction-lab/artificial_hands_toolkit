@@ -52,8 +52,8 @@ add_message_files(
   FILES
   FrameKinematics.msg
   FrameKinematicsStamped.msg
-  Wrist.msg
-  WristStamped.msg
+  WristDynamics.msg
+  WristDynamicsStamped.msg
   Detection.msg
   DetectionStamped.msg
 )
@@ -62,7 +62,7 @@ add_message_files(
 add_service_files(
   FILES
   FrameKinematicsCommand.srv
-  WristCommand.srv
+  WristDynamicsCommand.srv
 )
 
 ## Generate actions in the 'action' folder

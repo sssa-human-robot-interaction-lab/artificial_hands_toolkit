@@ -1,2 +1,0 @@
-std_msgs/Header header
-artificial_hands_msgs/Wrist wrist

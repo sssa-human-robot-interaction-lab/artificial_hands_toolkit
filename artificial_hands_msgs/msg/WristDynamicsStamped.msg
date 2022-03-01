@@ -1,0 +1,2 @@
+std_msgs/Header header
+artificial_hands_msgs/WristDynamics wrist_dynamics

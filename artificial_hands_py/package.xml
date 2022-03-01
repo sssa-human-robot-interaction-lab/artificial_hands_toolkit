@@ -51,7 +51,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>pybind11_catkin</depend>
-  <depend>artificial_hands_wrist</depend>
+  <depend>artificial_hands_base</depend>
   <depend>artificial_hands_msgs</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>

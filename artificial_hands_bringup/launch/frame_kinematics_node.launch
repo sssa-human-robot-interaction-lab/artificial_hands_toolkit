@@ -1,0 +1,19 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Make use of moveit servo_server -->
+  <arg name="servo_server" default="true" />
+  
+  <!-- Load moveit planning and execution interface -->
+  <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
+
+  <!-- Run the frame kinematics node -->
+  <node pkg="artificial_hands_base" type="frame_kinematics_node" name="frame_kinematics_node" output="screen" args="--rate 100"/>
+
+  <!-- rviz -->
+  <node pkg="rviz" type="rviz" name="rviz_demo_config" output="screen" args="-d $(find artificial_hands_bringup)/cfg/demo_config.rviz"/>
+
+  <!-- rqt plot -->
+  <node pkg="rqt_gui" type="rqt_gui" name="rqt_plot_frame_kinematics" output="screen" args="--perspective-file $(find artificial_hands_bringup)/cfg/plot_perspective.perspective"/>
+
+</launch>

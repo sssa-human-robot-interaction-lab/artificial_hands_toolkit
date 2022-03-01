@@ -3,20 +3,14 @@ project(artificial_hands_base)
 
 ## Compile as C++11, supported in ROS Kinetic and newer
 # add_compile_options(-std=c++11)
-cmake_policy(SET CMP0054 NEW)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
-find_package(catkin REQUIRED COMPONENTS
-  roscpp
-  moveit_ros_planning
-  eigen_conversions
-  )
+find_package(catkin REQUIRED COMPONENTS roscpp moveit_ros_planning eigen_conversions artificial_hands_msgs)
 
 ## System dependencies are found with CMake's conventions
-find_library(alglib REQUIRED libalglib.so)
-
+find_package(Boost REQUIRED COMPONENTS system program_options)
 
 ## Uncomment this if the package has a setup.py. This macro ensures
 ## modules and global scripts declared therein get installed
@@ -105,12 +99,8 @@ find_library(alglib REQUIRED libalglib.so)
 ## DEPENDS: system dependencies of this project that dependent projects also need
 catkin_package(
  INCLUDE_DIRS include
- LIBRARIES artificial_hands_base alglib
- CATKIN_DEPENDS
- roscpp
- moveit_ros_planning
- eigen_conversions
-#  DEPENDS system_lib
+ LIBRARIES artificial_hands_base
+ CATKIN_DEPENDS roscpp moveit_ros_planning eigen_conversions artificial_hands_msgs
 )
 
 ###########
@@ -122,18 +112,20 @@ catkin_package(
 include_directories(
  include
  ${catkin_INCLUDE_DIRS}
- ${alglib_INCLUDE_DIRS}
 )
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-  include/${PROJECT_NAME}/Algorithm.hpp
-  include/${PROJECT_NAME}/Common.hpp
-  include/${PROJECT_NAME}/Filters.hpp
-  include/${PROJECT_NAME}/Math.hpp
-  include/${PROJECT_NAME}/Sensor.hpp
-  src/Dynamics.cpp
-  src/Kinematics.cpp
+  include/${PROJECT_NAME}/BaseAlgorithm.hpp
+  include/${PROJECT_NAME}/BaseCommon.hpp
+  include/${PROJECT_NAME}/BaseFilters.hpp
+  include/${PROJECT_NAME}/BaseFTSensor.hpp
+  include/${PROJECT_NAME}/BaseMath.hpp
+  include/${PROJECT_NAME}/FrameDynamics.hpp
+  include/${PROJECT_NAME}/FrameKinematics.hpp
+  include/${PROJECT_NAME}/WristFTCalibration.hpp
+  include/${PROJECT_NAME}/WristFTDetection.hpp
+  include/${PROJECT_NAME}/WristFTInteraction.hpp
 )
 
 ## Add cmake target dependencies of the library
@@ -144,20 +136,25 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
 ## The recommended prefix ensures that target names across packages don't collide
-# add_executable(${PROJECT_NAME}_node src/artificial_hands_base_node.cpp)
+add_executable(frame_kinematics_node src/frame_kinematics_node.cpp)
+add_executable(wrist_dynamics_node src/wrist_dynamics_node.cpp)
 
 ## Rename C++ executable without prefix
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-# set_target_properties(${PROJECT_NAME}_node PROPERTIES OUTPUT_NAME node PREFIX "")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
-# add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(frame_kinematics_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(wrist_dynamics_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${alglib_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} alglib)
+target_link_libraries(frame_kinematics_node ${catkin_LIBRARIES} ${PROJECT_NAME})
+target_link_libraries(wrist_dynamics_node ${catkin_LIBRARIES} ${PROJECT_NAME})
+
 
 #############
 ## Install ##
@@ -168,10 +165,10 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES} ${alglib_LIBRARIES})
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  scripts/fake_ft_sensor_node.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html

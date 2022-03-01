@@ -9,7 +9,7 @@ add_compile_options(-O3 -std=c++11 -fPIC)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   pybind11_catkin
-  artificial_hands_wrist
+  artificial_hands_base
   artificial_hands_msgs
 )
 
@@ -106,7 +106,7 @@ catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES artificial_hands_py
  CATKIN_DEPENDS
- artificial_hands_wrist
+ artificial_hands_base
  artificial_hands_msgs
 #  DEPENDS system_lib
 )
@@ -123,14 +123,15 @@ include_directories(
 )
 
 ## Declare a C++ library
-add_library(${PROJECT_NAME}atk
-  src/pyatk.cpp
+add_library(${PROJECT_NAME}
+  include/${PROJECT_NAME}/pyBaseWrapper.hpp
+  include/${PROJECT_NAME}/pyWristFTWrapper.hpp
 )
 
 ## Add cmake target dependencies of the library
 ## as an example, code may need to be generated before libraries
 ## either from message generation or dynamic reconfigure
-add_dependencies(${PROJECT_NAME}atk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
+add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Declare a C++ executable
 ## With catkin_make all packages are built within a single CMake context
@@ -141,14 +142,15 @@ add_dependencies(${PROJECT_NAME}atk ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-set_target_properties(${PROJECT_NAME}atk PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION}atk OUTPUT_NAME pyatk PREFIX "" SUFFIX ".cpython-38-x86_64-linux-gnu.so")
+set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION} OUTPUT_NAME pyatk PREFIX "" SUFFIX ".cpython-38-x86_64-linux-gnu.so")
+set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above
 # add_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(${PROJECT_NAME}atk ${catkin_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 
 #############
 ## Install ##
@@ -159,10 +161,10 @@ target_link_libraries(${PROJECT_NAME}atk ${catkin_LIBRARIES})
 
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
-# catkin_install_python(PROGRAMS
-#   scripts/my_python_script
-#   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
-# )
+catkin_install_python(PROGRAMS
+  scripts/handover_release_smach_node.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
 
 ## Mark executables for installation
 ## See http://docs.ros.org/melodic/api/catkin/html/howto/format1/building_executables.html

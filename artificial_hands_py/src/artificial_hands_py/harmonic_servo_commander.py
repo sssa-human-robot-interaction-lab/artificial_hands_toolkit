@@ -1,5 +1,3 @@
-from math import floor
-from time import sleep
 import numpy as np
 from cmath import pi
 

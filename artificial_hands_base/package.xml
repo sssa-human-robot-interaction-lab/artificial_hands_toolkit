@@ -52,6 +52,7 @@
   <depend>roscpp</depend>
   <depend>moveit_ros_planning</depend>
   <depend>eigen_conversions</depend>
+  <depend>artificial_hands_msgs</depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
