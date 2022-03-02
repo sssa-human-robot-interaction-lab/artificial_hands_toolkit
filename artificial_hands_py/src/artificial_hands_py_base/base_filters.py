@@ -1,4 +1,4 @@
-from artificial_hands_py.pyatk import pyBaseFilter
+from artificial_hands_py.artificial_hands_py_base import pyBaseFilter
 
 class BaseFilter(pyBaseFilter):
 

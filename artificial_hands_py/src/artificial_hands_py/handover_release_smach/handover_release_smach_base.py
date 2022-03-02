@@ -7,8 +7,8 @@ import rospy
 from artificial_hands_msgs.srv import *
 from artificial_hands_msgs.msg import *
 
-from artificial_hands_py.mia_hand_commander import MiaHandCommander
-from artificial_hands_py.harmonic_servo_commander import HarmonicServoCommander
+from artificial_hands_py.robot_commander.mia_hand_commander import MiaHandCommander
+from artificial_hands_py.robot_commander.harmonic_servo_commander import HarmonicServoCommander
 
 from artificial_hands_py.handover_release_smach.constants import *
 
@@ -22,7 +22,7 @@ class WristInterface:
     sub = rospy.Subscriber("/wrist_detection",DetectionStamped,self.wristCallback)
 
   def wristCommand(self,service_name):
-    res = rospy.ServiceProxy(service_name,WristCommand)
+    res = rospy.ServiceProxy(service_name,WristDynamicsCommand)
     return res().success
 
   def wristCallback(self,msg : DetectionStamped):
