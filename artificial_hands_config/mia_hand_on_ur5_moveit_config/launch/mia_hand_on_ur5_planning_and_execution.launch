@@ -14,9 +14,7 @@
     <arg name="moveit_controller_manager" default="mia_hand_on_ur5" />
   </include>
 
-  <!-- Load moveit servo server for mia_hand_on_ur5 robot (if needed)-->
-  <node if="$(arg servo_server)" name="mia_hand_on_ur5_servo_server" pkg="moveit_servo" type="servo_server" output="screen" >
-    <rosparam command="load" file="$(find mia_hand_on_ur5_moveit_config)/config/mia_hand_on_ur5_moveit_servo_config.yaml" />
-  </node>
+  <!-- Load moveit servo server -->
+  <include if="$(arg servo_server)" file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_moveit_servo_server.launch" pass_all_args="true"/>
 
 </launch>

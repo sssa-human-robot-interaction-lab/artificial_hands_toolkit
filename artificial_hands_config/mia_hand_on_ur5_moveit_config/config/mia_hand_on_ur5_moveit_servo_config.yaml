@@ -39,7 +39,7 @@ robot_link_command_frame: ft_sensor_frame  # commands must be given in the frame
 incoming_command_timeout:  0.1  # Stop servoing if X seconds elapse without a new command
 # If 0, republish commands forever even if the robot is stationary. Otherwise, specify num. to publish.
 # Important because ROS may drop some messages and we need the robot to halt reliably.
-num_outgoing_halt_msgs_to_publish: 4
+num_outgoing_halt_msgs_to_publish: 0
 
 ## Configure handling of singularities and joint limits
 lower_singularity_threshold:  17  # Start decelerating when the condition number hits this (close to singularity)
@@ -49,7 +49,7 @@ joint_limit_margin: 0.1 # added as a buffer to joint limits [radians]. If moving
 ## Topic names
 cartesian_command_in_topic: /servo_twist_controller/command  # Topic for incoming Cartesian twist commands
 joint_command_in_topic: /servo_joint_controller/command # Topic for incoming joint angle commands
-joint_topic: joint_states
+joint_topic: /servo_joint_states
 status_topic: status # Publish status to this topic
 command_out_topic: /joint_group_vel_controller/command # Publish outgoing commands here
 

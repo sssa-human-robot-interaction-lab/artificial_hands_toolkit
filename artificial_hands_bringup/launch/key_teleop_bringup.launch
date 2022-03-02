@@ -1,0 +1,26 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="true" />
+
+  <!-- Load real or simulated (Gazebo) hardware -->
+  <include if="$(arg sim)" file="$(find artificial_hands_bringup)/launch/mia_hand_on_ur5_bringup.launch" pass_all_args="true"/>
+  
+  <!-- Make use of moveit servo_server -->
+  <arg name="servo_server" default="true" />
+  
+  <!-- Load moveit planning and execution interface -->
+  <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
+
+  <!-- Load key_teleop -->
+  <node pkg="key_teleop" type="key_teleop.py" name="key_teleop_node" output="screen" launch-prefix="xterm -e">
+    <param name="hz" type="int" value="50" />
+    <param name="forward_rate" type="double" value="0.1" />
+    <param name="backward_rate" type="double" value="0.1" />
+    <param name="rotation_rate" type="double" value="0.5" />
+  </node>
+
+  <!-- Load node to forward teleop commands -->
+  <node pkg="artificial_hands_py" type="key_teleop_servo_node.py" name="key_teleop_servo_node" output="screen" launch-prefix="xterm -e" />
+
+</launch>

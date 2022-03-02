@@ -1,0 +1,15 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="true"/>
+
+  <!-- Load moveit servo server for mia_hand_on_ur5 robot -->
+  <node name="mia_hand_on_ur5_servo_server" pkg="moveit_servo" type="servo_server" output="screen" >
+    <rosparam command="load" file="$(find mia_hand_on_ur5_moveit_config)/config/mia_hand_on_ur5_moveit_servo_config.yaml" />
+    <param if="$(arg sim)" name="use_gazebo" value="true"/>
+    <param if="$(arg sim)" name="publish_joint_positions" value="true"/>
+    <param if="$(arg sim)" name="publish_joint_velocities" value="false"/>
+    <param if="$(arg sim)" name="command_out_topic" value="/joint_group_pos_controller/command"/>
+  </node>
+
+</launch>

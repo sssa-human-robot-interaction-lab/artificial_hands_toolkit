@@ -1,9 +1,0 @@
-<?xml version="1.0"?>
-<launch>
-
-  <!-- Load moveit servo server for mia_hand_on_ur5 robot -->
-  <node name="mia_hand_on_ur5_servo_server" pkg="moveit_servo" type="servo_server" output="screen" >
-    <rosparam command="load" file="$(find mia_hand_on_ur5_moveit_config)/config/mia_hand_on_ur5_moveit_servo_config.yaml" />
-  </node>
-
-</launch>

@@ -1,3 +1,4 @@
+from symtable import SymbolTableFactory
 import numpy as np
 from cmath import pi
 
@@ -7,7 +8,7 @@ from std_msgs.msg import Float64MultiArray
 from geometry_msgs.msg import Pose, TwistStamped
 from trajectory_msgs.msg import JointTrajectory
 
-from artificial_hands_py.controller_manager_base import ControllerManagerBase
+from artificial_hands_py.robot_commander.controller_manager_base import ControllerManagerBase
 
 class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCommander):
   """ Purpose of this class is giving access to cartesian planning in the eef frame.
@@ -39,7 +40,7 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
   """
 
   j_traj_ctrl = 'pos_joint_traj_controller'
-  j_servo_ctrl = 'joint_group_vel_controller'
+  j_servo_ctrl = 'joint_group_pos_controller'
   eef_frame_servo = 'servo_twist_controller'
   dt = 0.001
 
@@ -80,10 +81,8 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
       servo_cmd.twist.linear.x = servo_x[c]
       servo_cmd.twist.linear.y = servo_y[c]
       servo_cmd.twist.linear.z = servo_z[c]
-
-      servo_cmd.header.seq = 0
-      servo_cmd.header.stamp = rospy.Time.now()
-      servo_cmd.header.stamp.secs += 1
+      servo_cmd.header.stamp.secs = rospy.Time.now().secs
+      servo_cmd.header.stamp.nsecs = rospy.Time.now().nsecs + servo_rate.sleep_dur.to_nsec()
 
       self.servo_command(self.eef_frame_servo,servo_cmd)
 

@@ -10,13 +10,10 @@
 
   <group if="$(arg sim)">
 
-    <!-- Load extra gazebo controllers to parameter server -->
-    <rosparam file="$(find artificial_hands_bringup)/config/control/gazebo_controllers.yaml" command="load"/>
-
     <!-- Make use of UR5 bringup from ur_gazebo-->
     <include file="$(find ur_gazebo)/launch/ur5_bringup.launch" >
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_ur5.launch.xml" />
-      <arg name="stopped_controllers" value="joint_group_vel_controller" />
+      <arg name="stopped_controllers" value="joint_group_pos_controller" />
     </include>
 
     <!-- Load Mia hand controllers to parameter server -->
