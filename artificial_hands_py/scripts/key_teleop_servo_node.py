@@ -10,7 +10,7 @@ from geometry_msgs.msg import Twist,TwistStamped
 class KeyTeleopServoCommander(HarmonicServoCommander):
 
   def __init__(self,rate : rospy.Rate, ns='') -> None:
-    super().__init__(ns,rate)
+    super().__init__(rate,ns)
     self.lin = 0
     self.ang = 0
     self.rate = rate

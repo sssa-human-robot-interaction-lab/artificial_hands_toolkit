@@ -124,8 +124,7 @@ include_directories(
 
 ## Declare a C++ library
 add_library(${PROJECT_NAME}
-  include/${PROJECT_NAME}/pyBaseWrapper.hpp
-  include/${PROJECT_NAME}/pyWristFTWrapper.hpp
+  src/artificial_hands_py_base.cpp
 )
 
 ## Add cmake target dependencies of the library
@@ -142,8 +141,7 @@ add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EX
 ## The above recommended prefix causes long target names, the following renames the
 ## target back to the shorter version for ease of user use
 ## e.g. "rosrun someones_pkg node" instead of "rosrun someones_pkg someones_pkg_node"
-set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION} OUTPUT_NAME artificial_hands_py_base PREFIX "" SUFFIX ".cpython-38-x86_64-linux-gnu.so")
-set_target_properties(${PROJECT_NAME} PROPERTIES LINKER_LANGUAGE CXX)
+set_target_properties(${PROJECT_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY ${CATKIN_DEVEL_PREFIX}/${CATKIN_PACKAGE_PYTHON_DESTINATION} OUTPUT_NAME pyatk PREFIX "" SUFFIX ".cpython-38-x86_64-linux-gnu.so")
 
 ## Add cmake target dependencies of the executable
 ## same as for the library above

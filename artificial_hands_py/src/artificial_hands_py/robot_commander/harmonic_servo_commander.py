@@ -44,7 +44,7 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
   c_frame_servo = 'servo_twist_controller'
 
   def __init__(self,rate : rospy.Rate ,ns=''):
-    super().__init__(ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.eef_frame_servo : TwistStamped})
+    super().__init__(ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
     super(ControllerManagerBase,self).__init__('manipulator') 
     self.rate = rate
     self.dt = rate.sleep_dur.to_sec()

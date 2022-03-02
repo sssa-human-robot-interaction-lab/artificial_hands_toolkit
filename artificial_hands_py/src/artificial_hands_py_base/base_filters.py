@@ -1,6 +1,6 @@
-from artificial_hands_py.artificial_hands_py_base import pyBaseFilter
+from artificial_hands_py import pyatk
 
-class BaseFilter(pyBaseFilter):
+class BaseFilter(pyatk.pyBaseFilter):
 
   def __init__(self,len : int = 20) -> None:
       super().__init__(len)

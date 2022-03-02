@@ -1,6 +1,6 @@
-from artificial_hands_py.artificial_hands_py_base import pyWristFTDetection
+from artificial_hands_py import pyatk
 
-class WristFTDetection(pyWristFTDetection):
+class WristFTDetection(pyatk.pyWristFTDetection):
 
   def __init__(self,buf : int = 50, th : int = 20, rto : float = 0.5, dev : float =0.4, factor : float = 2.0) -> None:
     super.__init__(buf,th,rto,dev,factor)
