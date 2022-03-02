@@ -41,12 +41,13 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
 
   j_traj_ctrl = 'pos_joint_traj_controller'
   j_servo_ctrl = 'joint_group_pos_controller'
-  eef_frame_servo = 'servo_twist_controller'
-  dt = 0.001
+  c_frame_servo = 'servo_twist_controller'
 
-  def __init__(self,ns=''):
+  def __init__(self,rate : rospy.Rate ,ns=''):
     super().__init__(ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.eef_frame_servo : TwistStamped})
     super(ControllerManagerBase,self).__init__('manipulator') 
+    self.rate = rate
+    self.dt = rate.sleep_dur.to_sec()
 
   def servo_delta(self, goal_time : float, delta_pose : Pose = Pose(), delta_pose_2 : Pose = Pose()):
 
@@ -74,18 +75,16 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
     servo_y = np.ndarray.tolist(harmonic_vel(delta_pose.position.y,goal_time) + biharmonic_vel_2(delta_pose_2.position.y,goal_time))
     servo_z = np.ndarray.tolist(harmonic_vel(delta_pose.position.z,goal_time) + biharmonic_vel_2(delta_pose_2.position.z,goal_time))
 
-    servo_rate = rospy.Rate(1/self.dt)
-
     servo_cmd = TwistStamped()
     for c in range(0,len(servo_x)):
       servo_cmd.twist.linear.x = servo_x[c]
       servo_cmd.twist.linear.y = servo_y[c]
       servo_cmd.twist.linear.z = servo_z[c]
       servo_cmd.header.stamp.secs = rospy.Time.now().secs
-      servo_cmd.header.stamp.nsecs = rospy.Time.now().nsecs + servo_rate.sleep_dur.to_nsec()
+      servo_cmd.header.stamp.nsecs = rospy.Time.now().nsecs + self.rate.sleep_dur.to_nsec()
 
-      self.servo_command(self.eef_frame_servo,servo_cmd)
+      self.servo_command(self.c_frame_servo,servo_cmd)
 
-      servo_rate.sleep()
+      self.rate.sleep()
     
     self.switch_to_controller(self.j_traj_ctrl)

@@ -9,10 +9,11 @@ from geometry_msgs.msg import Twist,TwistStamped
 
 class KeyTeleopServoCommander(HarmonicServoCommander):
 
-  def __init__(self,ns='') -> None:
-    super().__init__(ns)
+  def __init__(self,rate : rospy.Rate, ns='') -> None:
+    super().__init__(ns,rate)
     self.lin = 0
     self.ang = 0
+    self.rate = rate
     key_sub = rospy.Subscriber("/key_vel",Twist,self.key_callback)
 
   def key_callback(self,msg : Twist):
@@ -28,7 +29,8 @@ class KeyTeleopServoCommander(HarmonicServoCommander):
     cmd.twist.angular.y = self.ang*servo_ff*servo_axis[1]
     cmd.twist.angular.z = self.ang*servo_ff*servo_axis[2]
     cmd.header.stamp.secs = rospy.Time.now().secs
-    cmd.header.stamp.nsecs = rospy.Time.now().nsecs
+    cmd.header.stamp.nsecs = rospy.Time.now().nsecs + self.rate.sleep_dur.to_nsec()
+    self.servo_command(self.c_frame_servo,cmd)
 
 def getKey(key_timeout):
     tty.setraw(sys.stdin.fileno())
@@ -46,7 +48,8 @@ def main():
 
   rospy.init_node("key_teleop_servo_node")
   
-  servo_cmd = KeyTeleopServoCommander()
+  rate = rospy.Rate(50)
+  servo_cmd = KeyTeleopServoCommander(rate)
 
   print("\nKey settings:\n + : increase speed feedforward\n - : decrease speed feedforward\n x : control x axis\n y : control y axis\n z : control z axis\n h : move to home position\n")
 
@@ -55,18 +58,20 @@ def main():
 
   servo_cmd.switch_to_controller(servo_cmd.j_servo_ctrl)
 
-  rate = rospy.Rate(50)
+  rate.sleep()
   while not rospy.is_shutdown():
 
     servo_cmd.key_servo(servo_axis,servo_ff)
 
     set_key = getKey(rate.remaining().to_sec())
     if set_key == '+':
-      servo_ff = servo_ff * 1.5
-      rospy.loginfo("Increased speed feed_forward to %.2f",servo_ff)
+      if servo_ff < 20:
+        servo_ff = servo_ff * 2
+        rospy.loginfo("Increased speed feed_forward to %.2f",servo_ff)
     elif set_key == '-':
-      servo_ff = servo_ff * 0.5
-      rospy.loginfo("Decreased speed feed_forward to %.2f",servo_ff)
+      if servo_ff > .05:
+        servo_ff = servo_ff * 0.5
+        rospy.loginfo("Decreased speed feed_forward to %.2f",servo_ff)
     elif set_key in ['x','y','z']:
       servo_axis = [0,0,0]
       servo_axis[['x','y','z'].index(set_key)] = 1
