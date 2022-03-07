@@ -49,7 +49,7 @@ joint_limit_margin: 0.1 # added as a buffer to joint limits [radians]. If moving
 ## Topic names
 cartesian_command_in_topic: /servo_twist_controller/command  # Topic for incoming Cartesian twist commands
 joint_command_in_topic: /servo_joint_controller/command # Topic for incoming joint angle commands
-joint_topic: /servo_joint_states
+joint_topic: /joint_states
 status_topic: status # Publish status to this topic
 command_out_topic: /joint_group_vel_controller/command # Publish outgoing commands here
 

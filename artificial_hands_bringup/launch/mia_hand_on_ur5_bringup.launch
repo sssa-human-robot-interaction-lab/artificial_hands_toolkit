@@ -14,6 +14,7 @@
     <include file="$(find ur_gazebo)/launch/ur5_bringup.launch" >
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_ur5.launch.xml" />
       <arg name="stopped_controllers" value="joint_group_pos_controller" />
+      <arg name="kinematics_params" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg robot_ip).yaml" />
     </include>
 
     <!-- Load Mia hand controllers to parameter server -->
@@ -74,13 +75,13 @@
   </group>
 
   <!-- Load other cartesian controllers to parameter server -->
-  <rosparam file="$(find artificial_hands_bringup)/config/control/cartesian_controllers.yaml" command="load"/>
+  <rosparam file="$(find artificial_hands_bringup)/config/control/cartesian_eik_controllers.yaml" command="load"/>
 
   <!-- Load robot SRDF to the parameter server -->
   <param name="/robot_description_semantic" type="str" textfile="$(find mia_hand_on_ur5_moveit_config)/config/mia_hand_on_ur5.srdf"/>
 
   <!-- Spawn stopped cartesian controllers -->
-  <node name="cartesian_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped cartesian_motion_controller" />
+  <node name="cartesian_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped cartesian_eik_position_controller" />
 
   <!-- Load gui -->
   <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" />
