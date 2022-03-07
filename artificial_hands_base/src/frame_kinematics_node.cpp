@@ -103,7 +103,7 @@ namespace rosatk
 
       void loopTimerCallback(const ros::WallTimerEvent& event)
       {
-        start_ = ros::WallTime::now();
+        wall_start_ = ros::WallTime::now();
 
         FrameKinematics::Get();
         switch(mode_)
@@ -116,7 +116,7 @@ namespace rosatk
         if(publish_)
         {
           loop_msg_.header.seq = (int)cycle_count_;
-          loop_msg_.header.stamp.fromNSec(start_.toNSec());      
+          loop_msg_.header.stamp = ros::Time::now();   
           loop_msg_.frame_kinematics.position = position; 
           loop_msg_.frame_kinematics.velocity = velocity; 
           loop_msg_.frame_kinematics.acceleration = acceleration;
@@ -126,7 +126,7 @@ namespace rosatk
         }
         
         cycle_count_ += 1.0;
-        cycle_time_ += (ros::WallTime::now() - start_).toSec();
+        cycle_time_ += (ros::WallTime::now() - wall_start_).toSec();
       }      
 
       void jDataCallback(const sensor_msgs::JointState::ConstPtr& msg){FrameKinematics::Update(*msg);}
@@ -138,7 +138,7 @@ namespace rosatk
       artificial_hands_msgs::FrameKinematicsStamped loop_msg_;
       ros::WallTimer loop_tim_;
       ros::Publisher loop_pub_;
-      ros::WallTime start_;
+      ros::WallTime wall_start_;
       ros::NodeHandle nh_;
       ros::Subscriber j_sub_;
       sensor_msgs::JointStateConstPtr js_;
