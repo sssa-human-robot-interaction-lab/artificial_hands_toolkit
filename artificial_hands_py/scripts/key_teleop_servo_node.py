@@ -1,19 +1,19 @@
 #! /usr/bin/env python3
 
-import rospy
-import sys, select, termios, tty
-from cmath import pi
+from artificial_hands_py.robot_commander import *
+from artificial_hands_py import get_key
 
-from artificial_hands_py.robot_commander import HarmonicServoCommander
-from geometry_msgs.msg import Twist,TwistStamped
+class KeyTeleopServoCommander(ServoCommanderBase):
 
-class KeyTeleopServoCommander(HarmonicServoCommander):
+  j_traj_ctrl = 'pos_joint_traj_controller'
+  j_servo_ctrl = 'joint_group_vel_controller'
+  c_frame_servo = 'servo_twist_controller'
 
-  def __init__(self,rate : rospy.Rate, ns='') -> None:
-    super().__init__(rate,ns)
+  def __init__(self, rate: rospy.Rate, ns: str = '') -> None:
+    super().__init__(rate,ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
     self.lin = 0
     self.ang = 0
-    self.rate = rate
+    
     key_sub = rospy.Subscriber("/key_vel",Twist,self.key_callback)
 
   def key_callback(self,msg : Twist):
@@ -31,16 +31,6 @@ class KeyTeleopServoCommander(HarmonicServoCommander):
     cmd.header.stamp.secs = rospy.Time.now().secs
     cmd.header.stamp.nsecs = rospy.Time.now().nsecs + self.rate.sleep_dur.to_nsec()
     self.servo_command(self.c_frame_servo,cmd)
-
-def getKey(key_timeout):
-    tty.setraw(sys.stdin.fileno())
-    rlist, _, _ = select.select([sys.stdin], [], [], key_timeout)
-    if rlist:
-        key = sys.stdin.read(1)
-    else:
-        key = ''
-    termios.tcsetattr(sys.stdin, termios.TCSADRAIN, settings)
-    return key
 
 def main():
 
@@ -63,7 +53,7 @@ def main():
 
     servo_cmd.key_servo(servo_axis,servo_ff)
 
-    set_key = getKey(rate.remaining().to_sec())
+    set_key = get_key(rate.remaining().to_sec())
     if set_key == '+':
       if servo_ff < 20:
         servo_ff = servo_ff * 2
@@ -88,5 +78,4 @@ def main():
     rate.sleep()
   
 if __name__ == '__main__':
-  settings = termios.tcgetattr(sys.stdin)
   main()
