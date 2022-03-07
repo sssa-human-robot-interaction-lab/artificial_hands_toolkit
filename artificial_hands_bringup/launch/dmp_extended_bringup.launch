@@ -1,0 +1,23 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="true" />
+
+  <!-- Load simulated (Gazebo) hardware -->
+  <include if="$(arg sim)" file="$(find artificial_hands_bringup)/launch/mia_hand_on_ur5_bringup.launch" pass_all_args="true"/>
+  
+  <!-- Make use of moveit servo_server -->
+  <arg name="servo_server" default="true" />
+  <arg name="ee_frame" default="ft_sensor_frame" />
+  <arg name="command_frame" default="world" />
+  
+  <!-- Load moveit planning and execution interface -->
+  <include file="$(find mia_hand_on_ur5_moveit_config)/launch/mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
+
+  <!-- Load dmp_extended node -->
+  <!-- <include file="$(find dmp_extended)/launch/dmp_node.launch"/> -->
+
+  <!-- Load node to forward dmp commands -->
+  <!-- <node pkg="artificial_hands_py" type="dmp_extended_servo_node.py" name="dmp_extended_servo_node" output="screen" launch-prefix="xterm -e" /> -->
+
+</launch>
