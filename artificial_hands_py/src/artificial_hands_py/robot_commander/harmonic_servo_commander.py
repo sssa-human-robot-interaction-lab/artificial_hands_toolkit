@@ -1,16 +1,6 @@
-from symtable import SymbolTableFactory
-import numpy as np
-from cmath import pi
+from artificial_hands_py.robot_commander import *
 
-import rospy
-import moveit_commander
-from std_msgs.msg import Float64MultiArray
-from geometry_msgs.msg import Pose, TwistStamped
-from trajectory_msgs.msg import JointTrajectory
-
-from artificial_hands_py.robot_commander.controller_manager_base import ControllerManagerBase
-
-class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCommander):
+class HarmonicServoCommander(ServoCommanderBase):
   """ Purpose of this class is giving access to cartesian planning in the eef frame.
   Using a moveit servo_server node it is possible to move the eef following cycloidal
   or biharmonic motion-laws
@@ -40,14 +30,11 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
   """
 
   j_traj_ctrl = 'pos_joint_traj_controller'
-  j_servo_ctrl = 'joint_group_pos_controller'
+  j_servo_ctrl = 'joint_group_vel_controller'
   c_frame_servo = 'servo_twist_controller'
 
   def __init__(self,rate : rospy.Rate ,ns=''):
-    super().__init__(ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
-    super(ControllerManagerBase,self).__init__('manipulator') 
-    self.rate = rate
-    self.dt = rate.sleep_dur.to_sec()
+    super().__init__(rate,ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
 
   def servo_delta(self, goal_time : float, delta_pose : Pose = Pose(), delta_pose_2 : Pose = Pose()):
 
@@ -71,15 +58,21 @@ class HarmonicServoCommander(ControllerManagerBase,moveit_commander.MoveGroupCom
     if goal_time/self.dt % 2 == 0:
       goal_time += self.dt
 
-    servo_x = np.ndarray.tolist(harmonic_vel(delta_pose.position.x,goal_time) + biharmonic_vel_2(delta_pose_2.position.x,goal_time))
-    servo_y = np.ndarray.tolist(harmonic_vel(delta_pose.position.y,goal_time) + biharmonic_vel_2(delta_pose_2.position.y,goal_time))
-    servo_z = np.ndarray.tolist(harmonic_vel(delta_pose.position.z,goal_time) + biharmonic_vel_2(delta_pose_2.position.z,goal_time))
+    servo_vx = np.ndarray.tolist(harmonic_vel(delta_pose.position.x,goal_time) + biharmonic_vel_2(delta_pose_2.position.x,goal_time))
+    servo_vy = np.ndarray.tolist(harmonic_vel(delta_pose.position.y,goal_time) + biharmonic_vel_2(delta_pose_2.position.y,goal_time))
+    servo_vz = np.ndarray.tolist(harmonic_vel(delta_pose.position.z,goal_time) + biharmonic_vel_2(delta_pose_2.position.z,goal_time))
+    servo_wx = np.ndarray.tolist(harmonic_vel(delta_pose.orientation.x,goal_time) + biharmonic_vel_2(delta_pose_2.orientation.x,goal_time))
+    servo_wy = np.ndarray.tolist(harmonic_vel(delta_pose.orientation.y,goal_time) + biharmonic_vel_2(delta_pose_2.orientation.y,goal_time))
+    servo_wz = np.ndarray.tolist(harmonic_vel(delta_pose.orientation.z,goal_time) + biharmonic_vel_2(delta_pose_2.orientation.z,goal_time))
 
     servo_cmd = TwistStamped()
-    for c in range(0,len(servo_x)):
-      servo_cmd.twist.linear.x = servo_x[c]
-      servo_cmd.twist.linear.y = servo_y[c]
-      servo_cmd.twist.linear.z = servo_z[c]
+    for c in range(0,len(servo_vx)):
+      servo_cmd.twist.linear.x = servo_vx[c]
+      servo_cmd.twist.linear.y = servo_vy[c]
+      servo_cmd.twist.linear.z = servo_vz[c]
+      servo_cmd.twist.angular.x = servo_wx[c]
+      servo_cmd.twist.angular.y = servo_wy[c]
+      servo_cmd.twist.angular.z = servo_wz[c]
       servo_cmd.header.stamp.secs = rospy.Time.now().secs
       servo_cmd.header.stamp.nsecs = rospy.Time.now().nsecs + self.rate.sleep_dur.to_nsec()
 

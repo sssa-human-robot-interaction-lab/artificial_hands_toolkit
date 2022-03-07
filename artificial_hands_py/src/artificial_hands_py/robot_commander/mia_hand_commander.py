@@ -1,10 +1,12 @@
 from time import sleep
+
 import rospy
+
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from std_msgs.msg import Float64MultiArray
 
-from artificial_hands_py.robot_commander.controller_manager_base import ControllerManagerBase
+from artificial_hands_py.robot_commander.servo_commander_base import ControllerManagerBase
 
 class MiaHandCommander(ControllerManagerBase):
   """ Simple commander for Mia hand: grasps using ROS control
