@@ -161,6 +161,7 @@ target_link_libraries(${PROJECT_NAME} ${catkin_LIBRARIES})
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
   scripts/dmp_extended_servo_node.py
+  scripts/fake_ft_sensor_node.py
   scripts/handover_release_smach_node.py
   scripts/key_teleop_servo_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}

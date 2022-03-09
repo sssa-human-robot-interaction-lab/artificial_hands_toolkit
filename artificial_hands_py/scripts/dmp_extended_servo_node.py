@@ -1,9 +1,12 @@
 from threading import Thread
+from time import sleep
 from artificial_hands_py.robot_commander import *
 from artificial_hands_py import get_key
 
 from dmp_extended.msg import DesiredTrajectory, MJerkTrackTarget
-from geometry_msgs.msg import QuaternionStamped
+from geometry_msgs.msg import QuaternionStamped, Transform
+from trajectory_msgs.msg import MultiDOFJointTrajectoryPoint
+from std_msgs.msg import Float64
 
 class DMPExtendedCommander(ServoCommanderBase):
 
@@ -13,7 +16,7 @@ class DMPExtendedCommander(ServoCommanderBase):
   c_frame_servo = 'servo_twist_controller'
 
   def __init__(self, rate: rospy.Rate, ns: str = '', ref: str = '', eef: str = '') -> None:
-    super().__init__(rate,ns,ref,eef,{self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : PoseStamped, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
+    super().__init__(rate,ns,ref,eef,{self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : MultiDOFJointTrajectoryPoint, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
     self.dmp_traj = DesiredTrajectory()
     self.dmp_target = MJerkTrackTarget()
     self.dmp_orientation = QuaternionStamped()
@@ -38,10 +41,13 @@ class DMPExtendedCommander(ServoCommanderBase):
     self.servo_command(self.c_frame_servo,cmd)
   
   def dmp_command(self):
-    cmd = PoseStamped()
-    cmd.header = self.dmp_traj.header
-    cmd.header.frame_id = self.reference_frame
-    cmd.pose = self.dmp_traj.pose
+    cmd = MultiDOFJointTrajectoryPoint()
+    cmd_ = Transform()
+    cmd_.translation = self.dmp_traj.pose.position
+    cmd_.rotation = self.dmp_traj.pose.orientation
+    cmd_dot = self.dmp_traj.twist
+    cmd.transforms.append(cmd_)
+    cmd.velocities.append(cmd_dot)
     self.controller_command(cmd)
   
   def dmp_set_rot(self):
@@ -53,13 +59,15 @@ class DMPExtendedCommander(ServoCommanderBase):
       self.rate.sleep()
     
   def dmp_servo_follow(self):
-    while True:
+    self.cmd_thread_stop = False
+    while not self.cmd_thread_stop:
       if self.dmp_follow:
         self.dmp_servo()
       self.rate.sleep()
   
   def dmp_command_follow(self):
-    while True:
+    self.cmd_thread_stop = False
+    while not self.cmd_thread_stop:
       if self.dmp_follow:
         self.dmp_command()
       self.rate.sleep()
@@ -73,15 +81,18 @@ def main():
   set_key = ''
   
   servo_rate = rospy.Rate(500)
-  servo_cmd = DMPExtendedCommander(servo_rate,ref='world',eef='ft_sensor_frame')
+  servo_cmd = DMPExtendedCommander(servo_rate,ref='base_link',eef='tool0')
+
+  print("\nKey settings:\n h : move to home position\n r : read current ee pose\n s : switch to servo twist control\n t : switch to cartesian trajectory control\n f : start to follow dmp generated target\n c : update dmp target to current ee pose\n 1-9: set a predefined dmp target" )
 
   dmp_thread = Thread(target = servo_cmd.dmp_set_target)
   dmp_thread.start()
 
   cmd_thread = Thread(target = servo_cmd.dmp_servo_follow)
   cmd_thread.start()
+  cmd_ctrl = servo_cmd.j_servo_ctrl
 
-  target = {'1' : [0.5,0.1,1.0], '2' : [0.5,0.1,0.3], '3' : [0.6,0.1,0.4]}
+  target = {'1' : [0.5,0.1,0.6], '2' : [0.5,0.1,0.2], '3' : [0.6,0.1,0.2], '4' : [0.65,0.1,0.4], '5' : [0.25,0.1,0.4]}
 
   rate = rospy.Rate(1)
   while not rospy.is_shutdown():
@@ -91,7 +102,27 @@ def main():
       servo_cmd.dmp_follow = False
       servo_cmd.switch_to_controller(servo_cmd.j_traj_ctrl)
       servo_cmd.go([.0,-pi/2,pi/2,.0,pi/2,.0],wait=True)
-      servo_cmd.switch_to_controller(servo_cmd.j_servo_ctrl)
+      servo_cmd.switch_to_controller(cmd_ctrl)
+    elif set_key == 's':
+      rospy.loginfo("Switching to servo control")
+      servo_cmd.cmd_thread_stop = True
+      sleep(.1)
+      cmd_thread.join()
+      del cmd_thread
+      cmd_ctrl = servo_cmd.j_servo_ctrl
+      servo_cmd.switch_to_controller(cmd_ctrl)
+      cmd_thread = Thread(target = servo_cmd.dmp_servo_follow)
+      cmd_thread.start()
+    elif set_key == 't':
+      rospy.loginfo("Switching to traj control")
+      servo_cmd.cmd_thread_stop = True
+      sleep(.1)
+      cmd_thread.join()
+      del cmd_thread
+      cmd_ctrl = servo_cmd.c_traj_ctrl
+      servo_cmd.switch_to_controller(cmd_ctrl)
+      cmd_thread = Thread(target = servo_cmd.dmp_command_follow)
+      cmd_thread.start()
     elif set_key == 'f':
       servo_cmd.dmp_follow = not servo_cmd.dmp_follow
       rospy.loginfo("Follow dmp generated trajectory: %s",servo_cmd.dmp_follow)

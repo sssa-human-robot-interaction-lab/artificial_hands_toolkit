@@ -166,7 +166,6 @@ target_link_libraries(wrist_dynamics_node ${catkin_LIBRARIES} ${PROJECT_NAME})
 ## Mark executable scripts (Python etc.) for installation
 ## in contrast to setup.py, you can choose the destination
 catkin_install_python(PROGRAMS
-  scripts/fake_ft_sensor_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
 

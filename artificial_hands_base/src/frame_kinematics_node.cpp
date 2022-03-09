@@ -13,7 +13,7 @@ namespace rosatk
   {
     
     public:
-      FrameKinematicsNode(ros::NodeHandle nh, int filter, int rate, const char* controller, int controller_rate, const char* target_frame, const char* model_frame):  
+      FrameKinematicsNode(ros::NodeHandle nh, bool autostart, int filter, int rate, const char* controller, int controller_rate, const char* target_frame, const char* model_frame):  
         nh_(nh),
         publish_(true),
         controller_(controller),
@@ -34,6 +34,11 @@ namespace rosatk
         addService("frame_kinematics_mode/publish",cmd::Request::MOD_PUB,this);
         addService("frame_kinematics_macro/start_node",cmd::Request::MAC_STA,this);
         ROS_INFO("Node ready to take command.");
+        if(autostart)
+        {
+         cmd c;
+         command(c.request,c.response,cmd::Request::MAC_STA);
+        }
       }
 
     private:
@@ -151,7 +156,7 @@ int main(int argc, char** argv)
 
   ros::NodeHandle nh;
 
-  bool publish;
+  bool autostart;
   int filter;
   int rate;
   std::string controller;
@@ -162,7 +167,7 @@ int main(int argc, char** argv)
   po::options_description desc("Options");
   desc.add_options()
     ("help", "display help")
-    ("publish", po::value<bool>(&publish)->default_value(1), "set true to advertise a FrameKinematicsStamped publisher")
+    ("autostart", po::value<bool>(&autostart)->default_value(1), "set true to autostart the node")
     ("filter", po::value<int>(&filter)->default_value(20), "length of moving average filters (in samples)")
     ("rate", po::value<int>(&rate)->default_value(100), "rosnode internal rate (in Hertz)")
     ("controller", po::value<std::string>(&controller)->default_value("/joint_states"), "name of the rostopic published by joint_state_controller") 
@@ -185,7 +190,7 @@ int main(int argc, char** argv)
   int joint_rate;
   ros::param::get(controller_rate,joint_rate);
   if(joint_rate < rate){rate = joint_rate; ROS_WARN("Required node rate was g.t. joint_state_controller publish rate, node rate lowered to %i Hz",rate);}
-  rosatk::FrameKinematicsNode hr_per_node = rosatk::FrameKinematicsNode(nh,filter,rate,controller.c_str(),joint_rate,target_frame.c_str(),model_frame.c_str());
+  rosatk::FrameKinematicsNode hr_per_node = rosatk::FrameKinematicsNode(nh,autostart,filter,rate,controller.c_str(),joint_rate,target_frame.c_str(),model_frame.c_str());
   ros::spin();
 
   return true;

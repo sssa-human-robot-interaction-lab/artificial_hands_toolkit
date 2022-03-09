@@ -1,0 +1,29 @@
+cartesian_eik_position_controller:
+  type: "position_controllers/CartesianEikController"
+  end_effector_link: "tool0"
+  robot_base_link: "base_link"
+  target_traj_topic: "command"
+  joints: &robot_joints
+  - shoulder_pan_joint
+  - shoulder_lift_joint
+  - elbow_joint
+  - wrist_1_joint
+  - wrist_2_joint
+  - wrist_3_joint
+  pd_gains: &pd
+    p: &p 10.0
+    d: &d 0.0  
+    trans_x: {p: *p, d: *d}
+    trans_y: {p: *p, d: *d}
+    trans_z: {p: *p, d: *d}
+    rot_x: {p: *p, d: *d}
+    rot_y: {p: *p, d: *d}
+    rot_z: {p: *p, d: *d}
+
+cartesian_eik_velocity_controller:
+  type: "velocity_controllers/CartesianEikController"
+  end_effector_link: "ft_sensor_frame"
+  robot_base_link: "world"
+  target_traj_topic: "command"
+  joints: *robot_joints
+  pd_gains: *pd

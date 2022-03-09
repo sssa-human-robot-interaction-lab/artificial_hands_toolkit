@@ -9,8 +9,8 @@ class KeyTeleopServoCommander(ServoCommanderBase):
   j_servo_ctrl = 'joint_group_vel_controller'
   c_frame_servo = 'servo_twist_controller'
 
-  def __init__(self, rate: rospy.Rate, ns: str = '') -> None:
-    super().__init__(rate,ns,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
+  def __init__(self, rate: rospy.Rate, ns: str = '', ref: str = '', eef: str = '') -> None:
+    super().__init__(rate,ns,ref,eef,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
     self.lin = 0
     self.ang = 0
     
@@ -34,14 +34,14 @@ class KeyTeleopServoCommander(ServoCommanderBase):
 
 def main():
 
-  input('Press Enter to start key teleop>\n')
+  input('< Press Enter to start key teleop >\n')
 
   rospy.init_node("key_teleop_servo_node")
   
   rate = rospy.Rate(50)
-  servo_cmd = KeyTeleopServoCommander(rate)
+  servo_cmd = KeyTeleopServoCommander(rate,ref='base_link',eef='ft_sensor_frame')
 
-  print("\nKey settings:\n + : increase speed feedforward\n - : decrease speed feedforward\n x : control x axis\n y : control y axis\n z : control z axis\n h : move to home position\n")
+  print("\nKey settings:\n + : increase speed feedforward\n - : decrease speed feedforward\n x : control x axis\n y : control y axis\n z : control z axis\n h : move to home position\n r : read current ee pose")
 
   servo_ff = 1
   servo_axis = [1,0,0]
@@ -71,6 +71,9 @@ def main():
       servo_cmd.switch_to_controller(servo_cmd.j_traj_ctrl)
       servo_cmd.go([.0,-pi/2,pi/2,.0,pi/2,.0],wait=True)
       servo_cmd.switch_to_controller(servo_cmd.j_servo_ctrl)
+    elif set_key == 'r':
+      rospy.loginfo("Current eef pose")
+      print(servo_cmd.get_eef_frame())
     else:
       if (set_key == '\x03'):
         break
