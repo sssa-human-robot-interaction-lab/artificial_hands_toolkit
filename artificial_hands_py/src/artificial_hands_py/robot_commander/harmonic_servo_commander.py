@@ -1,3 +1,4 @@
+from time import sleep
 from artificial_hands_py.robot_commander import *
 
 class HarmonicServoCommander(ServoCommanderBase):
@@ -15,12 +16,10 @@ class HarmonicServoCommander(ServoCommanderBase):
   ----------
   j_traj_ctlr : str
     name of ROS joint controller for trajectory planning and excution
-  j_servo_ctrl : dict
+  j_servo_ctrl : str
     name of ROS joint controller to feedforward output from moveit servo_server
-  servo_pub : rospy.Publisher
-    rostopic publisher to feedforward input to moveit servo_server
-  dt : float
-    servo trajectory time discretization
+  c_twist_servo : str
+    name of ROS topic to publish cartesian twist command
 
   Methods
   -------
@@ -30,11 +29,15 @@ class HarmonicServoCommander(ServoCommanderBase):
   """
 
   j_traj_ctrl = 'pos_joint_traj_controller'
-  j_servo_ctrl = 'vel_joint_traj_controller'
-  c_frame_servo = 'servo_twist_controller'
+  j_servo_ctrl = 'joint_group_vel_controller'
+  c_twist_servo = 'servo_twist_controller'
 
-  def __init__(self, rate: rospy.Rate, ns: str = '', ref: str = '', eef: str = ''):
-    super().__init__(rate,ns,ref,eef,{self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : JointTrajectory},{self.c_frame_servo : TwistStamped})
+  def __init__(self, ns: str, ref: str, eef: str, ctrl_dict: dict = None, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
+    if ctrl_dict is None:
+      ctrl_dict = {self.j_traj_ctrl : JointTrajectory, self.j_servo_ctrl : Float64MultiArray}
+    if servo_dict is None:
+      servo_dict = {self.c_twist_servo : TwistStamped}
+    super().__init__(ns, ref, eef, ctrl_dict, servo_dict, move_group)
 
   def servo_delta(self, goal_time : float, delta_pose : Pose = Pose(), delta_pose_2 : Pose = Pose()):
 
@@ -68,8 +71,10 @@ class HarmonicServoCommander(ServoCommanderBase):
       servo_cmd.header.stamp.secs = rospy.Time.now().secs
       servo_cmd.header.stamp.nsecs = rospy.Time.now().nsecs 
 
-      self.servo_command(self.c_frame_servo,servo_cmd)
+      self.servo_command(self.c_twist_servo,servo_cmd)
 
       self.rate.sleep()
+
+    sleep(.5)
     
     self.switch_to_controller(self.j_traj_ctrl)

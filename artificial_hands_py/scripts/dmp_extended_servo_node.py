@@ -6,21 +6,20 @@ from artificial_hands_py import get_key
 from dmp_extended.msg import DesiredTrajectory, MJerkTrackTarget
 from geometry_msgs.msg import QuaternionStamped, Transform
 from trajectory_msgs.msg import MultiDOFJointTrajectoryPoint
-from std_msgs.msg import Float64
 
-class DMPExtendedCommander(ServoCommanderBase):
+class DMPExtendedCommander(HarmonicServoCommander):
 
   j_traj_ctrl = 'pos_joint_traj_controller'
-  c_traj_ctrl = 'cartesian_eik_position_controller'
   j_servo_ctrl = 'joint_group_vel_controller'
-  c_frame_servo = 'servo_twist_controller'
+  c_twist_servo = 'servo_twist_controller'
+  c_traj_ctrl = 'cartesian_eik_position_controller'
 
-  def __init__(self, rate: rospy.Rate, ns: str = '', ref: str = '', eef: str = '') -> None:
-    super().__init__(rate,ns,ref,eef,{self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : MultiDOFJointTrajectoryPoint, self.j_servo_ctrl : Float64MultiArray},{self.c_frame_servo : TwistStamped})
+  def __init__(self, rate: rospy.Rate, ns: str = '', ref: str = '', eef: str = ''):
+    super().__init__(rate, ns, ref, eef, {self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : MultiDOFJointTrajectoryPoint, self.j_servo_ctrl : Float64MultiArray},{self.c_twist_servo : TwistStamped})
     self.dmp_traj = DesiredTrajectory()
     self.dmp_target = MJerkTrackTarget()
     self.dmp_orientation = QuaternionStamped()
-    self.dmp_follow = False
+    self.dmp_follow = False    
     
     dmp_traj_sub = rospy.Subscriber("/target_traj",DesiredTrajectory,self.target_traj_callback)
     dmp_servo_sub = rospy.Subscriber("/dmp_extended_servo_node/command",MJerkTrackTarget,self.servo_target_callback)
@@ -38,7 +37,7 @@ class DMPExtendedCommander(ServoCommanderBase):
     cmd.header = self.dmp_traj.header
     cmd.header.frame_id = self.reference_frame
     cmd.twist = self.dmp_traj.twist
-    self.servo_command(self.c_frame_servo,cmd)
+    self.servo_command(self.c_twist_servo,cmd)
   
   def dmp_command(self):
     cmd = MultiDOFJointTrajectoryPoint()
@@ -81,7 +80,7 @@ def main():
   set_key = ''
   
   servo_rate = rospy.Rate(500)
-  servo_cmd = DMPExtendedCommander(servo_rate,ref='base_link',eef='tool0')
+  servo_cmd = DMPExtendedCommander(servo_rate,ref='world',eef='ft_sensor_frame')
 
   print("\nKey settings:\n h : move to home position\n r : read current ee pose\n s : switch to servo twist control\n t : switch to cartesian trajectory control\n f : start to follow dmp generated target\n c : update dmp target to current ee pose\n 1-9: set a predefined dmp target" )
 
@@ -92,7 +91,7 @@ def main():
   cmd_thread.start()
   cmd_ctrl = servo_cmd.j_servo_ctrl
 
-  target = {'1' : [0.5,0.1,0.6], '2' : [0.5,0.1,0.2], '3' : [0.6,0.1,0.2], '4' : [0.65,0.1,0.4], '5' : [0.25,0.1,0.4]}
+  target = {'1' : [0.5,0.1,1.0], '2' : [0.5,0.1,0.4], '3' : [0.7,0.1,0.4], '4' : [0.1,0.1,0.4]}
 
   rate = rospy.Rate(1)
   while not rospy.is_shutdown():

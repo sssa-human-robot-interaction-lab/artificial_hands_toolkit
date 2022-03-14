@@ -26,6 +26,9 @@ class ControllerManagerBase:
   
   controller_command(cmd)
     forward command to the active controller
+
+  servo_command(servo_name. cmd)
+    forward command to a given servo topic
   """
 
   def __init__(self,ns : str, ctrl_dict : dict, servo_dict : dict = None) -> None:  
@@ -64,19 +67,24 @@ class ControllerManagerBase:
 
 class ServoCommanderBase(ControllerManagerBase,moveit_commander.MoveGroupCommander):
 
-  def __init__(self, rate: rospy.Rate, ns: str, ref: str, eef: str, ctrl_dict: dict, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
+  def __init__(self, ns: str, ref: str, eef: str, ctrl_dict: dict, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
     super().__init__(ns, ctrl_dict, servo_dict)
     super(ControllerManagerBase,self).__init__(move_group) 
-    self.rate = rate
-    self.dt = rate.sleep_dur.to_sec()
     self.reference_frame = ref
-    self.eef_frame = eef
+    self.ee_frame = eef
+    self.paused = False
+    self.set_pose_reference_frame(ref)
+    self.set_end_effector_link(eef)
+  
+  def set_rate(self, rate : rospy.Rate) -> None:
+    self.rate = rate
+    self.dt = self.rate.sleep_dur.to_sec()
     self.tf_buffer = tf2_ros.Buffer(rospy.Duration(100.0))
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)
   
   def get_eef_frame(self,ref : str = None, frame : str = None) -> PoseStamped:
     if frame is None:
-      frame = self.eef_frame
+      frame = self.ee_frame
     if ref is None:
       ref = self.reference_frame
     pose_ref : PoseStamped = self.get_current_pose(frame)

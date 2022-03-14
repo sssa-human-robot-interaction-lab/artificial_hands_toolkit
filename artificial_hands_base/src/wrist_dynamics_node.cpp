@@ -30,28 +30,29 @@ namespace rosatk
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
         ROS_INFO("Using reference frame %s.",model_frame);
-        if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::WristDynamicsStamped>("frame_kinematics_data",1000);
+        if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::WristDynamicsStamped>("wrist_dynamics_data",1000);
         loop_tim_ = nh_.createWallTimer(ros::WallDuration(1.0/(double)rate),&WristDynamicsNode::loopTimerCallback, this, false, false);
         loop_msg_.header.frame_id = target_frame;
-        det_pub_ = nh_.advertise<artificial_hands_msgs::DetectionStamped>("wrist_detection",1000);
+        det_pub_ = nh_.advertise<artificial_hands_msgs::DetectionStamped>("wrist_contact_detection",1000);
         det_tim_ = nh_.createWallTimer(ros::WallDuration(0.1),&WristDynamicsNode::externalTimerCallback, this, false, false);
         det_msg_.header.frame_id = target_frame;
         ROS_INFO("Starting node services.");
-        addService("wrist_command/subscribe", cmd::Request::CMD_SUB, this);
-        addService("wrist_command/start_loop", cmd::Request::CMD_STA, this);
-        addService("wrist_command/build_model", cmd::Request::CMD_BUI, this);
-        addService("wrist_command/stop_loop", cmd::Request::CMD_STO, this);
-        addService("wrist_command/read_loop_time", cmd::Request::CMD_REA, this);
-        addService("wrist_command/set_zero", cmd::Request::CMD_ZRO, this);  
-        addService("wrist_command/set_calibration", cmd::Request::CMD_CAL, this); 
-        addService("wrist_command/check_calibration", cmd::Request::CMD_CHK, this);   
-        addService("wrist_mode/publish", cmd::Request::MOD_PUB, this);
-        addService("wrist_mode/trigger_static", cmd::Request::MOD_TST, this);
-        addService("wrist_mode/estimate_wrench", cmd::Request::MOD_EST, this);
-        addService("wrist_mode/save_dynamics", cmd::Request::MOD_SDY, this);
-        addService("wrist_mode/save_interaction", cmd::Request::MOD_SIN, this);
-        addService("wrist_mode/trigger_dynamics", cmd::Request::MOD_TDY, this);
-        addService("wrist_mode/save_calibration", cmd::Request::MOD_SCA, this);
+        addService("wrist_dynamics_command/subscribe", cmd::Request::CMD_SUB, this);
+        addService("wrist_dynamics_command/start_loop", cmd::Request::CMD_STA, this);
+        addService("wrist_dynamics_command/build_model", cmd::Request::CMD_BUI, this);
+        addService("wrist_dynamics_command/stop_loop", cmd::Request::CMD_STO, this);
+        addService("wrist_dynamics_command/read_loop_time", cmd::Request::CMD_REA, this);
+        addService("wrist_dynamics_command/set_zero", cmd::Request::CMD_ZRO, this);  
+        addService("wrist_dynamics_command/estimate_calibration", cmd::Request::CMD_CAL, this); 
+        addService("wrist_dynamics_command/set_calibration", cmd::Request::CMD_SET, this); 
+        addService("wrist_dynamics_command/check_calibration", cmd::Request::CMD_CHK, this);   
+        addService("wrist_dynamics_mode/publish", cmd::Request::MOD_PUB, this);
+        addService("wrist_dynamics_mode/trigger_static", cmd::Request::MOD_TST, this);
+        addService("wrist_dynamics_mode/estimate_wrench", cmd::Request::MOD_EST, this);
+        addService("wrist_dynamics_mode/save_dynamics", cmd::Request::MOD_SDY, this);
+        addService("wrist_dynamics_mode/save_interaction", cmd::Request::MOD_SIN, this);
+        addService("wrist_dynamics_mode/trigger_dynamics", cmd::Request::MOD_TDY, this);
+        addService("wrist_dynamics_mode/save_calibration", cmd::Request::MOD_SCA, this);
         ROS_INFO("Node ready to take command.");
       }
 
@@ -102,7 +103,7 @@ namespace rosatk
         if(publish_)
         {
           loop_msg_.header.seq = (int)cycle_count_;
-          loop_msg_.header.stamp.fromNSec(start_.toNSec());
+          loop_msg_.header.stamp = ros::Time::now();
           loop_msg_.wrist_dynamics.frame_kinematics.position = position; 
           loop_msg_.wrist_dynamics.frame_kinematics.velocity = velocity; 
           loop_msg_.wrist_dynamics.frame_kinematics.acceleration = acceleration;
@@ -178,16 +179,19 @@ namespace rosatk
             ROS_INFO("Starting estimate of calibration parameters.");
             WristFTCalibration::Solve();
             ROS_INFO("%s",cal_str.str().c_str());
+            break;
+          case cmd::Request::CMD_SET:
             ROS_INFO("Setting offset on force/torque sensor.");
             FrameDynamics::SetOffset(WristFTCalibration::Get());
             WristFTDetection::SetOffset(WristFTCalibration::Get());
             break;
           case cmd::Request::CMD_CHK:
-            ROS_INFO("Checking force/torque sensor calibration.");
+            ROS_INFO("Checking force/torque sensor calibration (unzeroing sensor).");
+            WristFTDetection::SetZero(false);
             WristFTDetection::SetOffset(WristFTCalibration::Get());
-            c_mass_ = 100*(atk::magnitudeVector3(force_iir)/(WristFTCalibration::GetMass()*9.81) - 1);
+            c_mass_ = 100*(atk::magnitudeVector3(force_fir)/(WristFTCalibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
-            (abs(c_mass_) > 10 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
+            (abs(c_mass_) > 5 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;            
           }   
           ROS_INFO("Executed command.");

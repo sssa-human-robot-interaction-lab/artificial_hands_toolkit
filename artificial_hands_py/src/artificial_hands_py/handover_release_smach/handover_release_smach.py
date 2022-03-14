@@ -6,13 +6,13 @@ class GoToHome(smach.State,RobotCommander):
   """ In this state the robot moves to home position """
   def __init__(self):
     super().__init__(outcomes=['at_home','end'])
-    self.arm.set_max_velocity_scaling_factor(.1)                  # set maximum speed (be careful exceeding .2)
+    self.arm.set_max_velocity_scaling_factor(.1)                           # set maximum speed (be careful exceeding .2)
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_HOME')
-    self.wrist.wristCommand("wrist_command/subscribe")            # start subscribers
-    self.wrist.wristCommand("wrist_command/start_loop")           # start loop
-    # if self.waitForDetection('GO_TO_HOME'):                       # use this function (comment waitForEnter) to start loop by touching the robotic hand
+    self.wrist.wristCommand("wrist_dynamics_command/subscribe")            # start subscribers
+    self.wrist.wristCommand("wrist_dynamics_command/start_loop")           # start loop
+    # if self.waitForDetection('GO_TO_HOME'):                              # use this function (comment waitForEnter) to start loop by touching the robotic hand
     if self.waitForEnter('GO_TO_HOME'):
       self.goHome()
       return 'at_home'
@@ -25,7 +25,7 @@ class CheckCalib(smach.State,RobotCommander):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state CHECK_CALIB')
-    self.wrist.calib = self.wrist.wristCommand("wrist_command/check_calibration")
+    self.wrist.calib = self.wrist.wristCommand("wrist_dynamics_command/check_calibration")
     if self.wrist.calib:
       return 'calib'
     return 'uncalib'
@@ -38,10 +38,10 @@ class DoCalib(smach.State,RobotCommander):
   def execute(self, userdata):
     rospy.loginfo('Executing state DO_CALIB')  
     self.arm.set_max_velocity_scaling_factor(.25)                                              
-    self.longCalib()                                              # execute fast calibration procedure
+    self.longCalib()                                                       # execute fast calibration procedure
     self.arm.set_max_velocity_scaling_factor(.1)
-    self.wrist.wristCommand("wrist_command/estimate_calibration") # solve for calibration offsets
-    self.wrist.wristCommand("wrist_command/set_calibration")      # make use of calibration result
+    self.wrist.wristCommand("wrist_dynamics_command/estimate_calibration") # solve for calibration offsets
+    self.wrist.wristCommand("wrist_dynamics_command/set_calibration")      # make use of calibration result
     return 'return_to_home'
 
 class GoToGraspPos(smach.State,RobotCommander):
@@ -51,7 +51,7 @@ class GoToGraspPos(smach.State,RobotCommander):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GO_TO_GRASP_POS')
-    self.arm.go(joint_grasp, wait=True)                          # go to the grasp position
+    self.arm.go(joint_grasp, wait=True)                                  # go to the grasp position
     self.arm.stop()
     return 'ready_to_grasp'
 
@@ -61,7 +61,7 @@ class WaitForGrasp(smach.State,RobotCommander):
     super().__init__(outcomes=['grasp','home'])
 
   def execute(self, userdata):
-    sleep(3)                                                     # wait a bit before trying to grasp the object
+    sleep(3)                                                             # wait a bit before trying to grasp the object
     return 'grasp'
 
 class Grasp(smach.State,RobotCommander):
@@ -71,7 +71,7 @@ class Grasp(smach.State,RobotCommander):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state GRASP')
-    self.hand.close_cyl()                                        # close mia hand with a cylindrical grasp
+    self.hand.close_cyl()                                                # close mia hand with a cylindrical grasp
     return 'grasped'
 
 class DoObjectRecognition(smach.State,RobotCommander):
@@ -80,12 +80,12 @@ class DoObjectRecognition(smach.State,RobotCommander):
     super().__init__(outcomes=['recog_done','home'])
 
   def execute(self, userdata):
-    self.arm.go(joint_start ,wait=True)                          # move arm to the start configuration
-    self.wrist.wristCommand("wrist_mode/save_dynamics")          # start to record dynamics
-    sleep(1)
-    # self.arm.servo_delta(goal_time,goal,goal_2)                  # lift the object enforcing linear acceleration
-    self.wrist.wristCommand("wrist_command/stop_loop")           # stop node loop
-    self.wrist.wristCommand("wrist_command/build_model")         # estimate inertial model
+    self.arm.go(joint_start ,wait=True)                                  # move arm to the start configuration
+    self.wrist.wristCommand("wrist_dynamics_mode/save_dynamics")         # start to record dynamics
+    sleep(.1)
+    self.doObjectRecognitionTraj(max_accel=1.0,max_disp=0.05)            # regulate accel and displacement for object recognition
+    self.wrist.wristCommand("wrist_dynamics_command/stop_loop")          # stop node loop
+    self.wrist.wristCommand("wrist_dynamics_command/build_model")        # estimate inertial model
     return 'recog_done'
 
 class PrepareToReach(smach.State,RobotCommander):
@@ -94,10 +94,10 @@ class PrepareToReach(smach.State,RobotCommander):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state PREPARE_TO_REACH')
-    self.wrist.wristCommand("wrist_command/subscribe")           # subscribe to js and ft topics
-    self.wrist.wristCommand("wrist_command/start_loop")          # start node loop
-    self.wrist.wristCommand("wrist_command/set_calibration")     # make use of previous calibration
-    self.wrist.wristCommand("wrist_mode/save_interaction")       # save estimate error on interaction forces
+    self.wrist.wristCommand("wrist_dynamics_command/subscribe")          # subscribe to js and ft topics
+    self.wrist.wristCommand("wrist_dynamics_command/start_loop")         # start node loop
+    self.wrist.wristCommand("wrist_dynamics_command/set_calibration")    # make use of previous calibration
+    self.wrist.wristCommand("wrist_dynamics_mode/save_interaction")      # save estimate error on interaction forces
     return 'ready_to_reach'
 
 class StartToReach(smach.State,RobotCommander):
@@ -106,9 +106,9 @@ class StartToReach(smach.State,RobotCommander):
 
   def execute(self, userdata):
     rospy.loginfo('Executing state START_TO_REACH')
-    self.arm.go(joint_reach,wait=False)                         # start reaching 
-    sleep(1)                                                    # wait a bit to be confident on estimate error
-    self.wrist.wristCommand("wrist_mode/trigger_dynamics")      # enable trigger for dynamic handover
+    self.arm.go(joint_reach,wait=False)                                  # start reaching 
+    sleep(1)                                                             # wait a bit to be confident on estimate error
+    self.wrist.wristCommand("wrist_dynamics_mode/trigger_dynamics")      # enable trigger for dynamic handover
     return 'ready_to_handover'
 
 class ReachToHandover(smach.State,RobotCommander):

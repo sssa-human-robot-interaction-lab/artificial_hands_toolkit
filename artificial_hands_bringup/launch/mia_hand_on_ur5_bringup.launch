@@ -81,7 +81,7 @@
   <rosparam file="$(find artificial_hands_bringup)/config/control/ur_controllers.yaml" command="load"/>
 
   <!-- Spawn stopped ur controllers -->
-  <node name="cartesian_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped cartesian_eik_position_controller" />
+  <node name="cartesian_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped cartesian_eik_position_controller cartesian_eik_velocity_controller" />
 
   <!-- Load gui -->
   <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" />

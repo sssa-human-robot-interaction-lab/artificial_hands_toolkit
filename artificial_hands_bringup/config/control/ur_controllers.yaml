@@ -1,7 +1,7 @@
 cartesian_eik_position_controller:
   type: "position_controllers/CartesianEikController"
-  end_effector_link: "tool0"
-  robot_base_link: "base_link"
+  end_effector_link: "ft_sensor_frame"
+  robot_base_link: "base"
   target_traj_topic: "command"
   joints: &robot_joints
   - shoulder_pan_joint
@@ -23,7 +23,7 @@ cartesian_eik_position_controller:
 cartesian_eik_velocity_controller:
   type: "velocity_controllers/CartesianEikController"
   end_effector_link: "ft_sensor_frame"
-  robot_base_link: "world"
+  robot_base_link: "base"
   target_traj_topic: "command"
   joints: *robot_joints
   pd_gains: *pd

@@ -23,15 +23,3 @@ calibration_joints[2][5] += pi/2
 calibration_joints[3][3] -= pi/2
 calibration_joints[4][3] += pi/2
 """ Hardcoded arm joint angles for long calibration of force/torque """
-
-goal_time = 1.12
-""" Goal time for object recognition trajectory """
-
-goal = Pose()
-goal.position.y = 0.2
-""" Pose delta for object recognition trajectory """
-
-goal_2 = Pose()
-goal_2.position.x = 0.032
-goal_2.position.z = 0.032
-""" Pose delta_2 for object recognition trajectory """

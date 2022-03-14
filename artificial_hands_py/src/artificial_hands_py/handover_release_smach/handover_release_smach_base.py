@@ -85,5 +85,24 @@ class RobotCommander(ABC):
       sleep(.3)                                                          
       self.wrist.wristCommand("wrist_mode/save_calibration")                   
       sleep(.7)                                                          
-      self.wrist.wristCommand("wrist_mode/publish")                                                                                                     
-  
+      self.wrist.wristCommand("wrist_mode/publish")      
+
+  def doObjectRecognitionTraj(self,type : str = 'rot', max_accel : float = 1.0, max_disp = 0.05):
+    goal_time_2 = pow(4*9.9*abs(max_disp/max_accel),0.5)
+    goal_2 = Pose()
+    if type == 'rot':
+      goal_2.orientation.x = max_disp
+      goal_2.orientation.y = max_disp
+      goal_2.orientation.z = max_disp
+    elif type == 'lin':
+      goal_2.position.x = max_disp
+      goal_2.position.y = max_disp
+      goal_2.position.z = max_disp
+    elif type == 'both': 
+      goal_2.position.x = max_disp
+      goal_2.position.y = max_disp
+      goal_2.position.z = max_disp
+      goal_2.orientation.x = max_disp
+      goal_2.orientation.y = max_disp
+      goal_2.orientation.z = max_disp
+    self.arm.servo_delta(goal_time=goal_time_2,delta_pose_2=goal_2)

@@ -41,7 +41,7 @@ class MiaHandCommander(ControllerManagerBase):
     stop mia hand motors to the current position
   """
   
-  traj_ctrl = 'mia_hand_vel_trajectory_controller'
+  traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
   vel_ctrl = 'mia_hand_joint_group_vel_controller'
   joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']
 

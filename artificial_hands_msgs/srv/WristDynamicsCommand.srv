@@ -5,7 +5,8 @@ uint8 CMD_STO = 3
 uint8 CMD_REA = 4
 uint8 CMD_ZRO = 5
 uint8 CMD_CAL = 6
-uint8 CMD_CHK = 7
+uint8 CMD_SET = 7
+uint8 CMD_CHK = 8
 
 uint8 MOD_PUB = 10
 uint8 MOD_TST = 11

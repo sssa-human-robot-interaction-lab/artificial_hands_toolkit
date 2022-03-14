@@ -22,6 +22,7 @@ namespace rosatk
       {
         ROS_INFO("Starting FIR filters with length %i samples.",filter); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
+        ROS_INFO("Starting kinematics relative to frame %s.",target_frame);
         ROS_INFO("Using reference frame %s.",model_frame);
         if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::FrameKinematicsStamped>("frame_kinematics_data",1000);
         loop_tim_ = nh_.createWallTimer(ros::WallDuration(1.0/(double)rate),&FrameKinematicsNode::loopTimerCallback, this, false, false);

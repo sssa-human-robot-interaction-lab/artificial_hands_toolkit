@@ -4,7 +4,7 @@
   <arg name="sim" default="true"/>
   <arg name="ee_frame" default="ft_sensor_frame" doc="The name of the end effector link, used to return the EE pose."/>
   <arg name="command_frame" default="base" doc="Commands must be given in the frame of a robot link."/>
-  <arg name="reference_frame" default="world" doc="Pose refenece frame."/>
+  <arg name="reference_frame" default="world" doc="Pose reference frame."/>
   <arg name="control_rate" default="500" doc="Set the correct publish rate for sending commands (in Hz)"/>
   <arg name="control_type" default="velocity" doc="Choose frome joint position, velocity, pos_trajectory or vel_trajectory control"/>
   <arg name="group_name" default="manipulator" doc="Choose the move_group to control"/>
