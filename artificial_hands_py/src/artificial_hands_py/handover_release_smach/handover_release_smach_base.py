@@ -8,7 +8,7 @@ from artificial_hands_msgs.srv import *
 from artificial_hands_msgs.msg import *
 
 from artificial_hands_py.robot_commander.mia_hand_commander import MiaHandCommander
-from artificial_hands_py.robot_commander.harmonic_servo_commander import HarmonicServoCommander
+from artificial_hands_py.robot_commander.twist_servo_commander import HarmonicServoCommander
 
 from artificial_hands_py.handover_release_smach.constants import *
 

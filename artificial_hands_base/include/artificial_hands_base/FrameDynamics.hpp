@@ -30,8 +30,8 @@ namespace atk
         gravity_.y = 0;
         gravity_.z = -9.81;
 
-        x_.resize(6*10*1000);
-        y_.resize(6*1000);
+        x_.reserve(6*10*1000);
+        y_.reserve(6*1000);
       }
 
       /**
@@ -89,13 +89,13 @@ namespace atk
       void GetCoefficients()
       {
 
-        double wx = -twist_velocity.angular.x;
-        double wy = -twist_velocity.angular.y;
-        double wz = -twist_velocity.angular.z;
+        double wx = twist_velocity.angular.x;
+        double wy = twist_velocity.angular.y;
+        double wz = twist_velocity.angular.z;
 
-        double wx2 = pow(wx,2);
-        double wy2 = pow(wy,2);
-        double wz2 = pow(wz,2);
+        double wx2 = -pow(wx,2);
+        double wy2 = -pow(wy,2);
+        double wz2 = -pow(wz,2);
 
         double ax = -twist_acceleration.linear.x;
         double ay = -twist_acceleration.linear.y;
@@ -109,13 +109,13 @@ namespace atk
         double gy = -gravity.y;
         double gz = -gravity.z;
 
-        double x[60] = {ax-gx,    -wy2-wy2,     wx*wy-ez,     wx*wz+ey,   .0, .0, .0, .0, .0, .0,
-                        ay-gy,    wx*wy+ez,     -wy2-wy2,     wy*wz-ex,   .0, .0, .0, .0, .0, .0,
-                        az-gz,    wx*wz-ey,     wy*wz+ex,     -wy2-wy2,   .0, .0, .0, .0, .0, .0,
+        double x[60] = {ax-gx,    -wy2-wz2,     wx*wy-ez,     wx*wz+ey,   .0, .0, .0, .0, .0, .0,
+                        ay-gy,    wx*wy+ez,     -wx2-wz2,     wy*wz-ex,   .0, .0, .0, .0, .0, .0,
+                        az-gz,    wx*wz-ey,     wy*wz+ex,     -wy2-wx2,   .0, .0, .0, .0, .0, .0,
 
-                        .0,       .0,           az-gz,        gy-ay,      ex,         ey-wx*wz,     ez+wx*wy,    -wy*wz,      wy2-wy2,      wy*wz,
-                        .0,       gz-az,        .0,           ax-gx,      wx*wz,      ex+wy*wz,     wy2-wy2,     ey,          ez-wx*wy,     -wx*wz,
-                        .0,       ay-gy,        gx-ax,        .0,         -wx*wy,     wy2-wy2,      ex-wy*wz,    wx*wy,       ey+wx*wz,     ez      };
+                        .0,       .0,           az-gz,        gy-ay,      ex,         ey-wx*wz,     ez+wx*wy,    -wy*wz,      wy2-wz2,      wy*wz,
+                        .0,       gz-az,        .0,           ax-gx,      wx*wz,      ex+wy*wz,     wz2-wx2,     ey,          ez-wx*wy,     -wx*wz,
+                        .0,       ay-gy,        gx-ax,        .0,         -wx*wy,     wx2-wy2,      ex-wy*wz,    wx*wy,       ey+wx*wz,     ez      };
         
         copyArray(&V_,x,60);
       
@@ -130,7 +130,6 @@ namespace atk
         double l[10] = {0, -inf, -inf, -inf, 0, 0, 0, 0, 0, 0};
         double u[10];
         for(int i = 0; i < 10; i++)u[i] = inf;
-
         double* c = leastSquareFit(y_.size(),10,x_.data(),y_.data(),l,u);
         copyArray(&phi_,c,10);
         phi_str.str("");

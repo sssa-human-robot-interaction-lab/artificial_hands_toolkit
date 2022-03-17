@@ -6,12 +6,13 @@ from threading import Thread
 from abc import ABC
 
 import rospy, rosbag, tf
-from geometry_msgs.msg import Pose, Quaternion, Point
+from std_msgs.msg import Bool
+from geometry_msgs.msg import Point
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 
 from artificial_hands_py.robot_commander import *
-from artificial_hands_py import get_key
+from artificial_hands_py import get_key, quat_to_list, list_to_quat
 
 from artificial_hands_msgs.srv import *
 from artificial_hands_msgs.msg import *
@@ -30,39 +31,26 @@ calibration_joints[2][5] += pi
 calibration_joints[3][3] -= pi/2
 calibration_joints[4][3] += pi/2
 
-max_accel = 1
+max_disp_accel = 0.5
 max_disp = 0.05
-max_rot = 0.1
+p_goal_time = pow(4*9.9*abs(max_disp/max_disp_accel),0.5)
+p_goal = Point()
+p_goal.x = max_disp
+p_goal.y = max_disp
+p_goal.z = max_disp
 
-p_goal_time_2 = pow(4*9.9*abs(max_disp/max_accel),0.5)
-p_goal_2 = Pose()
-p_goal_2.position.x = max_disp
-p_goal_2.position.y = max_disp
-p_goal_2.position.z = max_disp
-o_goal_time_2 = pow(4*9.9*abs(max_rot/max_accel),0.5)
-o_goal_2 = Pose()
-o_goal_2.orientation.x = max_rot
-o_goal_2.orientation.y = max_rot
-o_goal_2.orientation.z = max_rot
+max_rot_accel = 2
+max_rot = 0.2
+r_goal_time = pow(4*9.9*abs(max_rot/max_rot_accel),0.5)
+r_goal = Point()
+r_goal.x = max_rot
+r_goal.y = max_rot
+r_goal.z = max_rot
 
 joint_ini = np.array([114.20,-92.06,97.77,-140.54,-90.05,-201.39])
 joint_ini = joint_ini/180*pi
 
-def list_to_quat(q : list) -> Quaternion: 
-  quat = Quaternion()
-  quat.x = q[0]
-  quat.y = q[1]
-  quat.z = q[2]
-  quat.w = q[3]
-  return quat
-
-def quat_to_list(quat : Quaternion) -> list: 
-  q = []
-  q.append(quat.x)
-  q.append(quat.y)
-  q.append(quat.z)
-  q.append(quat.w)
-  return q
+joint_home = np.array([2.0,-pi/2,pi/2,-pi,-pi/2,-pi])
 
 def generate_markers(ref_pose : Pose, num : int) -> MarkerArray:
   
@@ -79,7 +67,6 @@ def generate_markers(ref_pose : Pose, num : int) -> MarkerArray:
     marker.color.a = 1
     marker.id = c
 
-    # q = ts.quaternion_about_axis(-pi/2,[0,0,1])
     # q = ts.quaternion_multiply(ts.quaternion_about_axis(-pi/2,[0,0,1]),quat_to_list(ref_pose.orientation))
     # q_norm = [float(i)/max(q) for i in q]
 
@@ -115,14 +102,14 @@ class WristInterface:
     self.detection = Detection()
     sub = rospy.Subscriber("/wrist_dynamics_data",WristDynamicsStamped,self.wrist_data_callback)
     det_sub = rospy.Subscriber("/wrist_contact_detection",DetectionStamped,self.wrist_detection_callback)
-    self.bag_open = False
+    self.bag_record = False
+    self.near_to_end_pose = Bool()
 
   def open_bag(self,bag_name : str):
     self.bag = rosbag.Bag(bag_name,'w')
-    self.bag_open = True
 
   def close_bag(self):
-    self.bag_open = False
+    self.bag_record = False
     sleep(.1)
     self.bag.close()
     
@@ -135,13 +122,14 @@ class WristInterface:
     self.detection = msg.detection
   
   def wrist_data_callback(self,msg : WristDynamicsStamped):
-    if self.bag_open:
+    if self.bag_record:
       self.bag.write('wrist_dynamics_data',msg)
       self.bag.write("wrist_dynamics_detection",self.detection)
+      self.bag.write("status",self.near_to_end_pose)
 
 class RobotCommander(ABC):
 
-  twist_servo = HarmonicServoCommander(ns='',ref='base',eef='ft_sensor_frame')
+  twist_servo = TwistServoCommander(ns='',ref='base',eef='ft_sensor_frame')
   arm = CartesianServoCommander(ns='',ref='base',eef='ft_sensor_frame')
   hand = MiaHandCommander('mia_hand')
   wrist = WristInterface()                                                 
@@ -206,11 +194,14 @@ class RobotCommander(ABC):
   def do_object_recognition(self):
     self.wrist.wristCommand("wrist_dynamics_command/subscribe")    
     self.wrist.wristCommand("wrist_dynamics_command/start_loop") 
-    self.wrist.wristCommand("wrist_dynamics_command/set_calibration")     
+    self.wrist.wristCommand("wrist_dynamics_command/set_calibration")  
+    sleep(.5)   
     self.wrist.wristCommand("wrist_dynamics_mode/save_dynamics")         
-    sleep(.1)
-    self.twist_servo.servo_delta(o_goal_time_2,delta_pose_2=o_goal_2)
-    self.twist_servo.servo_delta(p_goal_time_2,delta_pose_2=p_goal_2)
+    self.twist_servo.servo_delta(r_goal_time,'biharmonic2',delta_rot=r_goal)
+    joint_home[5] += pi/2
+    self.arm.go(joint_home)
+    joint_home[5] -= pi/2
+    self.twist_servo.servo_delta(r_goal_time,'biharmonic2',delta_rot=r_goal)
     self.wrist.wristCommand("wrist_dynamics_command/stop_loop")          
     self.wrist.wristCommand("wrist_dynamics_command/build_model")     
 

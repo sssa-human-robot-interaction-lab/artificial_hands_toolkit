@@ -81,8 +81,6 @@ namespace atk
         wrench_e_.torque = subtractVector3(torque_fir,torque_hat);
         sensor_e_->Update(wrench_e_);
         sensor_e_->Get();
-        absoluteVector3(&sensor_e_->force); //TO DO remove absolute value from here
-        absoluteVector3(&sensor_e_->torque); 
       };
 
       /**
@@ -91,6 +89,8 @@ namespace atk
       void SaveInteraction()
       {
         Estimate();
+        absoluteVector3(&sensor_e_->force); //TO DO remove absolute value from here
+        absoluteVector3(&sensor_e_->torque); 
         compareVector3(&th_dyn_.force,sensor_e_->force);
         compareVector3(&th_dyn_.torque,sensor_e_->torque);
       };
