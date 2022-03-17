@@ -17,19 +17,18 @@ namespace rosatk
   {
     
     public:
-      WristDynamicsNode(ros::NodeHandle nh, bool publish, double factor, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame, const char* model_frame):  
+      WristDynamicsNode(ros::NodeHandle nh, bool publish, double factor, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame):  
         nh_(nh),
         publish_(publish),
         factor_(factor),
         sensor_(sensor),
         controller_(controller),
-        WristFTInteraction(filter, controller_rate, target_frame, "manipulator", "robot_description", model_frame),
+        WristFTInteraction(filter, controller_rate, target_frame, "manipulator", "robot_description"),
         ServiceManagerBase(nh,&WristDynamicsNode::command)
       {
         ROS_INFO("Starting FIR filters with length %i samples.",filter); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
-        ROS_INFO("Using reference frame %s.",model_frame);
         if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::WristDynamicsStamped>("wrist_dynamics_data",1000);
         loop_tim_ = nh_.createWallTimer(ros::WallDuration(1.0/(double)rate),&WristDynamicsNode::loopTimerCallback, this, false, false);
         loop_msg_.header.frame_id = target_frame;
@@ -268,7 +267,6 @@ int main(int argc, char** argv)
   std::string controller;
   std::string controller_rate;
   std::string target_frame;
-  std::string model_frame;
 
   po::options_description desc("Options");
   desc.add_options()
@@ -281,7 +279,6 @@ int main(int argc, char** argv)
     ("controller", po::value<std::string>(&controller)->default_value("/joint_states"), "name of the rostopic published by joint_state_controller") 
     ("controller_rate", po::value<std::string>(&controller_rate)->default_value("/joint_state_controller/publish_rate"), "rosparam name of the publish rate in joint_state_controller") 
     ("target_frame", po::value<std::string>(&target_frame)->default_value("ft_sensor_frame"), "wrist F/T sensor frame id") 
-    ("model_frame", po::value<std::string>(&model_frame)->default_value("world"), "fixed reference frame of the robot model") 
     ;
   po::positional_options_description p;
   p.add("filter",  1);
@@ -298,7 +295,7 @@ int main(int argc, char** argv)
   int joint_rate;
   ros::param::get(controller_rate,joint_rate);
   if(joint_rate < rate){rate = joint_rate; ROS_WARN("Required node rate was g.t. joint_state_controller publish rate, node rate lowered to %i Hz",rate);}
-  rosatk::WristDynamicsNode hr_per_node = rosatk::WristDynamicsNode(nh,publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str(),model_frame.c_str());
+  rosatk::WristDynamicsNode hr_per_node = rosatk::WristDynamicsNode(nh,publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str());
   ros::spin();
 
   return true;

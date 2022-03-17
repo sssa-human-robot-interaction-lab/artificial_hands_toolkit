@@ -18,11 +18,9 @@ namespace atk
        * @param target_frame frame to compute for absolute kinematics
        * @param srdf_group name of the planning group for the target frame (according to robot SRDF)
        * @param robot_description name of XML robot description (robot URDF)
-       * @param model_frame absolute frame for the planning group
        */
-      FrameDynamics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", 
-      const char* robot_description="robot_description", const char* model_frame="world"):
-        FrameKinematics(filter_length,controller_rate, target_frame, srdf_group, robot_description, model_frame)
+      FrameDynamics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
+        FrameKinematics(filter_length,controller_rate, target_frame, srdf_group, robot_description)
       {
         BaseFTSensor::SetFilter(filter_length);
 

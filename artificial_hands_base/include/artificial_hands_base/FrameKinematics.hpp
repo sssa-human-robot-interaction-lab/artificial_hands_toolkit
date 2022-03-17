@@ -23,15 +23,12 @@ namespace atk
        * @param target_frame frame to compute for absolute kinematics
        * @param srdf_group name of the planning group for the target frame (according to robot SRDF)
        * @param robot_description name of XML robot description (robot URDF)
-       * @param model_frame absolute frame for the planning group
        */
-      FrameKinematics(int filter_length, const double loop_rate, const char* target_frame, const char* srdf_group="manipulator", 
-      const char* robot_description="robot_description", const char* model_frame="world"):
+      FrameKinematics(int filter_length, const double loop_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
         loop_rate_(loop_rate),
         target_frame_(target_frame),
         robot_description_(robot_description),
         srdf_group_(srdf_group),
-        model_frame_(model_frame),
         BaseFilter(filter_length)
       {
 
@@ -40,14 +37,13 @@ namespace atk
 
         joint_model_group_ = kinematic_model->getJointModelGroup(srdf_group_);
         kinematic_state_ = new moveit::core::RobotState(kinematic_model);
-
+        
         KDL::Tree robot_kin;
         kdl_parser::treeFromUrdfModel(*robot_model_loader.getURDF(),robot_kin);
-        robot_kin.getChain(model_frame_,target_frame_,robot_chain_);
+        robot_kin.getChain(kinematic_model->getRootLinkName(),target_frame_,robot_chain_);
 
         jac_solver_ = new KDL::ChainJntToJacSolver(robot_chain_);
         dot_solver_ = new KDL::ChainJntToJacDotSolver(robot_chain_);
-
       }
 
       /**

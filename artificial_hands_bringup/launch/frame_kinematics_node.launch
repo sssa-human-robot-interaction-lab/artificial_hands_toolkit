@@ -1,8 +1,12 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="filter" default="20" />
+  <arg name="rate" default="125" />
+  <arg name="target_frame" default="ft_sensor_frame" />
+
   <!-- Run the frame kinematics node -->
-  <node pkg="artificial_hands_base" type="frame_kinematics_node" name="frame_kinematics_node" output="screen" args="--autostart true"/>
+  <node pkg="artificial_hands_base" type="frame_kinematics_node" name="frame_kinematics_node" output="screen" args="--autostart true --filter $(arg filter) --rate $(arg rate) --target_frame $(arg target_frame)"/>
 
   <!-- rqt plot -->
   <node pkg="rqt_gui" type="rqt_gui" name="rqt_plot_frame_kinematics" output="screen" args="--perspective-file $(find artificial_hands_bringup)/etc/frame_kinematics.perspective"/>

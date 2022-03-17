@@ -21,11 +21,9 @@ namespace atk
        * @param target_frame frame to compute for absolute kinematics
        * @param planning_group name of the moveit planning group of target frame
        * @param robot_description name of XML robot description
-       * @param model_frame absolute frame for the planning group
        */
-      WristFTInteraction(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", 
-      const char* robot_description="robot_description", const char* model_frame="world"):
-      FrameDynamics(filter_length,controller_rate,target_frame,srdf_group,robot_description,model_frame)
+      WristFTInteraction(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
+        FrameDynamics(filter_length,controller_rate,target_frame,srdf_group,robot_description)
       {
         sensor_e_ = new atk::BaseFTSensor<atk::BaseFilter>();
         sensor_e_->SetFilter(10);
