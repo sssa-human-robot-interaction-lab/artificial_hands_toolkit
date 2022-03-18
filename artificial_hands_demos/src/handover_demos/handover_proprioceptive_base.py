@@ -50,7 +50,7 @@ r_goal.z = max_rot
 joint_ini = np.array([114.20,-92.06,97.77,-140.54,-90.05,-201.39])
 joint_ini = joint_ini/180*pi
 
-joint_home = np.array([2.0,-pi/2,pi/2,-pi,-pi/2,-pi])
+joint_home = np.array([pi/2,-pi/2,pi/2,-pi,-pi/2,pi])
 
 def generate_markers(ref_pose : Pose, num : int) -> MarkerArray:
   
@@ -103,6 +103,7 @@ class WristInterface:
     sub = rospy.Subscriber("/wrist_dynamics_data",WristDynamicsStamped,self.wrist_data_callback)
     det_sub = rospy.Subscriber("/wrist_contact_detection",DetectionStamped,self.wrist_detection_callback)
     self.bag_record = False
+    self.recog_preempted = False
     self.near_to_end_pose = Bool()
 
   def open_bag(self,bag_name : str):
@@ -113,8 +114,7 @@ class WristInterface:
     sleep(.1)
     self.bag.close()
     
-
-  def wristCommand(self,service_name) -> bool:
+  def wrist_command(self,service_name) -> bool:
     res = rospy.ServiceProxy(service_name,WristDynamicsCommand)
     return res().success
 
@@ -142,11 +142,11 @@ class RobotCommander(ABC):
     return True
   
   def wait_for_touch_enter(self):
-    self.wrist.wristCommand("wrist_dynamics_command/subscribe")    
-    self.wrist.wristCommand("wrist_dynamics_command/start_loop") 
+    self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
+    self.wrist.wrist_command("wrist_dynamics_command/start_loop") 
     sleep(1)
-    self.wrist.wristCommand("wrist_dynamics_command/set_zero")                                          
-    self.wrist.wristCommand("wrist_dynamics_mode/trigger_static")  
+    self.wrist.wrist_command("wrist_dynamics_command/set_zero")                                          
+    self.wrist.wrist_command("wrist_dynamics_mode/trigger_static")  
     self.wrist.detection.backtrig = False
     start_time =  rospy.Time.now()             
     while self.wrist.detection.backtrig == False:  
@@ -158,7 +158,7 @@ class RobotCommander(ABC):
         else:
           start_time =  rospy.Time.now()
       sleep(0.05)
-    self.wrist.wristCommand("wrist_dynamics_command/stop_loop")  
+    self.wrist.wrist_command("wrist_dynamics_command/stop_loop")  
     return True
   
   def wait_for_release_trigger(self,timeout : float = 1000.0):                                                   
@@ -168,42 +168,60 @@ class RobotCommander(ABC):
       self.arm.rate.sleep()
 
   def check_calib(self) -> bool:
-    self.wrist.wristCommand("wrist_dynamics_command/subscribe")    
-    self.wrist.wristCommand("wrist_dynamics_command/start_loop") 
-    self.wrist.wristCommand("wrist_dynamics_command/set_calibration") 
+    self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
+    self.wrist.wrist_command("wrist_dynamics_command/start_loop") 
+    self.wrist.wrist_command("wrist_dynamics_command/set_calibration") 
     sleep(2)
-    return self.wrist.wristCommand("wrist_dynamics_command/check_calibration") 
+    return self.wrist.wrist_command("wrist_dynamics_command/check_calibration") 
 
   def do_calib(self):
-    self.wrist.wristCommand("wrist_dynamics_command/subscribe")    
-    self.wrist.wristCommand("wrist_dynamics_command/start_loop")     
+    self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
+    self.wrist.wrist_command("wrist_dynamics_command/start_loop")     
     self.arm.set_max_velocity_scaling_factor(.25)                                              
     for joint_target in calibration_joints:
       """ Move arm in joint configuration and save mesurments for further calibration """
       self.arm.go(joint_target, wait=True)                               
       self.arm.stop()                                                    
       sleep(.3)                                                          
-      self.wrist.wristCommand("wrist_dynamics_mode/save_calibration")                   
+      self.wrist.wrist_command("wrist_dynamics_mode/save_calibration")                   
       sleep(.7)                                                          
-      self.wrist.wristCommand("wrist_dynamics_mode/publish")                                                         
+      self.wrist.wrist_command("wrist_dynamics_mode/publish")                                                         
     self.arm.set_max_velocity_scaling_factor(.1)
-    self.wrist.wristCommand("wrist_dynamics_command/estimate_calibration")   
-    self.wrist.wristCommand("wrist_dynamics_command/set_calibration")   
-    self.wrist.wristCommand("wrist_dynamics_command/stop_loop")   
+    self.wrist.wrist_command("wrist_dynamics_command/estimate_calibration")   
+    self.wrist.wrist_command("wrist_dynamics_command/set_calibration")   
+    self.wrist.wrist_command("wrist_dynamics_command/stop_loop")   
 
   def do_object_recognition(self):
-    self.wrist.wristCommand("wrist_dynamics_command/subscribe")    
-    self.wrist.wristCommand("wrist_dynamics_command/start_loop") 
-    self.wrist.wristCommand("wrist_dynamics_command/set_calibration")  
+    self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
+    self.wrist.wrist_command("wrist_dynamics_command/start_loop") 
+    self.wrist.wrist_command("wrist_dynamics_command/set_calibration")  
     sleep(.5)   
-    self.wrist.wristCommand("wrist_dynamics_mode/save_dynamics")         
+    self.wrist.wrist_command("wrist_dynamics_mode/save_dynamics")         
     self.twist_servo.servo_delta(r_goal_time,'biharmonic2',delta_rot=r_goal)
     joint_home[5] += pi/2
     self.arm.go(joint_home)
     joint_home[5] -= pi/2
     self.twist_servo.servo_delta(r_goal_time,'biharmonic2',delta_rot=r_goal)
-    self.wrist.wristCommand("wrist_dynamics_command/stop_loop")          
-    self.wrist.wristCommand("wrist_dynamics_command/build_model")     
+    self.wrist.wrist_command("wrist_dynamics_command/stop_loop")          
+    self.wrist.wrist_command("wrist_dynamics_command/build_model")  
+
+  def start_object_recognition(self):
+    self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
+    self.wrist.wrist_command("wrist_dynamics_command/start_loop") 
+    self.wrist.wrist_command("wrist_dynamics_command/set_calibration")  
+    sleep(.5)   
+    self.wrist.wrist_command("wrist_dynamics_mode/save_dynamics")         
+    self.wrist.recog_preempted = True          
+
+  def build_object_model(self):
+    self.wrist.wrist_command("wrist_dynamics_command/build_model")
+  
+  def estimate_wrench(self):
+    self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
+    self.wrist.wrist_command("wrist_dynamics_command/start_loop") 
+    self.wrist.wrist_command("wrist_dynamics_command/set_calibration")  
+    sleep(.5)  
+    self.wrist.wrist_command("wrist_dynamics_mode/estimate_wrench")
 
   def eef_distance(self, point : Point):
     eef_point = self.arm.get_eef_frame().pose.position

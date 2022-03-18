@@ -2,7 +2,7 @@
 <launch>
 
   <arg name="filter" default="20" />
-  <arg name="rate" default="125" />
+  <arg name="rate" default="100" />
   <arg name="target_frame" default="ft_sensor_frame" />
 
   <!-- Run the frame kinematics node -->

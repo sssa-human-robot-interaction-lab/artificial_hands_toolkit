@@ -73,8 +73,16 @@ class ServoCommanderBase(ControllerManagerBase,moveit_commander.MoveGroupCommand
     self.reference_frame = ref
     self.ee_frame = eef
     self.paused = False
+    self.preempted = False
     self.set_pose_reference_frame(ref)
     self.set_end_effector_link(eef)
+  
+  def set_paused(self):
+    self.paused = True
+  
+  def set_preempted(self):
+    self.preempted = True
+    self.paused = False
   
   def set_rate(self, rate : rospy.Rate) -> None:
     self.rate = rate

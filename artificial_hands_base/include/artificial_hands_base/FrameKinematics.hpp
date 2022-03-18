@@ -12,7 +12,7 @@
 
 namespace atk
 {
-  class FrameKinematics: private atk::BaseFilter, public atk::kinematics6D_t
+  class FrameKinematics: public atk::kinematics6D_t
   {
 
     public:
@@ -24,12 +24,11 @@ namespace atk
        * @param srdf_group name of the planning group for the target frame (according to robot SRDF)
        * @param robot_description name of XML robot description (robot URDF)
        */
-      FrameKinematics(int filter_length, const double loop_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
-        loop_rate_(loop_rate),
+      FrameKinematics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
+        controller_rate_(controller_rate),
         target_frame_(target_frame),
         robot_description_(robot_description),
-        srdf_group_(srdf_group),
-        BaseFilter(filter_length)
+        srdf_group_(srdf_group)
       {
 
         robot_model_loader::RobotModelLoader robot_model_loader(robot_description_);
@@ -44,6 +43,9 @@ namespace atk
 
         jac_solver_ = new KDL::ChainJntToJacSolver(robot_chain_);
         dot_solver_ = new KDL::ChainJntToJacDotSolver(robot_chain_);
+        
+        j_pos_filter = new atk::BaseFilter(filter_length);
+        j_vel_filter = new atk::BaseFilter(filter_length);
       }
 
       /**
@@ -53,7 +55,8 @@ namespace atk
        */
       bool Init(sensor_msgs::JointState js) 
       {
-        BaseFilter::Init(js.position); 
+        j_pos_filter->Init(js.position); 
+        j_vel_filter->Init(js.velocity); 
         Update(js);
         Update(js); //Double update ensure acceleration starting from zero
         return true;
@@ -65,30 +68,25 @@ namespace atk
        */
       void Update(sensor_msgs::JointState js)
       {
-        BaseFilter::Update(js.position);
-        std::vector<double> j_position = BaseFilter::Get();
-
+        j_pos_filter->Update(js.position);
+        j_vel_filter->Update(js.velocity);
+        
+        std::vector<double> j_position = j_pos_filter->Get();
+        std::vector<double> j_velocity = j_vel_filter->Get();
         for(int i = 0; i <js.name.size(); i++)
         {
           kinematic_state_->setJointPositions(js.name[i].c_str(), &j_position[i]);
+          kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_velocity[i]);
         }
-
-        std::vector<double> j_pos_new;
-        kinematic_state_->copyJointGroupPositions(joint_model_group_, j_pos_new);
 
         std::vector<double> j_vel_new;
+        kinematic_state_->copyJointGroupVelocities(joint_model_group_, j_vel_new);
         std::vector<double> j_acc_new;
-
-        for(int i = 0; i < j_pos_new.size(); i++)
+        for(int i = 0; i < j_vel_new.size(); i++)
         {
-          j_vel_new.push_back((j_pos_new[i] - j_pos_[i])*loop_rate_);
-          j_acc_new.push_back((j_vel_new[i] - j_vel_[i])*loop_rate_);
-
-          j_pos_[i] = j_pos_new[i];
+          j_acc_new.push_back((j_vel_new[i] - j_vel_[i])*controller_rate_);
           j_vel_[i] = j_vel_new[i];
         }
-
-        kinematic_state_->setJointGroupVelocities(joint_model_group_, j_vel_new);
         kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
 
         transform_ = kinematic_state_->getGlobalLinkTransform(target_frame_);
@@ -174,14 +172,17 @@ namespace atk
       const char* srdf_group_;
       const char* target_frame_;
       const char* model_frame_;
-      const double loop_rate_;
+      const double controller_rate_;
       double j_pos_[20] = {0};
       double j_vel_[20] = {0};
       robot_state::JointModelGroup *joint_model_group_;
       moveit::core::RobotState *kinematic_state_;
       KDL::ChainJntToJacSolver *jac_solver_;
       KDL::ChainJntToJacDotSolver *dot_solver_;
-      KDL::Chain robot_chain_;    
+      KDL::Chain robot_chain_;  
+
+      atk::BaseFilter* j_pos_filter;
+      atk::BaseFilter* j_vel_filter;  
   };
 }
 
