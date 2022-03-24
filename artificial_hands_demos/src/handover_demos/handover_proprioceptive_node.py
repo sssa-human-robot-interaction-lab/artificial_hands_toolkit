@@ -6,44 +6,7 @@ from time import strftime
 from handover_proprioceptive_base import *
   
 def demo_execution(robot : RobotCommander, start_poses : MarkerArray, bagdir : str):
-
-  # if not robot.wait_for_enter():
-  #   rospy.logwarn("Aborting execution!")
-  # robot.do_object_recognition()
-
-  while True:
-    if not robot.wait_for_enter():
-      rospy.logwarn("Aborting execution!")
-      break
-    robot.do_object_recognition()
-    robot.arm.go(joint_home, wait=True)
-
-    robot.wrist.wristCommand("wrist_dynamics_command/subscribe")    
-    robot.wrist.wristCommand("wrist_dynamics_command/start_loop") 
-    robot.wrist.wristCommand("wrist_dynamics_command/set_calibration")  
-    sleep(.5)   
-    robot.wrist.wristCommand("wrist_dynamics_mode/estimate_wrench")  
-
-    delta_pos = Point()
-    delta_pos.z = 0.1
-    delta_rot = Point()
-    robot.twist_servo.servo_delta(1,'trapezoidal',delta_pos,delta_rot)
-    robot.arm.go(joint_home, wait=True)
-     
-
-  # if not robot.wait_for_enter():
-  #   rospy.logwarn("Aborting execution!")
-  # robot.wrist.wristCommand("wrist_dynamics_command/subscribe")    
-  # robot.wrist.wristCommand("wrist_dynamics_command/start_loop") 
-  # robot.wrist.wristCommand("wrist_dynamics_command/set_calibration")  
-  # sleep(.5)   
-  # robot.wrist.wristCommand("wrist_dynamics_mode/estimate_wrench")         
-  # robot.twist_servo.servo_delta(p_goal_time_2,delta_pose_2=p_goal_2)
-  # robot.twist_servo.servo_delta(o_goal_time_2,delta_pose_2=o_goal_2)
-  
-  rmtree(bagdir)
-  rospy.loginfo('bye!')
-  return 
+   
 
   robot.arm.switch_to_controller(robot.arm.j_traj_ctrl)
 
@@ -59,12 +22,6 @@ def demo_execution(robot : RobotCommander, start_poses : MarkerArray, bagdir : s
     rospy.logwarn("Aborting execution!")
     rospy.loginfo('bye!')
     return
-  # if not robot.wait_for_touch_enter():
-  #   rospy.logwarn("Terminated execution!")
-  #   return
-  # else:
-  #   sleep(2)
-  #   robot.hand.close_cyl()
 
   c = 0
   for marker in start_poses.markers:
@@ -82,15 +39,15 @@ def demo_execution(robot : RobotCommander, start_poses : MarkerArray, bagdir : s
     marker_pose = tf2_geometry_msgs.do_transform_pose(marker_pose,ref_to_base)
     marker_pose.pose.orientation = ref_orientation
     
-    if not robot.wait_for_enter():
-      rmtree(bagdir)
-    # if not robot.wait_for_touch_enter():
+    #if not robot.wait_for_enter():
+    if not robot.wait_for_touch_enter():
       rospy.logwarn("Terminated execution!")
+      rmtree(bagdir)
       break
 
     sleep(2)
     robot.arm.paused = False
-    # robot.hand.close_cyl()
+    robot.hand.close_cyl()
     (plan, fraction) = robot.arm.compute_cartesian_path([marker_pose.pose],0.01,0.0)
     if fraction == 1:
       robot.arm.execute(plan)
@@ -98,38 +55,45 @@ def demo_execution(robot : RobotCommander, start_poses : MarkerArray, bagdir : s
       (plan, fraction) = robot.arm.compute_cartesian_path([end_pose.pose],0.01,0.0)
       if fraction == 1:
         robot.wrist.open_bag(bag_name)
-        robot.wrist.wristCommand("wrist_dynamics_command/subscribe")
-        robot.wrist.wristCommand("wrist_dynamics_command/start_loop")     
-        robot.wrist.wristCommand("wrist_dynamics_command/set_calibration")  
-        robot.wrist.wristCommand("wrist_dynamics_mode/save_interaction") 
+        robot.wrist.wrist_command("wrist_dynamics_command/subscribe")
+        robot.wrist.wrist_command("wrist_dynamics_command/start_loop")     
+        robot.wrist.wrist_command("wrist_dynamics_command/set_calibration")  
+        robot.wrist.wrist_command("wrist_dynamics_mode/save_interaction") 
         sleep(2)     
-        goal_time = 4
+        goal_time = 2
         delta_thread = Thread(target=robot.arm.servo_goal,args=(goal_time,end_pose,))
         delta_thread.start()
         robot.wrist.near_to_end_pose.data = False
         robot.wrist.bag_record = True
         rate = rospy.Rate(10)
 
-        while robot.eef_distance(end_pose.pose.position) > 0.2:
-          rate.sleep()
-        robot.wrist.near_to_end_pose.data = True
-        robot.wrist.wristCommand("wrist_dynamics_mode/trigger_dynamics")
-        while robot.eef_distance(end_pose.pose.position) > 0.002:
-          rate.sleep()
-
-        # while robot.eef_distance(end_pose.pose.position) > 0.2:
+        # while robot.eef_distance(end_pose.pose.position) > 0.4:
+        #   # print(robot.eef_distance(end_pose.pose.position))
         #   rate.sleep()
         # robot.wrist.near_to_end_pose.data = True
-        # robot.hand.switch_to_controller(robot.hand.vel_ctrl)
-        # rel_thread = Thread(target=robot.hand.open,args=(False,3,))
-        # robot.wrist.wristCommand("wrist_dynamics_mode/trigger_dynamics")
-        # robot.wait_for_release_trigger(10)
-        # if robot.wrist.detection.trigger:
-        #   rel_thread.start()
-        #   robot.arm.paused = True
+        # robot.wrist.wrist_command("wrist_dynamics_mode/trigger_dynamics")
+        # while robot.eef_distance(end_pose.pose.position) > 0.05:
+        #   # print(robot.eef_distance(end_pose.pose.position))
+        #   rate.sleep()
 
+        robot.wrist.force_th = 0
+        robot.wrist.force_mag_zero = robot.wrist.force_mag
+        while robot.eef_distance(end_pose.pose.position) > 0.3:
+          if 2*abs(robot.wrist.force_mag - robot.wrist.force_mag_zero) > robot.wrist.force_th:
+             robot.wrist.force_th = 2*abs(robot.wrist.force_mag - robot.wrist.force_mag_zero)
+          rate.sleep()
+        robot.wrist.near_to_end_pose.data = True
+        robot.hand.switch_to_controller(robot.hand.vel_ctrl)
+        rel_thread = Thread(target=robot.hand.open,args=(False,3,))
+        robot.wrist.wrist_command("wrist_dynamics_mode/trigger_dynamics")
+        robot.wait_for_release_trigger(10)
+        if robot.wrist.force_mag_trig:
+          rel_thread.start()
+          robot.arm.paused = True
+
+        sleep(1)
         robot.wrist.close_bag()
-        robot.wrist.wristCommand("wrist_dynamics_command/stop_loop")     
+        robot.wrist.wrist_command("wrist_dynamics_command/stop_loop")     
       else:
         rospy.logwarn("Failed to compute return path for marker %i", marker.id)
     else:
@@ -149,12 +113,13 @@ def main():
   robot.twist_servo.set_rate(twist_rate)
 
   robot.arm.switch_to_controller(robot.arm.j_traj_ctrl)
-  robot.arm.go(joint_home, wait=True)
-  # robot.hand.open(vel=3)
+  robot.arm.go(joint_end, wait=True)
+  robot.hand.open(vel=3)
 
   if not robot.check_calib():
-    robot.do_calib()
     robot.arm.go(joint_home, wait=True)
+    robot.do_calib()
+    robot.arm.go(joint_end, wait=True)
 
   handover_end_pose = robot.arm.get_eef_frame().pose
   handover_start_frame_angle = atan2(handover_end_pose.position.y,handover_end_pose.position.x)

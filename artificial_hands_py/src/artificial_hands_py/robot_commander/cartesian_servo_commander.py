@@ -75,7 +75,7 @@ class CartesianServoCommander(ServoCommanderBase):
 
     return traj_cmd   
   
-  def servo_goal(self, goal_time : float, goal_pose : PoseStamped = PoseStamped()):
+  def servo_goal(self, goal_time : float, goal_pose : PoseStamped = PoseStamped(), auto_switch : bool = True):
 
     def harmonic_pos(h : float, ts : float):
       t = np.arange(0,ts,self.dt)
@@ -108,10 +108,14 @@ class CartesianServoCommander(ServoCommanderBase):
       traj_cmd.points[c].transforms[0].rotation = angle_pose.pose.orientation
       c += 1
 
-    self.switch_to_controller(self.c_traj_ctrl)
+    if auto_switch:
+      self.switch_to_controller(self.c_traj_ctrl)
+
     for pnt_cmd in traj_cmd.points:
       if not self.paused:
         self.controller_command(pnt_cmd)
       self.rate.sleep()
-    sleep(1)
-    self.switch_to_controller(self.j_traj_ctrl)   
+
+    if auto_switch:
+      sleep(1)
+      self.switch_to_controller(self.j_traj_ctrl)   

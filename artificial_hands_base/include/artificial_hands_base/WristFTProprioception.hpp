@@ -2,7 +2,7 @@
 #define ATK_WRIST_FT_INTERACTION
 
 #include <artificial_hands_base/FrameDynamics.hpp>
-#include <artificial_hands_base/WristFTDetection.hpp>
+#include <artificial_hands_base/WristFTContactDetection.hpp>
 
 namespace atk
 {
@@ -10,23 +10,23 @@ namespace atk
   using FIR = atk::BaseFTSensor<atk::BaseFilter>;
   using IIR = atk::BaseFTSensor<atk::BaseIRFilter>;
 
-  class WristFTInteraction: public atk::WristFTDetection, public atk::FrameDynamics
+  class WristFTProprioception: public atk::WristFTContactDetection, public atk::FrameDynamics
   {
 
     public:
       /**
-       * @brief Construct a new WristFTInteraction object
+       * @brief Construct a new WristFTProprioception object
        * @param filter_length length in samples of FIR (simple moving average) filter on joint angles
        * @param controller_rate rate in Hz of the joint state controller
        * @param target_frame frame to compute for absolute kinematics
        * @param planning_group name of the moveit planning group of target frame
        * @param robot_description name of XML robot description
        */
-      WristFTInteraction(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
+      WristFTProprioception(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
         FrameDynamics(filter_length,controller_rate,target_frame,srdf_group,robot_description)
       {
         sensor_e_ = new atk::BaseFTSensor<atk::BaseFilter>();
-        sensor_e_->SetFilter(10);
+        sensor_e_->SetFilter(3);
         resetVector3(&th_dyn_.force);
         resetVector3(&th_dyn_.torque);
       };
@@ -46,8 +46,8 @@ namespace atk
         wrench_e_.force = force_e;
         wrench_e_.torque = torque_e;
         sensor_e_->Init(wrench_e_);
-        WristFTDetection::SetZero(false);
-        return WristFTDetection::Init(ft) & FrameDynamics::Init(js,ft);
+        WristFTContactDetection::SetZero(false);
+        return WristFTContactDetection::Init(ft) & FrameDynamics::Init(js,ft);
       };
 
       /**
@@ -56,7 +56,7 @@ namespace atk
        */
       bool Get() 
       {
-        WristFTDetection::Get();
+        WristFTContactDetection::Get();
         FrameDynamics::Get();
         force_fir = FIR::force;
         torque_fir = FIR::torque;
@@ -79,6 +79,8 @@ namespace atk
         wrench_e_.torque = subtractVector3(torque_fir,torque_hat);
         sensor_e_->Update(wrench_e_);
         sensor_e_->Get();
+        absoluteVector3(&sensor_e_->force); //TO DO remove absolute value from here
+        absoluteVector3(&sensor_e_->torque); 
       };
 
       /**
@@ -87,8 +89,6 @@ namespace atk
       void SaveInteraction()
       {
         Estimate();
-        absoluteVector3(&sensor_e_->force); //TO DO remove absolute value from here
-        absoluteVector3(&sensor_e_->torque); 
         compareVector3(&th_dyn_.force,sensor_e_->force);
         compareVector3(&th_dyn_.torque,sensor_e_->torque);
       };
@@ -100,8 +100,7 @@ namespace atk
       void TriggerDynamics(double factor = 1.0)
       {
         Estimate();
-        th_dyn_.torque.z = torque_e.z; //removed too sensible torque vector
-        trigger = triggerOrVector3(th_dyn_.force,sensor_e_->force,factor) | triggerOrVector3(th_dyn_.torque,torque_e,factor);
+        trigger = triggerOrVector3(th_dyn_.force,sensor_e_->force,factor); // not using torque
       };
 
       geometry_msgs::Vector3 force_fir;

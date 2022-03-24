@@ -1,4 +1,5 @@
 from cmath import pi
+from matplotlib.colors import PowerNorm
 import numpy as np
 import random
 from time import sleep
@@ -19,33 +20,23 @@ from artificial_hands_msgs.msg import *
 
 calibration_joints = []
 for c in range(0,6):
-  calibration_joints.append([2.0,-pi/2,pi/2,-pi,-pi/2,-pi].copy())
-# calibration_joints[0][5] -= pi
-# calibration_joints[1][5] -= pi/2
-# calibration_joints[2][5] += pi/2
-# calibration_joints[3][3] -= pi/2
-# calibration_joints[4][3] += pi/2
-calibration_joints[0][5] -= pi/2
-calibration_joints[1][5] += pi/2
-calibration_joints[2][5] += pi
+  calibration_joints.append([pi/2,-pi/2,pi/2,-pi,-pi/2,pi].copy())
+calibration_joints[0][5] -= pi
+calibration_joints[1][5] -= pi/2
+calibration_joints[2][5] += pi/2
 calibration_joints[3][3] -= pi/2
 calibration_joints[4][3] += pi/2
 
-max_disp_accel = 0.5
-max_disp = 0.05
-p_goal_time = pow(4*9.9*abs(max_disp/max_disp_accel),0.5)
-p_goal = Point()
-p_goal.x = max_disp
-p_goal.y = max_disp
-p_goal.z = max_disp
+goal_time = 3.0
+max_lin_accel = 0.4
+max_lin_disp = max_lin_accel*pow(goal_time/2,2)/9.9
+delta_pos = Point()
+delta_pos.x = -max_lin_disp
+delta_pos.y = -max_lin_disp
+delta_pos.z = max_lin_disp
 
-max_rot_accel = 2
-max_rot = 0.2
-r_goal_time = pow(4*9.9*abs(max_rot/max_rot_accel),0.5)
-r_goal = Point()
-r_goal.x = max_rot
-r_goal.y = max_rot
-r_goal.z = max_rot
+joint_end = np.array([114.20,-74.26,110.14,-222.76,-90.05,180.02])
+joint_end = joint_end/180*pi
 
 joint_ini = np.array([114.20,-92.06,97.77,-140.54,-90.05,-201.39])
 joint_ini = joint_ini/180*pi
@@ -67,11 +58,15 @@ def generate_markers(ref_pose : Pose, num : int) -> MarkerArray:
     marker.color.a = 1
     marker.id = c
 
-    # q = ts.quaternion_multiply(ts.quaternion_about_axis(-pi/2,[0,0,1]),quat_to_list(ref_pose.orientation))
-    # q_norm = [float(i)/max(q) for i in q]
+    q = ts.quaternion_multiply(ts.quaternion_about_axis(-pi/2,[0,0,1]),quat_to_list(ref_pose.orientation))
+    q_norm = [float(i)/max(q) for i in q]
+    marker.pose.orientation = list_to_quat(q_norm)
 
-    # marker.pose.orientation = list_to_quat(q_norm)
-    marker.pose.orientation = ref_pose.orientation
+    q = ts.quaternion_multiply(ts.quaternion_about_axis(pi/2,[1,0,0]),quat_to_list(marker.pose.orientation))
+    q_norm = [float(i)/max(q) for i in q]
+    marker.pose.orientation = list_to_quat(q_norm)
+
+    # marker.pose.orientation = ref_pose.orientation
 
     marker.pose.position.x = 0
     marker.pose.position.y = -0.5
@@ -102,9 +97,14 @@ class WristInterface:
     self.detection = Detection()
     sub = rospy.Subscriber("/wrist_dynamics_data",WristDynamicsStamped,self.wrist_data_callback)
     det_sub = rospy.Subscriber("/wrist_contact_detection",DetectionStamped,self.wrist_detection_callback)
+    self.for_pub = rospy.Publisher("/force_mag_data",Float64MultiArray,queue_size=1000) 
     self.bag_record = False
     self.recog_preempted = False
     self.near_to_end_pose = Bool()
+    self.force_mag = 0
+    self.force_mag_zero = 0
+    self.force_mag_trig = False
+    self.force_th = 0
 
   def open_bag(self,bag_name : str):
     self.bag = rosbag.Bag(bag_name,'w')
@@ -120,8 +120,16 @@ class WristInterface:
 
   def wrist_detection_callback(self,msg : DetectionStamped):
     self.detection = msg.detection
+    if abs(self.force_mag - self.force_mag_zero) > self.force_th:
+      self.force_mag_trig = True  
+    # for_msg = Float64MultiArray()    
+    # for_msg.data.append(self.force_th)  
+    # for_msg.data.append(abs(self.force_mag-self.force_mag_zero))
+    # for_msg.data.append(self.force_mag_trig)    
+    # self.for_pub.publish(for_msg)
   
   def wrist_data_callback(self,msg : WristDynamicsStamped):
+    self.force_mag = pow(pow(msg.wrist_dynamics.wrench_fir.force.x,2) + pow(msg.wrist_dynamics.wrench_fir.force.y,2) + pow(msg.wrist_dynamics.wrench_fir.force.z,2),0.5)
     if self.bag_record:
       self.bag.write('wrist_dynamics_data',msg)
       self.bag.write("wrist_dynamics_detection",self.detection)
@@ -130,7 +138,7 @@ class WristInterface:
 class RobotCommander(ABC):
 
   twist_servo = TwistServoCommander(ns='',ref='base',eef='ft_sensor_frame')
-  arm = CartesianServoCommander(ns='',ref='base',eef='ft_sensor_frame')
+  arm = CartesianServoCommander(ns='',ref='base',eef='tool0')
   hand = MiaHandCommander('mia_hand')
   wrist = WristInterface()                                                 
  
@@ -148,9 +156,9 @@ class RobotCommander(ABC):
     self.wrist.wrist_command("wrist_dynamics_command/set_zero")                                          
     self.wrist.wrist_command("wrist_dynamics_mode/trigger_static")  
     self.wrist.detection.backtrig = False
-    start_time =  rospy.Time.now()             
+    start_time = rospy.Time.now()             
     while self.wrist.detection.backtrig == False:  
-      if (rospy.Time.now() - start_time).to_sec() > 180:             
+      if (rospy.Time.now() - start_time).to_sec() > 20:             
         rospy.loginfo("Program paused -> PRESS ENTER TO RESUME ('e' TO EXIT)")
         c = input()
         if c == "e":
@@ -161,11 +169,12 @@ class RobotCommander(ABC):
     self.wrist.wrist_command("wrist_dynamics_command/stop_loop")  
     return True
   
-  def wait_for_release_trigger(self,timeout : float = 1000.0):                                                   
+  def wait_for_release_trigger(self,timeout : float = 1000.0):                               
     start_time =  rospy.Time.now()
     self.wrist.detection.trigger = False
-    while not self.wrist.detection.trigger and (rospy.Time.now() - start_time).to_sec() < timeout:                                                         
-      self.arm.rate.sleep()
+    self.wrist.force_mag_trig = False
+    while not self.wrist.force_mag_trig and (rospy.Time.now() - start_time).to_sec() < timeout:                                                           
+      self.arm.rate.sleep() 
 
   def check_calib(self) -> bool:
     self.wrist.wrist_command("wrist_dynamics_command/subscribe")    
@@ -197,11 +206,7 @@ class RobotCommander(ABC):
     self.wrist.wrist_command("wrist_dynamics_command/set_calibration")  
     sleep(.5)   
     self.wrist.wrist_command("wrist_dynamics_mode/save_dynamics")         
-    self.twist_servo.servo_delta(r_goal_time,'biharmonic2',delta_rot=r_goal)
-    joint_home[5] += pi/2
-    self.arm.go(joint_home)
-    joint_home[5] -= pi/2
-    self.twist_servo.servo_delta(r_goal_time,'biharmonic2',delta_rot=r_goal)
+    self.twist_servo.servo_delta(goal_time,'biharmonic2',delta_pos=delta_pos)
     self.wrist.wrist_command("wrist_dynamics_command/stop_loop")          
     self.wrist.wrist_command("wrist_dynamics_command/build_model")  
 
@@ -214,6 +219,7 @@ class RobotCommander(ABC):
     self.wrist.recog_preempted = True          
 
   def build_object_model(self):
+    self.wrist.wrist_command("wrist_dynamics_command/stop_loop")  
     self.wrist.wrist_command("wrist_dynamics_command/build_model")
   
   def estimate_wrench(self):
@@ -225,4 +231,4 @@ class RobotCommander(ABC):
 
   def eef_distance(self, point : Point):
     eef_point = self.arm.get_eef_frame().pose.position
-    return pow(pow(eef_point.x-point.x,2)+pow(eef_point.y-point.y,2)+pow(eef_point.y-point.y,2),0.5)
+    return pow(pow(eef_point.x-point.x,2)+pow(eef_point.y-point.y,2)+pow(eef_point.z-point.z,2),0.5)

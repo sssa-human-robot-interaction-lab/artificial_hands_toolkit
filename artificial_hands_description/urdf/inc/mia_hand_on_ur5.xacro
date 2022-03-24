@@ -39,10 +39,52 @@
   <link name="ft_sensor_frame"/>
 
   <joint name="ft_frame_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0"/> 
-    <parent link="robotiq_ft_frame_id"/>
+    <origin xyz="0 0 0.016" rpy="0 0 0"/> 
+    <parent link="tool0"/>
     <child link="ft_sensor_frame"/>
   </joint>
+
+  <!-- OnRobot HEX-E v2-->
+  <!-- <link name="hex_mounting_plate">
+    <visual>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+          <mesh filename="package://artificial_hands_description/meshes/visual/onrobot_hex_e.stl"/>
+      </geometry>
+      <material name="onrobot-grey">
+          <color rgba="0.4 0.4 0.4 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+          <mesh filename="package://artificial_hands_description/meshes/collision/onrobot_hex_e.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="hex_ee_mounting_plate"/>
+
+  <joint name="hex_mounting_joint" type="fixed">
+    <origin xyz="0 0 0.037" rpy="0 0 0" />
+    <parent link="hex_mounting_plate" />
+    <child link="hex_ee_mounting_plate" />
+  </joint>
+
+  <link name="hex_sensor_frame"/>
+
+  <joint name="hex_sensor_joint" type="fixed">
+    <origin xyz="0 0 0.037" rpy="0 0 0" />
+    <parent link="hex_mounting_plate" />
+    <child link="hex_sensor_frame" />
+  </joint> -->
+
+  <!-- Attach HEX sensor -->
+  <!-- <joint name="hex_fix" type="fixed">
+      <origin xyz="0 0 0.016" rpy="0 0 0"/> 
+      <parent link="tool0" />
+      <child link="hex_mounting_plate" />
+  </joint> -->
 
   <!-- Enable joint feedback representing the ft_sensor-->
   <gazebo reference="measurment_joint">

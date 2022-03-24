@@ -6,15 +6,15 @@
 namespace atk
 {
 
-  class WristFTDetection: public atk::BaseFTSensor<BaseIRFilter>
+  class WristFTContactDetection: public atk::BaseFTSensor<BaseIRFilter>
   {
 
     public:
       /**
-       * @brief Construct a new WristFTDetection object
+       * @brief Construct a new WristFTContactDetection object
        * @note Default parameters are calibrated for sensor driver streaming at 500 Hz
        */
-      WristFTDetection(int buf = 50, int th = 20, double rto = .5, double dev = .4, double factor = 2):
+      WristFTContactDetection(int buf = 50, int th = 20, double rto = .5, double dev = .4, double factor = 2):
       th_(th),
       rto_(rto),
       dev_(dev),

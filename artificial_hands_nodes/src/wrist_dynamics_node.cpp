@@ -1,7 +1,7 @@
 #include <artificial_hands_base/BaseROSCommon.hpp>
 
 #include <artificial_hands_base/WristFTCalibration.hpp>
-#include <artificial_hands_base/WristFTInteraction.hpp>
+#include <artificial_hands_base/WristFTProprioception.hpp>
 #include <artificial_hands_msgs/DetectionStamped.h>
 #include <artificial_hands_msgs/WristDynamicsStamped.h>
 #include <artificial_hands_msgs/WristDynamicsCommand.h>
@@ -13,7 +13,7 @@ namespace rosatk
 {
   using cmd = artificial_hands_msgs::WristDynamicsCommand;
 
-  class WristDynamicsNode: public atk::WristFTInteraction, public atk::WristFTCalibration, public rosatk::ServiceManagerBase<rosatk::WristDynamicsNode,cmd>
+  class WristDynamicsNode: public atk::WristFTProprioception, public atk::WristFTCalibration, public rosatk::ServiceManagerBase<rosatk::WristDynamicsNode,cmd>
   {
     
     public:
@@ -23,7 +23,7 @@ namespace rosatk
         factor_(factor),
         sensor_(sensor),
         controller_(controller),
-        WristFTInteraction(filter, controller_rate, target_frame, "manipulator", "robot_description"),
+        WristFTProprioception(filter, controller_rate, target_frame, "manipulator", "robot_description"),
         ServiceManagerBase(nh,&WristDynamicsNode::command)
       {
         ROS_INFO("Starting FIR filters with length %i samples.",filter); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
@@ -59,7 +59,7 @@ namespace rosatk
 
       void externalTimerCallback(const ros::WallTimerEvent& event)
       {	
-        WristFTDetection::TriggerStatic();
+        WristFTContactDetection::TriggerStatic();
         ROS_INFO("%s",det_str.str().c_str());
         det_tim_.stop();
       }
@@ -68,31 +68,31 @@ namespace rosatk
       {
         start_ = ros::WallTime::now();
 
-        WristFTInteraction::Get();
+        WristFTProprioception::Get();
         switch(mode_)
         {
           case cmd::Request::MOD_PUB:
             // no action needed here
             break;
           case cmd::Request::MOD_TST:
-            if(WristFTDetection::PreTriggerStatic() & !det_tim_.hasStarted())
+            if(WristFTContactDetection::PreTriggerStatic() & !det_tim_.hasStarted())
             {
               trigger = false;//to do: find proper way to reset this trigger
               det_tim_.start();
             }
-            WristFTDetection::BackUpTriggerStatic();
+            WristFTContactDetection::BackUpTriggerStatic();
             break;
           case cmd::Request::MOD_EST:
-            WristFTInteraction::Estimate(); 
+            WristFTProprioception::Estimate(); 
             break;
           case cmd::Request::MOD_SDY:
             FrameDynamics::AddEquation();
             break;
           case cmd::Request::MOD_SIN:
-            WristFTInteraction::SaveInteraction();
+            WristFTProprioception::SaveInteraction();
             break;
           case cmd::Request::MOD_TDY:
-            WristFTInteraction::TriggerDynamics(factor_);
+            WristFTProprioception::TriggerDynamics(factor_);
             break;
           case cmd::Request::MOD_SCA:
             WristFTCalibration::AddEquation(force_fir,torque_fir,gravity,twist_acceleration.linear); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
@@ -148,7 +148,7 @@ namespace rosatk
             ft_ = ros::topic::waitForMessage<geometry_msgs::WrenchStamped>(sensor_);
             j_sub_ = nh_.subscribe(controller_, 1000, &WristDynamicsNode::jDataCallback, this);	
             js_ = ros::topic::waitForMessage<sensor_msgs::JointState>(controller_);
-            response.success = WristFTInteraction::Init(*js_,ft_->wrench);
+            response.success = WristFTProprioception::Init(*js_,ft_->wrench);
             break; 
           case cmd::Request::CMD_STA:
             ROS_INFO("Starting node loop (computation and publish).");
@@ -172,7 +172,7 @@ namespace rosatk
             break;
           case cmd::Request::CMD_ZRO:
             ROS_INFO("Setting zero on force/torque sensor IIR filter.");
-            WristFTDetection::SetZero(true);
+            WristFTContactDetection::SetZero(true);
             break;
           case cmd::Request::CMD_CAL:
             ROS_INFO("Starting estimate of calibration parameters.");
@@ -182,15 +182,15 @@ namespace rosatk
           case cmd::Request::CMD_SET:
             ROS_INFO("Setting offset on force/torque sensor.");
             FrameDynamics::SetOffset(WristFTCalibration::Get());
-            WristFTDetection::SetOffset(WristFTCalibration::Get());
+            WristFTContactDetection::SetOffset(WristFTCalibration::Get());
             break;
           case cmd::Request::CMD_CHK:
             ROS_INFO("Checking force/torque sensor calibration (unzeroing sensor).");
-            WristFTDetection::SetZero(false);
-            WristFTDetection::SetOffset(WristFTCalibration::Get());
+            WristFTContactDetection::SetZero(false);
+            WristFTContactDetection::SetOffset(WristFTCalibration::Get());
             c_mass_ = 100*(atk::magnitudeVector3(force_fir)/(WristFTCalibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
-            (abs(c_mass_) > 5 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
+            (abs(c_mass_) > 6 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;            
           }   
           ROS_INFO("Executed command.");
@@ -231,8 +231,8 @@ namespace rosatk
           return true;
       }
 
-      //Store latest force/torque message and update WristFTDetection accordingly (filtered and raw data)
-      void ftDataCallback(const geometry_msgs::WrenchStamped::ConstPtr &msg){ft_ = msg; WristFTDetection::Update(ft_->wrench);}
+      //Store latest force/torque message and update WristFTContactDetection accordingly (filtered and raw data)
+      void ftDataCallback(const geometry_msgs::WrenchStamped::ConstPtr &msg){ft_ = msg; WristFTContactDetection::Update(ft_->wrench);}
 
       //Update FrameDynamics with the latest joint state and force/torque messages (ATTENTION to the sensor rate, it must be higher then publish rate of joint_state_controller)
       void jDataCallback(const sensor_msgs::JointState::ConstPtr& msg){FrameDynamics::Update(*msg,ft_->wrench);}
