@@ -1,2 +1,0 @@
-from artificial_hands_py_base.base_filters import BaseFilter
-from artificial_hands_py_base.wrist_ft_detection import WristFTDetection

@@ -21,3 +21,10 @@ add_dependencies(wrist_dynamics_node ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catki
 
 target_link_libraries(frame_kinematics_node ${catkin_LIBRARIES})
 target_link_libraries(wrist_dynamics_node ${catkin_LIBRARIES})
+
+catkin_install_python(PROGRAMS
+  scripts/dmp_extended_servo_node.py
+  scripts/fake_ft_sensor_node.py
+  scripts/key_teleop_servo_node.py
+  DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
+)
