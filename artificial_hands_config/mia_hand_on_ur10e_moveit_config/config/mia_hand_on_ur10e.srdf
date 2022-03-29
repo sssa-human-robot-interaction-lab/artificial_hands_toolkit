@@ -13,7 +13,7 @@
         <chain base_link="base_link" tip_link="tool0"/>
     </group>
     <!--VIRTUAL JOINT: Purpose: this element defines a virtual joint between a robot link and an external frame of reference (considered fixed with respect to the robot)-->
-    <virtual_joint name="virtual_fix" type="fixed" parent_frame="virtual_ap" child_link="world"/>
+    <virtual_joint name="virtual_fix" type="fixed" parent_frame="virtual_map" child_link="world"/>
     <!--PASSIVE JOINT: Purpose: this element is used to mark joints that are not actuated-->
     <passive_joint name="j_thumb_opp"/>
     <passive_joint name="j_ring_fle"/>

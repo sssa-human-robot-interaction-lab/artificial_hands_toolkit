@@ -3,7 +3,7 @@
 
   <arg name="sim" default="true" />
   <arg name="robot_ip" default="192.168.1.3" doc="specify robot IP address"/>
-  <arg name="ur_robot" default="ur5" doc="choose robot type: ur5, ur10e" />
+  <arg name="ur_robot" default="ur10e" doc="choose robot type: ur5, ur10e" />
   <arg name="Mia_COM" default='0' doc="Int number of the Mia hand COM port" />
   <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
   <arg name="Mia_hw_sim" default="false" doc="set to true to simulate mia hand hardware interface (requires to emulate a serial port)" />

@@ -19,9 +19,13 @@ def main():
 
   rate = rospy.Rate(200)
 
+  rospy.loginfo('Starting fake ft_sensor...')
+
   while not rospy.is_shutdown():
     pub.publish(ft)
     rate.sleep()
+  
+  rospy.loginfo('bye!')
 
 if __name__ == '__main__':
   main()

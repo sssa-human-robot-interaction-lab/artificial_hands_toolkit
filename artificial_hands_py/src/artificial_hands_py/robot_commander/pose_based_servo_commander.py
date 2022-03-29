@@ -6,7 +6,7 @@ from geometry_msgs.msg import Transform, Point
 
 class PoseBasedServoCommander(ServoCommanderBase):
 
-  j_traj_ctrl = 'scaled_pos_joint_traj_controller'
+  j_traj_ctrl = 'pos_joint_traj_controller'
   c_traj_ctrl = 'pose_based_cartesian_traj_controller'
 
   def __init__(self, ns: str, ref: str, eef: str, ctrl_dict: dict = None, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
