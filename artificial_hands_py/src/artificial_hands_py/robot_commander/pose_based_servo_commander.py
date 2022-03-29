@@ -1,20 +1,20 @@
 from time import sleep
 from artificial_hands_py.robot_commander import *
 
-from trajectory_msgs.msg import MultiDOFJointTrajectory, MultiDOFJointTrajectoryPoint
+from cartesian_control_msgs.msg import CartesianTrajectory, CartesianTrajectoryPoint, FollowCartesianTrajectoryActionGoal
 from geometry_msgs.msg import Transform, Point
 
-class CartesianServoCommander(ServoCommanderBase):
+class PoseBasedServoCommander(ServoCommanderBase):
 
-  j_traj_ctrl = 'pos_joint_traj_controller'
-  c_traj_ctrl = 'cartesian_eik_position_controller'
+  j_traj_ctrl = 'scaled_pos_joint_traj_controller'
+  c_traj_ctrl = 'pose_based_cartesian_traj_controller'
 
   def __init__(self, ns: str, ref: str, eef: str, ctrl_dict: dict = None, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
     if ctrl_dict is None:
-      ctrl_dict = {self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : MultiDOFJointTrajectoryPoint}
+      ctrl_dict = {self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : FollowCartesianTrajectoryActionGoal}
     super().__init__(ns, ref, eef, ctrl_dict, servo_dict, move_group)
 
-  def servo_delta(self, goal_time : float, goal_delta : Point = Point(), goal_delta_2 : Point = Point(), forward_command : bool = False) -> MultiDOFJointTrajectory:
+  def servo_delta(self, goal_time : float, goal_delta : Point = Point(), goal_delta_2 : Point = Point(), forward_command : bool = False) -> CartesianTrajectory:
 
     def harmonic_pos(h : float, ts : float):
       t = np.arange(0,ts,self.dt)
@@ -46,21 +46,17 @@ class CartesianServoCommander(ServoCommanderBase):
 
     c_pose = self.get_eef_frame()
 
-    traj_cmd = MultiDOFJointTrajectory()
+    traj_cmd = CartesianTrajectory()
 
     for c in range(0,len(servo_x)):
-      cmd = MultiDOFJointTrajectoryPoint()
-      cmd_ = Transform()
-      cmd_.translation.x = servo_x[c] + c_pose.pose.position.x
-      cmd_.translation.y = servo_y[c] + c_pose.pose.position.y
-      cmd_.translation.z = servo_z[c] + c_pose.pose.position.z
-      cmd_.rotation = c_pose.pose.orientation
-      cmd_dot = Twist()
-      cmd_dot.linear.x = servo_vx[c]
-      cmd_dot.linear.y = servo_vy[c]
-      cmd_dot.linear.z = servo_vz[c]
-      cmd.transforms.append(cmd_)
-      cmd.velocities.append(cmd_dot)
+      cmd = CartesianTrajectoryPoint()
+      cmd.pose.position.x = servo_x[c] + c_pose.pose.position.x
+      cmd.pose.position.y = servo_y[c] + c_pose.pose.position.y
+      cmd.pose.position.z = servo_z[c] + c_pose.pose.position.z
+      cmd.twist.linear.x = servo_vx[c]
+      cmd.twist.linear.y = servo_vy[c]
+      cmd.twist.linear.z = servo_vz[c]
+      cmd.time_from_start = rospy.Duration.from_sec(c*self.dt)
       traj_cmd.points.append(cmd)
       
     if forward_command:
@@ -104,16 +100,16 @@ class CartesianServoCommander(ServoCommanderBase):
       angle_pose.header.frame_id = self.ee_frame
       angle_pose.pose.orientation = list_to_quat(ts.quaternion_from_matrix(ts.rotation_matrix(angle,ee_delta_axis,ee_delta_point)))
       angle_pose = tf2_geometry_msgs.do_transform_pose(angle_pose,eef_to_base)
-      traj_cmd.points[c].transforms[0].rotation = angle_pose.pose.orientation
+      traj_cmd.points[c].pose.orientation = angle_pose.pose.orientation
       c += 1
 
     if auto_switch:
       self.switch_to_controller(self.c_traj_ctrl)
 
-    for pnt_cmd in traj_cmd.points:
-      if not self.paused:
-        self.controller_command(pnt_cmd)
-      self.rate.sleep()
+    cmd = FollowCartesianTrajectoryActionGoal()
+    cmd.goal.trajectory.points = traj_cmd.points[1:-1]
+    self.controller_command(cmd)
+    sleep(goal_time)
 
     if auto_switch:
       sleep(1)

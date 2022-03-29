@@ -2,8 +2,23 @@ import rospy
 import tf2_ros, tf2_geometry_msgs
 import moveit_commander, moveit_commander.conversions as cv
 from rqt_controller_manager.controller_manager import *
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, Quaternion
 
+def list_to_quat(q : list) -> Quaternion: 
+  quat = Quaternion()
+  quat.x = q[0]
+  quat.y = q[1]
+  quat.z = q[2]
+  quat.w = q[3]
+  return quat
+
+def quat_to_list(quat : Quaternion) -> list: 
+  q = []
+  q.append(quat.x)
+  q.append(quat.y)
+  q.append(quat.z)
+  q.append(quat.w)
+  return q
 class ControllerManagerBase:
   """ This base class provides methods to check and load required controllers,
   switch to and command the active one.
