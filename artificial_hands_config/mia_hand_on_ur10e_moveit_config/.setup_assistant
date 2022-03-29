@@ -1,11 +1,11 @@
 moveit_setup_assistant_config:
   URDF:
     package: artificial_hands_description
-    relative_path: urdf/mia_hand_on_ur5.urdf.xacro
+    relative_path: urdf/mia_hand_on_ur10e.urdf.xacro
     xacro_args: ""
   SRDF:
-    relative_path: config/mia_hand_on_ur5.srdf
+    relative_path: config/mia_hand_on_ur10e.srdf
   CONFIG:
     author_name: penzottimattia
     author_email: penzottimattia@santannapisa.it
-    generated_timestamp: 1648568518
+    generated_timestamp: 1648568870

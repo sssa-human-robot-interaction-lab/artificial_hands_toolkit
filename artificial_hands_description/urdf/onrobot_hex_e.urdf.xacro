@@ -2,6 +2,11 @@
 <robot xmlns:xacro="http://wiki.ros.org/xacro" name="onrobot_hex">
 
   <link name="hex_mounting_plate">
+    <inertial>
+      <origin xyz="0 0 0.016" rpy="-${pi/2} 0 0"/>
+      <mass value="0.245"/>
+      <inertia ixx="${99 / 1000000}" ixy="0" ixz="0" iyy="${142 / 1000000}" iyx="0" iyz="${-0.2 / 1000000}" izz="${99 / 1000000}" izx="0" izy="${-0.2 / 1000000}"/>
+    </inertial>
     <visual>
       <origin xyz="0 0 0.016" rpy="-${pi/2} 0 0" />
       <geometry>
@@ -12,7 +17,7 @@
       </material>
     </visual>
     <collision>
-      <origin xyz="0 0 0" rpy="0 0 0" />
+      <origin xyz="0 0 0.016" rpy="-${pi/2} 0 0" />
       <geometry>
           <mesh filename="package://artificial_hands_description/meshes/collision/onrobot_hex_e.stl"/>
       </geometry>
@@ -34,5 +39,25 @@
     <parent link="hex_mounting_plate" />
     <child link="hex_sensor_frame" />
   </joint>
+
+  <gazebo reference="hex_mounting_plate">
+    <selfCollide>False</selfCollide>
+  </gazebo>
+
+    <!-- Enable joint feedback representing the ft_sensor-->
+  <gazebo reference="hex_sensor_joint">
+    <preserveFixedJoint>true</preserveFixedJoint>
+    <provideFeedback>true</provideFeedback>
+  </gazebo>
+  
+  <!-- The ft_sensor plugin -->
+  <gazebo>
+    <plugin name="gazebo_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
+      <updateRate>500.0</updateRate>
+        <topicName>hex_ft_sensor</topicName>
+        <!-- <gaussianNoise>0.0</gaussianNoise> -->
+        <jointName>hex_sensor_joint</jointName>
+    </plugin>
+  </gazebo>  
 
 </robot>

@@ -3,17 +3,6 @@
 
   <arg name="rviz" default="true" />
 
-  <!-- Make use of the normal bringup -->
-  <include file="$(find artificial_hands_bringup)/launch/mia_hand_on_ur5_bringup.launch">
-    <arg name="sim" default="false" />
-    <arg name="robot_ip" default="192.168.1.52"/>
-  
-    <arg name="Mia_COM" default='52' doc="Int number of the Mia hand COM port" />
-    <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
-    <arg name="Mia_hw_sim" default="true" doc="set to true to simulate mia hand hardware interface (requires to emulate a serial port)" />
-  
-  </include>
-
   <!-- Namespace of the simulated mia_hand -->
   <arg name="mia_hand_sim_namespace" default="mia_hand_sim" />
 

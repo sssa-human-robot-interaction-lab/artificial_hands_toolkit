@@ -1,9 +1,9 @@
 <package>
 
-  <name>mia_hand_on_ur5_moveit_config</name>
+  <name>mia_hand_on_ur10e_moveit_config</name>
   <version>0.3.0</version>
   <description>
-     An automatically generated package with all the configuration and launch files for using the mia_hand_on_ur5 with the MoveIt Motion Planning Framework
+     An automatically generated package with all the configuration and launch files for using the mia_hand_on_ur10e with the MoveIt Motion Planning Framework
   </description>
   <author email="penzottimattia@santannapisa.it">penzottimattia</author>
   <maintainer email="penzottimattia@santannapisa.it">penzottimattia</maintainer>

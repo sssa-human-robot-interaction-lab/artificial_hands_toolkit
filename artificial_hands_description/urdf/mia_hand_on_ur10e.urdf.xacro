@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_ur5">
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_ur10e">
 
   <!-- Make use of UR macro -->
-  <xacro:include filename="$(find ur_description)/urdf/inc/ur5_macro.xacro"/>
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur10e_macro.xacro"/>
 
   <!-- Instantiate the UR robot and pass it all the required arguments. -->
-  <xacro:ur5_robot
+  <xacro:ur10e_robot
     prefix=""
   />
 

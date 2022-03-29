@@ -1,11 +1,11 @@
 <?xml version="1.0"?>
-<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_ur10e">
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_ur">
 
-  <!-- Make use of UR5 macro -->
-  <xacro:include filename="$(find ur_description)/urdf/inc/ur10e_macro.xacro" />
+  <!-- Make use of UR macro -->
+  <xacro:include filename="$(find ur_description)/urdf/inc/ur_macro.xacro"/>
 
-  <!-- Instantiate the UR5 Gazebo robot and pass it all the required arguments. -->
-  <xacro:ur10e_robot
+  <!-- Instantiate the UR robot and pass it all the required arguments. -->
+  <xacro:ur_robot
     prefix=""
     joint_limits_parameters_file="$(arg joint_limit_params)"
     kinematics_parameters_file="$(arg kinematics_params)"
@@ -17,7 +17,7 @@
     safety_k_position="$(arg safety_k_position)"
   />
 
-  <!-- Arm base (orange block representing mount for ur5 or ur10 arm) -->
+  <!-- Arm base -->
   <xacro:include filename="$(find artificial_hands_description)/urdf/arm_base.urdf.xacro" />
   
   <!-- Attach arm to the arm base -->
@@ -37,22 +37,6 @@
       <child link="hex_mounting_plate" />
   </joint>
 
-  <!-- Enable joint feedback representing the ft_sensor-->
-  <gazebo reference="hex_sensor_joint">
-    <preserveFixedJoint>true</preserveFixedJoint>
-    <provideFeedback>true</provideFeedback>
-  </gazebo>
-  
-  <!-- The ft_sensor plugin -->
-  <gazebo>
-    <plugin name="gazebo_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
-      <updateRate>500.0</updateRate>
-        <topicName>gazebo_ft_sensor</topicName>
-        <gaussianNoise>0.0</gaussianNoise>
-        <jointName>hex_sensor_joint</jointName>
-    </plugin>
-  </gazebo>  
-
   <!-- Mia hand on UR flange -->
   <xacro:include filename="$(find artificial_hands_description)/urdf/mia_hand_on_ur_flange.urdf.xacro" />
 
@@ -64,16 +48,12 @@
   </joint>  
   
   <!-- Instantiate the Mia hand Gazebo robot and pass it all the required arguments. -->
-  <!-- <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand_gazebo.urdf.xacro" />
+  <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand_gazebo.urdf.xacro" />
+
   <xacro:arg name="mia_hw_interface" default="Position" />
-  <xacro:mia_gazebo hw_interface_thumb_fle="$(arg mia_hw_interface)JointInterface"
-                    hw_interface_index_fle="$(arg mia_hw_interface)JointInterface"
-                    hw_interface_mrl_fle="$(arg mia_hw_interface)JointInterface"
-                    robotNamespace="" /> -->
-  
-  <gazebo>
-    <plugin name="gazebo_ros_control" filename="libgazebo_ros_control.so">
-    </plugin>
-  </gazebo>
+
+  <xacro:mia_gazebo 
+    robotNamespace=""
+  />
 
 </robot>
