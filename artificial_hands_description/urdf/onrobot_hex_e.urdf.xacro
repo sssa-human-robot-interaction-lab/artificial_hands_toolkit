@@ -1,0 +1,38 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="onrobot_hex">
+
+  <link name="hex_mounting_plate">
+    <visual>
+      <origin xyz="0 0 0.016" rpy="-${pi/2} 0 0" />
+      <geometry>
+          <mesh filename="package://artificial_hands_description/meshes/visual/onrobot_hex_e.stl"/>
+      </geometry>
+      <material name="onrobot-grey">
+          <color rgba="0.4 0.4 0.4 1.0"/>
+      </material>
+    </visual>
+    <collision>
+      <origin xyz="0 0 0" rpy="0 0 0" />
+      <geometry>
+          <mesh filename="package://artificial_hands_description/meshes/collision/onrobot_hex_e.stl"/>
+      </geometry>
+    </collision>
+  </link>
+
+  <link name="hex_ee_mounting_plate"/>
+
+  <joint name="hex_ee_mounting_joint" type="fixed">
+    <origin xyz="0 0 0.037" rpy="0 0 0" />
+    <parent link="hex_mounting_plate" />
+    <child link="hex_ee_mounting_plate" />
+  </joint>
+
+  <link name="hex_sensor_frame"/>
+
+  <joint name="hex_sensor_joint" type="fixed">
+    <origin xyz="0 0 0.016" rpy="0 0 0" />
+    <parent link="hex_mounting_plate" />
+    <child link="hex_sensor_frame" />
+  </joint>
+
+</robot>

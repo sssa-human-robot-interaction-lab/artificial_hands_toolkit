@@ -20,10 +20,10 @@ cartesian_eik_position_controller:
     rot_y: {p: *p, d: *d}
     rot_z: {p: *p, d: *d}
 
-cartesian_eik_velocity_controller:
-  type: "velocity_controllers/CartesianEikController"
-  end_effector_link: "tool0"
-  robot_base_link: "base"
-  target_traj_topic: "command"
-  joints: *robot_joints
-  pd_gains: *pd
+# cartesian_eik_velocity_controller:
+#   type: "velocity_controllers/CartesianEikController"
+#   end_effector_link: "tool0"
+#   robot_base_link: "base"
+#   target_traj_topic: "command"
+#   joints: *robot_joints
+#   pd_gains: *pd
