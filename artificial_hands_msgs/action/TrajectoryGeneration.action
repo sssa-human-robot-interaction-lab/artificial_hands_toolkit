@@ -1,0 +1,17 @@
+#goal   
+int64 HARMONIC = 0
+int64 traj_type
+float64 traj_max_accel
+float64 traj_max_angaccel
+cartesian_control_msgs/CartesianTrajectoryPoint traj_target
+---
+#result
+int64 success
+---
+#feedback
+float64 goal_time
+float64 percentage
+geometry_msgs/Point max_vel
+geometry_msgs/Point max_angvel
+geometry_msgs/Point max_accel
+geometry_msgs/Point max_angaccel

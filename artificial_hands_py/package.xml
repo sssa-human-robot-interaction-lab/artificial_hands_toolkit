@@ -53,6 +53,9 @@
   <depend>pybind11_catkin</depend>
   <depend>artificial_hands_base</depend>
   <depend>artificial_hands_msgs</depend>
+  <depend>actionlib_msgs</depend>
+  <depend>cartesian_control_msgs</depend>
+  <depend>message_runtime</depend>
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->

@@ -1,5 +1,4 @@
 #include <artificial_hands_base/BaseROSCommon.hpp>
-
 #include <artificial_hands_base/WristFTCalibration.hpp>
 #include <artificial_hands_base/WristFTProprioception.hpp>
 #include <artificial_hands_msgs/DetectionStamped.h>

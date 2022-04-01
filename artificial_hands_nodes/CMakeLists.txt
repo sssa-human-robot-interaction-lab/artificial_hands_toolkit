@@ -26,6 +26,8 @@ target_link_libraries(wrist_dynamics_node ${catkin_LIBRARIES})
 target_link_libraries(onrobot_hex_driver_node ${catkin_LIBRARIES})
 
 catkin_install_python(PROGRAMS
+  scripts/cartesian_trajectory_generator_gui_node.py
+  scripts/cartesian_trajectory_generator_node.py
   scripts/dmp_extended_servo_node.py
   scripts/fake_ft_sensor_node.py
   scripts/key_teleop_servo_node.py

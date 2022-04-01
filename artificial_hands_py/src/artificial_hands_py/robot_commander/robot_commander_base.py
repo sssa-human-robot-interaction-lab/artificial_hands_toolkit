@@ -1,7 +1,10 @@
 import rospy
+
 import tf2_ros, tf2_geometry_msgs
-import moveit_commander, moveit_commander.conversions as cv
+import moveit_commander
+
 from rqt_controller_manager.controller_manager import *
+
 from geometry_msgs.msg import PoseStamped, Quaternion
 
 def list_to_quat(q : list) -> Quaternion: 
@@ -19,6 +22,7 @@ def quat_to_list(quat : Quaternion) -> list:
   q.append(quat.z)
   q.append(quat.w)
   return q
+  
 class ControllerManagerBase:
   """ This base class provides methods to check and load required controllers,
   switch to and command the active one.
@@ -80,36 +84,21 @@ class ControllerManagerBase:
   def servo_command(self,servo,cmd) -> None:
     self.servo_dict[servo].publish(cmd)
 
-class ServoCommanderBase(ControllerManagerBase,moveit_commander.MoveGroupCommander):
+class RobotCommanderBase(ControllerManagerBase,moveit_commander.MoveGroupCommander):
+  tf_buffer = tf2_ros.Buffer(rospy.Duration(100.0))
+  tf_listener = tf2_ros.TransformListener(tf_buffer)
 
   def __init__(self, ns: str, ref: str, eef: str, ctrl_dict: dict, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
     super().__init__(ns, ctrl_dict, servo_dict)
     super(ControllerManagerBase,self).__init__(move_group) 
-    self.reference_frame = ref
-    self.ee_frame = eef
-    self.paused = False
-    self.preempted = False
-    self.set_pose_reference_frame(ref)
-    self.set_end_effector_link(eef)
+    self.ref_frame = ref
+    self.ee_frame = eef  
   
-  def set_paused(self):
-    self.paused = True
-  
-  def set_preempted(self):
-    self.preempted = True
-    self.paused = False
-  
-  def set_rate(self, rate : rospy.Rate) -> None:
-    self.rate = rate
-    self.dt = self.rate.sleep_dur.to_sec()
-    self.tf_buffer = tf2_ros.Buffer(rospy.Duration(100.0))
-    tf_listener = tf2_ros.TransformListener(self.tf_buffer)
-  
-  def get_eef_frame(self,ref : str = None, frame : str = None) -> PoseStamped:
+  def get_frame(self,ref : str = None, frame : str = None) -> PoseStamped:
     if frame is None:
       frame = self.ee_frame
     if ref is None:
-      ref = self.reference_frame
+      ref = self.ref_frame
     pose_ref : PoseStamped = self.get_current_pose(frame)
     ref_to_base = self.tf_buffer.lookup_transform(ref,pose_ref.header.frame_id,rospy.Time.now(),timeout=rospy.Duration(1))
     return tf2_geometry_msgs.do_transform_pose(pose_ref,ref_to_base)

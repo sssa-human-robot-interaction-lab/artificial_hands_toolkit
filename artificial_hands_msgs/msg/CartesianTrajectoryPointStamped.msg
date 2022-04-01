@@ -1,0 +1,2 @@
+std_msgs/Header header
+cartesian_control_msgs/CartesianTrajectoryPoint point
