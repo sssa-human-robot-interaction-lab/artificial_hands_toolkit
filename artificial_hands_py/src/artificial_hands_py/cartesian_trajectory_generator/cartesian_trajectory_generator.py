@@ -2,8 +2,8 @@ from math import floor
 from threading import Thread
 
 import rospy, actionlib
-import tf2_geometry_msgs, tf.transformations as ts
-from geometry_msgs.msg import Point, PoseStamped, Quaternion
+import tf.transformations as ts
+from geometry_msgs.msg import Quaternion
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 from artificial_hands_msgs.msg import *

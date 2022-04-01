@@ -1,6 +1,6 @@
 import sys
+from threading import Thread
 from PyQt5.QtWidgets import *
-from PyQt5.QtCore import Qt
 
 import rospy
 import tf.transformations as ts
@@ -46,19 +46,31 @@ class RobotCommanderGUI(QWidget):
     self.cart_traj_gen_widget.send_push_button.clicked.connect(self.on_send_button)
     self.cart_traj_gen_widget.stop_push_button.clicked.connect(self.on_cancel_button) 
 
-  def on_send_button(self):
+  def send_goals(self):
     target = Pose()
-    target.position.x = self.cart_traj_gen_widget.target_position_group_box.x_spin_box.value()
-    target.position.y = self.cart_traj_gen_widget.target_position_group_box.y_spin_box.value()
-    target.position.z = self.cart_traj_gen_widget.target_position_group_box.z_spin_box.value()
-    target.orientation = list_to_quat(ts.quaternion_from_euler(
-      self.cart_traj_gen_widget.target_orientation_group_box.x_spin_box.value(),
-      self.cart_traj_gen_widget.target_orientation_group_box.y_spin_box.value(),
-      self.cart_traj_gen_widget.target_orientation_group_box.z_spin_box.value()))
-    self.robot.set_pose_target(target)
-  
+    for r in range(0,self.cart_traj_gen_widget.target_table.rowCount()):
+      if self.cancel_send_thread:
+        return
+      target.position.x = float(self.cart_traj_gen_widget.target_table.item(r,0).text())
+      target.position.y = float(self.cart_traj_gen_widget.target_table.item(r,1).text())
+      target.position.z = float(self.cart_traj_gen_widget.target_table.item(r,2).text())
+      target.orientation = list_to_quat(
+        ts.quaternion_from_euler(
+          float(self.cart_traj_gen_widget.target_table.item(r,3).text()),
+          float(self.cart_traj_gen_widget.target_table.item(r,4).text()),
+          float(self.cart_traj_gen_widget.target_table.item(r,5).text())))
+      self.robot.set_pose_target(target)
+
+  def on_send_button(self):
+    if self.cart_traj_gen_widget.target_table.rowCount() == 0:
+      self.robot.set_pose_target(self.cart_traj_gen_widget.get_current_target())
+    else:
+      self.cancel_send_thread = False
+      send_thread = Thread(target=self.send_goals)
+      send_thread.start()
+
   def on_cancel_button(self):
-    self.robot.cancel_pose_target()
+    self.cancel_send_thread = True
     
 def main():
 
