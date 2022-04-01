@@ -76,7 +76,7 @@ class CartesianTrajectoryGenerator:
 
     if goal.traj_type == goal.HARMONIC:
       
-      h = max(abs(delta_target.pose.position.x),abs(delta_target.pose.position.y),abs(delta_target.pose.position.y))
+      h = max(abs(delta_target.pose.position.x),abs(delta_target.pose.position.y),abs(delta_target.pose.position.z))
       h_rot = abs(delta_angle)
 
       if h == 0 and h_rot == 0:
@@ -99,15 +99,6 @@ class CartesianTrajectoryGenerator:
       self.traj_feedback.max_accel.z = 2*pi*delta_target.pose.position.z/pow(goal_time,2)
 
       for c in range(0,c_max+1):
-
-        if self.traj_as.is_preempt_requested():
-          self.traj_as.set_preempted()
-          self.traj_result.success = False
-          self.target.twist.linear = Point()
-          self.target.twist.angular = Point() 
-          self.target.acceleration.linear = Point() 
-          self.target.acceleration.angular = Point() 
-          break
         
         self.target.pose.position.x = c_target.pose.position.x + harmonic_pos(delta_target.pose.position.x,c*dt,goal_time)
         self.target.pose.position.y = c_target.pose.position.y + harmonic_pos(delta_target.pose.position.y,c*dt,goal_time)
