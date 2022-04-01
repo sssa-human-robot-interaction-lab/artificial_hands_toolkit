@@ -3,7 +3,10 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
 
 import rospy, actionlib
+import tf.transformations as ts
+
 from artificial_hands_msgs.msg import *
+from artificial_hands_py.artificial_hands_py_base import list_to_quat
 
 class TargetGroupBox(QGroupBox):
 
@@ -43,19 +46,18 @@ class TargetGroupBox(QGroupBox):
 
 class CartesianTrajectoryGeneratorGUI(QWidget):
 
-  def __init__(self) -> None:
+  def __init__(self,title : str = 'ATK Cartesian Trajectory Generator GUI') -> None:
     super().__init__()
 
     self.traj_cl = actionlib.SimpleActionClient('cartesian_trajectory_generator',TrajectoryGenerationAction)
 
-    self.setWindowTitle('ATK Cartesian Trajectory Generator GUI')
+    self.setWindowTitle(title)
 
     self.target_position_group_box = TargetGroupBox(self,'Position [m]')
+    self.target_orientation_group_box = TargetGroupBox(self,'Orientation [rad]')
     
     self.send_push_button = QPushButton('Send')
     self.stop_push_button = QPushButton('Stop')
-    self.send_push_button.clicked.connect(self.on_send_button)
-    self.stop_push_button.clicked.connect(self.on_cancel_button)
     
     buttons_row_layout = QHBoxLayout()
     buttons_row_layout.addWidget(self.send_push_button)
@@ -63,15 +65,25 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
 
     main_layout = QVBoxLayout()
     main_layout.addWidget(self.target_position_group_box)  
+    main_layout.addWidget(self.target_orientation_group_box)  
     main_layout.addLayout(buttons_row_layout)  
 
-    self.setLayout(main_layout)
+    self.setLayout(main_layout)  
+
+  def connect(self):
+    self.send_push_button.clicked.connect(self.on_send_button)
+    self.stop_push_button.clicked.connect(self.on_cancel_button) 
 
   def on_send_button(self):
     goal = TrajectoryGenerationGoal()
     goal.traj_target.pose.position.x = self.target_position_group_box.x_spin_box.value()
     goal.traj_target.pose.position.y = self.target_position_group_box.y_spin_box.value()
     goal.traj_target.pose.position.z = self.target_position_group_box.z_spin_box.value()
+
+    goal.traj_target.pose.orientation = list_to_quat(ts.quaternion_from_euler(
+      self.target_orientation_group_box.x_spin_box.value(),
+      self.target_orientation_group_box.y_spin_box.value(),
+      self.target_orientation_group_box.z_spin_box.value()))
 
     self.traj_cl.send_goal(goal)
   
@@ -84,8 +96,9 @@ def main():
 
   app = QApplication(sys.argv)
 
-  robot_commander_gui = CartesianTrajectoryGeneratorGUI()
-  robot_commander_gui.show()
+  cart_trj_gen_gui = CartesianTrajectoryGeneratorGUI()
+  cart_trj_gen_gui.connect()
+  cart_trj_gen_gui.show()
 
   sys.exit(app.exec_())
 

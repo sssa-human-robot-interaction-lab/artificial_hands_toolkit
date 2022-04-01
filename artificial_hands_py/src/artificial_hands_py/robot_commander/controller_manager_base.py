@@ -1,28 +1,7 @@
 import rospy
 
-import tf2_ros, tf2_geometry_msgs
-import moveit_commander
-
 from rqt_controller_manager.controller_manager import *
 
-from geometry_msgs.msg import PoseStamped, Quaternion
-
-def list_to_quat(q : list) -> Quaternion: 
-  quat = Quaternion()
-  quat.x = q[0]
-  quat.y = q[1]
-  quat.z = q[2]
-  quat.w = q[3]
-  return quat
-
-def quat_to_list(quat : Quaternion) -> list: 
-  q = []
-  q.append(quat.x)
-  q.append(quat.y)
-  q.append(quat.z)
-  q.append(quat.w)
-  return q
-  
 class ControllerManagerBase:
   """ This base class provides methods to check and load required controllers,
   switch to and command the active one.
@@ -84,21 +63,3 @@ class ControllerManagerBase:
   def servo_command(self,servo,cmd) -> None:
     self.servo_dict[servo].publish(cmd)
 
-class RobotCommanderBase(ControllerManagerBase,moveit_commander.MoveGroupCommander):
-  tf_buffer = tf2_ros.Buffer(rospy.Duration(100.0))
-  tf_listener = tf2_ros.TransformListener(tf_buffer)
-
-  def __init__(self, ns: str, ref: str, eef: str, ctrl_dict: dict, servo_dict: dict = None, move_group: str = 'manipulator') -> None:
-    super().__init__(ns, ctrl_dict, servo_dict)
-    super(ControllerManagerBase,self).__init__(move_group) 
-    self.ref_frame = ref
-    self.ee_frame = eef  
-  
-  def get_frame(self,ref : str = None, frame : str = None) -> PoseStamped:
-    if frame is None:
-      frame = self.ee_frame
-    if ref is None:
-      ref = self.ref_frame
-    pose_ref : PoseStamped = self.get_current_pose(frame)
-    ref_to_base = self.tf_buffer.lookup_transform(ref,pose_ref.header.frame_id,rospy.Time.now(),timeout=rospy.Duration(1))
-    return tf2_geometry_msgs.do_transform_pose(pose_ref,ref_to_base)

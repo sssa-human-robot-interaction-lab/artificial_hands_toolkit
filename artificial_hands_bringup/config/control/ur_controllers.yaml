@@ -29,3 +29,12 @@ cartesian_eik_position_controller:
   joints: *robot_joints
 
   pd_gains: *pd
+
+cartesian_eik_velocity_controller:
+  type: "velocity_controllers/CartesianEikController"
+  end_effector_link: *ee
+  robot_base_link: *ref
+  target_traj_topic: "command"
+  joints: *robot_joints
+
+  pd_gains: *pd

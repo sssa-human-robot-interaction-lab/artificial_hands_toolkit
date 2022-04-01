@@ -2,10 +2,12 @@ from math import floor
 from threading import Thread
 
 import rospy, actionlib
-from geometry_msgs.msg import Point
+import tf2_geometry_msgs, tf.transformations as ts
+from geometry_msgs.msg import Point, PoseStamped, Quaternion
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 from artificial_hands_msgs.msg import *
+from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import *
 
 class CartesianTrajectoryGenerator:
@@ -20,6 +22,7 @@ class CartesianTrajectoryGenerator:
     self.traj_pnt_pub = rospy.Publisher('target_traj_pnt',CartesianTrajectoryPointStamped,queue_size=1000)
 
     self.target = CartesianTrajectoryPoint()
+    self.target.pose.orientation.x = 1
     self.target.time_from_start.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
 
@@ -38,11 +41,25 @@ class CartesianTrajectoryGenerator:
     c_target.pose.position.x = self.target.pose.position.x
     c_target.pose.position.y = self.target.pose.position.y
     c_target.pose.position.z = self.target.pose.position.z
+    c_target.pose.orientation.x = self.target.pose.orientation.x
+    c_target.pose.orientation.y = self.target.pose.orientation.y
+    c_target.pose.orientation.z = self.target.pose.orientation.z
+    c_target.pose.orientation.w = self.target.pose.orientation.w
+
+    inv_c_quat = Quaternion()
+    inv_c_quat.x = c_target.pose.orientation.x
+    inv_c_quat.y = c_target.pose.orientation.y
+    inv_c_quat.z = c_target.pose.orientation.z
+    inv_c_quat.w = -c_target.pose.orientation.w
 
     delta_target = CartesianTrajectoryPoint()
     delta_target.pose.position.x = goal.traj_target.pose.position.x - c_target.pose.position.x
     delta_target.pose.position.y = goal.traj_target.pose.position.y - c_target.pose.position.y
     delta_target.pose.position.z = goal.traj_target.pose.position.z - c_target.pose.position.z
+    delta_target.pose.orientation = list_to_quat(ts.quaternion_multiply(quat_to_list(goal.traj_target.pose.orientation),quat_to_list(inv_c_quat)))
+    
+    delta_rot = ts.quaternion_matrix(quat_to_list(delta_target.pose.orientation))
+    delta_angle,delta_axis,delta_point = ts.rotation_from_matrix(delta_rot)
 
     if goal.traj_max_accel < 0:
       goal.traj_max_accel = -goal.traj_max_accel
@@ -50,17 +67,24 @@ class CartesianTrajectoryGenerator:
       goal.traj_max_accel = 0.5
     elif goal.traj_max_accel > 1:
       goal.traj_max_accel = 1
+    if goal.traj_max_angaccel < 0:
+      goal.traj_max_angaccel = -goal.traj_max_angaccel
+    elif goal.traj_max_angaccel == 0:
+      goal.traj_max_angaccel = 0.5
+    elif goal.traj_max_angaccel > 1:
+      goal.traj_max_angaccel = 1
 
     if goal.traj_type == goal.HARMONIC:
       
       h = max(abs(delta_target.pose.position.x),abs(delta_target.pose.position.y),abs(delta_target.pose.position.y))
+      h_rot = abs(delta_angle)
 
-      if h == 0:
+      if h == 0 and h_rot == 0:
         self.traj_as.set_succeeded(self.traj_result)
         return
 
-      goal_time = pow(2*pi*h/goal.traj_max_accel,.5)
-      
+      goal_time = max(pow(2*pi*h/goal.traj_max_accel,.5),pow(2*pi*h_rot/goal.traj_max_angaccel,.5))
+
       c_max = goal_time/dt
       if floor(c_max) != c_max:
         c_max = floor(c_max) + 1
@@ -95,6 +119,10 @@ class CartesianTrajectoryGenerator:
         self.target.acceleration.linear.y = harmonic_accel(delta_target.pose.position.y,c*dt,goal_time)
         self.target.acceleration.linear.z = harmonic_accel(delta_target.pose.position.z,c*dt,goal_time)
 
+        angle = harmonic_pos(delta_angle,c*dt,goal_time)
+        self.target.pose.orientation = list_to_quat(
+          ts.quaternion_multiply(ts.quaternion_from_matrix(ts.rotation_matrix(angle,delta_axis,delta_point)),quat_to_list(c_target.pose.orientation)))
+
         self.traj_feedback.percentage = 100*c/c_max
         self.traj_as.publish_feedback(self.traj_feedback)
         
@@ -114,7 +142,7 @@ class CartesianTrajectoryGenerator:
 
 def main():
 
-  rospy.init_node('trajectory_generator_node')
+  rospy.init_node('cartesian_trajectory_generator_node')
 
   cart_traj_gen = CartesianTrajectoryGenerator()
 
