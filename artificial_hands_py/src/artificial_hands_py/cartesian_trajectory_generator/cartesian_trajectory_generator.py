@@ -23,7 +23,7 @@ class CartesianTrajectoryGenerator:
 
     self.target = CartesianTrajectoryPoint()
     self.target.pose.orientation.x = 1
-    self.target.time_from_start.from_sec(1/self.traj_rate)
+    self.target.time_from_start = rospy.Duration.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
 
     target_thread = Thread(target=self.trajectory_generator_target)
