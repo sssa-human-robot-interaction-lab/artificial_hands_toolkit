@@ -35,8 +35,8 @@
   <link name="hex_sensor_frame"/>
 
   <joint name="hex_sensor_joint" type="fixed">
-    <origin xyz="0 0 0.016" rpy="0 0 0" />
-    <parent link="hex_mounting_plate" />
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="hex_ee_mounting_plate" />
     <child link="hex_sensor_frame" />
   </joint>
 
