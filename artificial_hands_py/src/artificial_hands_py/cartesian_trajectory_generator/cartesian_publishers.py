@@ -1,7 +1,8 @@
 import rospy
 
-from geometry_msgs.msg import Transform, Twist
+from geometry_msgs.msg import Transform, Twist, PoseStamped
 from trajectory_msgs.msg import MultiDOFJointTrajectoryPoint
+from cartesian_control_msgs.msg import FollowCartesianTrajectoryActionGoal,CartesianTrajectory
 
 from artificial_hands_msgs.msg import CartesianTrajectoryPointStamped
 
@@ -26,4 +27,20 @@ class CartesianMDOFPointPublisher:
     self.twist = msg.point.twist
 
     self.pub.publish(self.mdof_pnt)
+
+class PoseStampedPublisher:
+
+  def __init__(self, target : str = '/target_pose_stamped') -> None:
+
+    self.pub = rospy.Publisher(target,PoseStamped,queue_size=1000)
+    sub = rospy.Subscriber("/target_traj_pnt",CartesianTrajectoryPointStamped,callback=self.target_traj_point_cb)
+
+    self.target_pose = PoseStamped()
+
+  def target_traj_point_cb(self, msg : CartesianTrajectoryPointStamped):
+
+    self.target_pose.header = msg.header
+    self.target_pose.header.frame_id = 'base'
+    self.target_pose.pose = msg.point.pose
+    self.pub.publish(self.target_pose)
 
