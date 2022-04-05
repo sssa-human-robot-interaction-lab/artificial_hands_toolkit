@@ -2,7 +2,7 @@
 <launch>
 
   <arg name="sim" default="true" />
-  <arg name="robot_ip" default="192.168.1.3" doc="specify robot IP address"/>
+  <arg name="robot_ip" default="192.168.1.7" doc="specify robot IP address"/>
   <arg name="ur_robot" default="ur10e" doc="choose robot type: ur5, ur10e" />
   <arg name="Mia_COM" default='0' doc="Int number of the Mia hand COM port" />
   <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
@@ -12,7 +12,7 @@
 
     <!-- Make use of UR robot bringup from ur_gazebo-->
     <include file="$(find ur_gazebo)/launch/$(arg ur_robot)_bringup.launch" >
-      <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/gazebo/load_mia_hand_on_$(arg ur_robot).launch.xml" />
+      <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_$(arg ur_robot).launch.xml" />
       <arg name="stopped_controllers" value="joint_group_pos_controller" />
       <arg name="kinematics_params" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg robot_ip).yaml" />
     </include>
@@ -79,7 +79,7 @@
 
   <!-- Load robot SRDF to the parameter server -->
   <arg name="moveit_config" value="mia_hand_on_$(arg ur_robot)_moveit_config" />
-  <!-- <param name="/robot_description_semantic" type="str" textfile="$(eval find(moveit_config) + '/config/mia_hand_on_' + ur_robot + '.srdf')"/> -->
+  <param name="/robot_description_semantic" type="str" textfile="$(eval find(moveit_config) + '/config/mia_hand_on_' + ur_robot + '.srdf')"/>
 
   <!-- Load other ur controllers to parameter server -->
   <rosparam file="$(find artificial_hands_bringup)/config/control/ur_controllers.yaml" command="load"/>

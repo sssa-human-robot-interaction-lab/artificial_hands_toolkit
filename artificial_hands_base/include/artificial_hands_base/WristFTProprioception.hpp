@@ -115,10 +115,6 @@ namespace atk
 
     private:
       
-      int order_ = 3;
-      int chann_ = 6;
-      double num_[3] = {0.0099537574599431831, -0.019594794464524581, 0.0099537574599431831};
-      double den_[3] = {1.0, -1.9749591089928671, 0.97527182944822877};
       double factor_ = 2.0;
       geometry_msgs::Wrench th_det_;
       //geometry_msgs::Wrench th_dyn_;
