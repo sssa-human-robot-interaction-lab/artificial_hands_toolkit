@@ -79,7 +79,8 @@
 
   <!-- Load robot SRDF to the parameter server -->
   <arg name="moveit_config" value="mia_hand_on_$(arg ur_robot)_moveit_config" />
-  <param name="/robot_description_semantic" type="str" textfile="$(eval find(moveit_config) + '/config/mia_hand_on_' + ur_robot + '.srdf')"/>
+  <arg name="srdf_path" value="/config/mia_hand_on_$(arg ur_robot).srdf"/>
+  <param name="/robot_description_semantic" type="str" textfile="$(eval find(moveit_config)+srdf_path)"/>
 
   <!-- Load other ur controllers to parameter server -->
   <rosparam file="$(find artificial_hands_bringup)/config/control/ur_controllers.yaml" command="load"/>
