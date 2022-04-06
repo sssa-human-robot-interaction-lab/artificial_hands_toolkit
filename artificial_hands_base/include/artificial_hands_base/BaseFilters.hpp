@@ -123,7 +123,7 @@ namespace atk{
         f_.clear();
         z_.clear();
       };
-      
+
       /**
        * @brief Set filter parameters
        * @param num array of numerator coefficients
@@ -136,6 +136,19 @@ namespace atk{
         num_ = num;
         den_ = den;
         order_ = order;
+        chann_ = chann;
+        set();
+      };
+      
+      /**
+       * @brief Set filter parameters
+       * @param filter struct of filtrt_t parameters
+       */
+      void SetFilter(atk::filter_t filter, int chann)
+      {
+        num_ = filter.num;
+        den_ = filter.den;
+        order_ = filter.order;
         chann_ = chann;
         set();
       };

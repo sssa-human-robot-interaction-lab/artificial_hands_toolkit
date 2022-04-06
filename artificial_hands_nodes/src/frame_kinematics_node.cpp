@@ -9,65 +9,19 @@ namespace rosatk
 {
   using cmd = artificial_hands_msgs::FrameKinematicsCommand;
   
-  class FrameKinematicsNode: public atk::FrameKinematics, public rosatk::ServiceManagerBase<rosatk::FrameKinematicsNode,cmd>
+  class FrameKinematicsNode: public atk::FrameKinematics, public rosatk::ServiceManagerBase<rosatk::FrameKinematicsNode,cmd>, public rosatk::FilterManagerBase
   {
     
     public:
-      FrameKinematicsNode(ros::NodeHandle nh, bool autostart, int filter, int rate, const char* controller, int controller_rate, const char* target_frame):  
+      FrameKinematicsNode(ros::NodeHandle nh, bool autostart, int filter_length, int rate, const char* controller, int controller_rate, const char* target_frame):  
         nh_(nh),
-        order_(filter),
         publish_(true),
         controller_(controller),
-        FrameKinematics(filter, controller_rate, target_frame, "manipulator", "robot_description"),
-        ServiceManagerBase(nh,&FrameKinematicsNode::command)
+        FrameKinematics(controller_rate, target_frame, "manipulator", "robot_description"),
+        ServiceManagerBase(nh,&FrameKinematicsNode::command),
+        FilterManagerBase(nh,"/frame_kinematics",filter_length)
       {
-        
-        
-        if(nh_.hasParam("/frame_kinematics/ir/order"))
-        {
-          nh_.getParam("/frame_kinematics/ir/order", order_);
-        }
-
-        XmlRpc::XmlRpcValue ir_num_val;
-        if(nh_.hasParam("/frame_kinematics/ir/num"))
-        {
-          nh_.getParam("/frame_kinematics/ir/num", ir_num_val);
-          num_ = new double[order_];
-          for(int i = 0; i < order_; i++)
-          {
-            num_[i]=(double)ir_num_val[i];
-          }
-
-          XmlRpc::XmlRpcValue ir_den_val;
-          if(nh_.hasParam("/frame_kinematics/ir/den"))
-          {  
-            nh_.getParam("/frame_kinematics/ir/den", ir_den_val);
-            den_ = new double[order_];
-            for(int i = 0; i < order_; i++)
-            {
-              den_[i]=(double)ir_den_val[i];
-            }
-            ROS_INFO("Starting IIR filters of order %i.",order_); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
-          }
-          else
-          {
-            den_ = new double[order_];
-            den_[0] = 1.0;
-            for(int i = 1; i < order_; i++)den_[i]=.0;
-            ROS_INFO("Starting FIR filters of order %i.",order_);
-          }
-        }
-        else
-        {
-          num_ = new double[order_];
-          den_ = new double[order_];
-          den_[0] = 1.0;
-          for(int i = 1; i < order_; i++)den_[i]=.0;
-          for(int i = 0; i < order_; i++)num_[i]=1.0/order_;
-          ROS_INFO("Starting SMA filters with length %i samples.",order_);
-        }
-        FrameKinematics::SetFilter(num_,den_,order_);
-
+        FrameKinematics::SetFilter(filter);
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting kinematics relative to frame %s.",target_frame);
         if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::FrameKinematicsStamped>("frame_kinematics_data",1000);
@@ -150,7 +104,7 @@ namespace rosatk
           ROS_INFO("End of macro.");
           response.message = "End of macro.";
         }
-          return true;
+        return true;
       }
 
       void loopTimerCallback(const ros::WallTimerEvent& event)
@@ -182,10 +136,6 @@ namespace rosatk
       }      
 
       void jDataCallback(const sensor_msgs::JointState::ConstPtr& msg){FrameKinematics::Update(*msg);}
-
-      int order_;
-      double* num_;
-      double* den_;
       
       bool publish_;
       int mode_ = 10;

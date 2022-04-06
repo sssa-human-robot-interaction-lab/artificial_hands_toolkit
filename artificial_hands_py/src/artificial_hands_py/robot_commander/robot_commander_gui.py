@@ -9,7 +9,7 @@ from geometry_msgs.msg import Pose
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_generator_gui import CartesianTrajectoryGeneratorGUI
-from artificial_hands_py.cartesian_trajectory_generator.cartesian_mdof_point_publisher import CartesianMDOFPointPublisher
+from artificial_hands_py.cartesian_trajectory_generator.cartesian_publishers import CartesianMDOFPointPublisher, PoseStampedPublisher
 from artificial_hands_py.robot_commander.robot_commander import RobotCommander
 
 class RobotCommanderGUI(QWidget):
@@ -79,7 +79,8 @@ def main():
   app = QApplication(sys.argv)
 
   robot_cmd_gui = RobotCommanderGUI()
-  cart_mdof_pnt_pub = CartesianMDOFPointPublisher('/cartesian_eik_position_controller/command')
+  # cart_mdof_pnt_pub = CartesianMDOFPointPublisher('/cartesian_eik_position_controller/command')
+  pose_st_pub = PoseStampedPublisher('/cartesian_motion_controller/command')
   robot_cmd_gui.show()
   
   sys.exit(app.exec_())

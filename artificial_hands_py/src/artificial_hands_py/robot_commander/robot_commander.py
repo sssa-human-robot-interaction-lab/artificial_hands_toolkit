@@ -11,14 +11,14 @@ from artificial_hands_py.robot_commander.controller_manager_base  import Control
 class RobotCommander(ControllerManagerBase,moveit_commander.MoveGroupCommander):
   
   j_traj_ctrl = 'pos_joint_traj_controller'
-  c_traj_ctrl = 'cartesian_eik_position_controller'
+  c_traj_ctrl = 'cartesian_motion_controller'
 
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
 
   tf_buffer = tf2_ros.Buffer(rospy.Duration(100.0))
 
   def __init__(self, ns: str = '', ref: str = 'base', eef: str = 'tool0', move_group: str = 'manipulator') -> None:
-    ctrl_dict = {self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : MultiDOFJointTrajectoryPoint}
+    ctrl_dict = {self.j_traj_ctrl : JointTrajectory, self.c_traj_ctrl : PoseStamped}
     super().__init__(ns, ctrl_dict)
     super(ControllerManagerBase,self).__init__(move_group) 
     self.ref_frame = ref
@@ -38,6 +38,8 @@ class RobotCommander(ControllerManagerBase,moveit_commander.MoveGroupCommander):
       ref = self.ref_frame
     pose_ref : PoseStamped = self.get_current_pose(frame)
     ref_to_base = self.tf_buffer.lookup_transform(ref,pose_ref.header.frame_id,rospy.Time.now(),timeout=rospy.Duration(1))
+    print(pose_ref)
+    print(tf2_geometry_msgs.do_transform_pose(pose_ref,ref_to_base))
     return tf2_geometry_msgs.do_transform_pose(pose_ref,ref_to_base)
 
   def set_joint_target(self, joint_target : list, wait : bool = True, auto_switch : bool = True):

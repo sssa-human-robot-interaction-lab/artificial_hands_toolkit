@@ -1,9 +1,9 @@
 artificial_hands_msgs/FrameKinematics frame_kinematics
-geometry_msgs/Wrench wrench_fir
-geometry_msgs/Wrench wrench_iir
+geometry_msgs/Wrench wrench_dyn
+geometry_msgs/Wrench wrench_lp
 geometry_msgs/Wrench wrench_raw
 geometry_msgs/Wrench wrench_hat
-geometry_msgs/Wrench wrench_e
+geometry_msgs/Wrench wrench_pr
 geometry_msgs/Wrench wrench_th
 geometry_msgs/Vector3 gravity
 string cal

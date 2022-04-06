@@ -16,16 +16,20 @@ namespace rosatk
   {
     
     public:
-      WristDynamicsNode(ros::NodeHandle nh, bool publish, double factor, int filter, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame):  
+      WristDynamicsNode(ros::NodeHandle nh, bool autostart, bool publish, double factor, int filter_length, int rate, const char* sensor, const char* controller, int controller_rate, const char* target_frame):  
         nh_(nh),
         publish_(publish),
         factor_(factor),
         sensor_(sensor),
         controller_(controller),
-        WristFTProprioception(filter, controller_rate, target_frame, "manipulator", "robot_description"),
+        WristFTProprioception(controller_rate, target_frame, "manipulator", "robot_description"),
         ServiceManagerBase(nh,&WristDynamicsNode::command)
       {
-        ROS_INFO("Starting FIR filters with length %i samples.",filter); // TO DO cahnge ROS_INFO to ROS_DEBUG where needed
+        rosatk::FilterManagerBase kin_fil(nh,"frame_kinematics",filter_length);
+        rosatk::FilterManagerBase dyn_fil(nh,"ft_sensor",filter_length);
+        WristFTProprioception::SetKinematicsFilter(dyn_fil.filter);
+        WristFTProprioception::SetFTFilter(dyn_fil.filter);
+
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
         if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::WristDynamicsStamped>("wrist_dynamics_data",1000);
@@ -52,6 +56,11 @@ namespace rosatk
         addService("wrist_dynamics_mode/trigger_dynamics", cmd::Request::MOD_TDY, this);
         addService("wrist_dynamics_mode/save_calibration", cmd::Request::MOD_SCA, this);
         ROS_INFO("Node ready to take command.");
+        if(autostart)
+        {
+         cmd c;
+         command(c.request,c.response,cmd::Request::MAC_STA);
+        }
       }
 
     private:
@@ -94,7 +103,7 @@ namespace rosatk
             WristFTProprioception::TriggerDynamics(factor_);
             break;
           case cmd::Request::MOD_SCA:
-            WristFTCalibration::AddEquation(force_fir,torque_fir,gravity,twist_acceleration.linear); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
+            WristFTCalibration::AddEquation(force_dyn,torque_dyn,gravity,twist_acceleration.linear); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
             break;
         }
 
@@ -107,16 +116,16 @@ namespace rosatk
           loop_msg_.wrist_dynamics.frame_kinematics.acceleration = acceleration;
           loop_msg_.wrist_dynamics.frame_kinematics.twist_velocity = twist_velocity; 
           loop_msg_.wrist_dynamics.frame_kinematics.twist_acceleration = twist_acceleration;
-          loop_msg_.wrist_dynamics.wrench_fir.force = force_fir;
-          loop_msg_.wrist_dynamics.wrench_fir.torque = torque_fir;
-          loop_msg_.wrist_dynamics.wrench_iir.force = force_iir;
-          loop_msg_.wrist_dynamics.wrench_iir.torque = torque_iir;
+          loop_msg_.wrist_dynamics.wrench_dyn.force = force_dyn;
+          loop_msg_.wrist_dynamics.wrench_dyn.torque = torque_dyn;
+          loop_msg_.wrist_dynamics.wrench_lp.force = force_lp;
+          loop_msg_.wrist_dynamics.wrench_lp.torque = torque_lp;
           loop_msg_.wrist_dynamics.wrench_raw.force = force_raw;
           loop_msg_.wrist_dynamics.wrench_raw.torque = torque_raw;
           loop_msg_.wrist_dynamics.wrench_hat.force = force_hat;
           loop_msg_.wrist_dynamics.wrench_hat.torque = torque_hat;
-          loop_msg_.wrist_dynamics.wrench_e.force = force_e;
-          loop_msg_.wrist_dynamics.wrench_e.torque = torque_e;
+          loop_msg_.wrist_dynamics.wrench_pr.force = force_pr;
+          loop_msg_.wrist_dynamics.wrench_pr.torque = torque_pr;
           loop_msg_.wrist_dynamics.wrench_th = th_dyn_; // only for debug
           loop_msg_.wrist_dynamics.gravity = gravity;
           loop_msg_.wrist_dynamics.phi = phi_str.str();
@@ -187,7 +196,7 @@ namespace rosatk
             ROS_INFO("Checking force/torque sensor calibration (unzeroing sensor).");
             WristFTContactDetection::SetZero(false);
             WristFTContactDetection::SetOffset(WristFTCalibration::Get());
-            c_mass_ = 100*(atk::magnitudeVector3(force_fir)/(WristFTCalibration::GetMass()*9.81) - 1);
+            c_mass_ = 100*(atk::magnitudeVector3(force_lp)/(WristFTCalibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
             (abs(c_mass_) > 6 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;            
@@ -195,7 +204,7 @@ namespace rosatk
           ROS_INFO("Executed command.");
           response.message = "Executed command.";
         }
-        else
+        else if(command <= 10 & command < 20)
         {
           mode_ = command;
           std::string msg = "Mode changed to ";
@@ -227,7 +236,22 @@ namespace rosatk
           response.message = "Mode changed.";
           response.success = 1;
         }
-          return true;
+        else
+        {
+          std::string msg = "Executing macro to ";
+          switch(command)
+          {
+          case cmd::Request::MAC_STA:
+            msg += "start node.";
+            ROS_INFO("%s",msg.c_str());
+            this->command(request,response,cmd::Request::CMD_SUB);
+            this->command(request,response,cmd::Request::CMD_STA);
+            break;
+          }
+          ROS_INFO("End of macro.");
+          response.message = "End of macro.";
+        }
+        return true;
       }
 
       //Store latest force/torque message and update WristFTContactDetection accordingly (filtered and raw data)
@@ -258,6 +282,7 @@ int main(int argc, char** argv)
 
   ros::NodeHandle nh;
   
+  bool autostart;
   bool publish;
   double factor;
   int filter;
@@ -270,6 +295,7 @@ int main(int argc, char** argv)
   po::options_description desc("Options");
   desc.add_options()
     ("help", "display help")
+    ("autostart", po::value<bool>(&autostart)->default_value(1), "set true to autostart the node")
     ("publish", po::value<bool>(&publish)->default_value(1), "set true to advertise a WristStamped publisher")
     ("factor", po::value<double>(&factor)->default_value(2.0), "robustness of interaction trigger for dynamic handover (g.t. 1)")
     ("filter", po::value<int>(&filter)->default_value(20), "length of moving average filters (in samples)")
@@ -294,7 +320,7 @@ int main(int argc, char** argv)
   int joint_rate;
   ros::param::get(controller_rate,joint_rate);
   if(joint_rate < rate){rate = joint_rate; ROS_WARN("Required node rate was g.t. joint_state_controller publish rate, node rate lowered to %i Hz",rate);}
-  rosatk::WristDynamicsNode hr_per_node = rosatk::WristDynamicsNode(nh,publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str());
+  rosatk::WristDynamicsNode hr_per_node = rosatk::WristDynamicsNode(nh,autostart,publish,factor,filter,rate,sensor.c_str(),controller.c_str(),joint_rate,target_frame.c_str());
   ros::spin();
 
   return true;

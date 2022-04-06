@@ -16,6 +16,8 @@ uint8 MOD_SIN = 14
 uint8 MOD_TDY = 15
 uint8 MOD_SCA = 16
 
+uint8 MAC_STA = 20
+
 ---
 
 bool success

@@ -61,6 +61,24 @@ namespace atk
         return true;
       };
 
+      // /**
+      //  * @brief Set filter parameters
+      //  * @param filter struct of filter_t parameters
+      //  */
+      // void SetFilter(filter_t filter)
+      // {
+      //   BaseIRFilter::SetFilter(filter,6);
+      // };
+
+      // /**
+      //  * @brief Set filter parameters
+      //  * @param filter struct of filter_t parameters
+      //  */
+      // void SetFilter(int filter_length)
+      // {
+      //   BaseFilter::SetFilter(filter_length);
+      // };
+
       /**
        * @brief Set zero of force/torque sensor
        * @param do_zero true/false to do/undo zero

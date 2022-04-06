@@ -18,13 +18,12 @@ namespace atk
     public:
       /**
        * @brief Construct a new FrameKinematics object
-       * @param filter_length length in samples of FIR (simple moving average) filter on joint angles
        * @param controller_rate rate in Hz of the joint state controller
        * @param target_frame frame to compute for absolute kinematics
        * @param srdf_group name of the planning group for the target frame (according to robot SRDF)
        * @param robot_description name of XML robot description (robot URDF)
        */
-      FrameKinematics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
+      FrameKinematics(const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
         controller_rate_(controller_rate),
         target_frame_(target_frame),
         robot_description_(robot_description),
@@ -43,10 +42,22 @@ namespace atk
 
         jac_solver_ = new KDL::ChainJntToJacSolver(robot_chain_);
         dot_solver_ = new KDL::ChainJntToJacDotSolver(robot_chain_);
-        
-        j_pos_filter = new atk::BaseFilter(filter_length);
-        j_vel_filter = new atk::BaseFilter(filter_length);
+
+        chann_ = robot_chain_.getNrOfJoints();
+
+        j_pos_filter_ = new atk::BaseIRFilter();
+        j_vel_filter_ = new atk::BaseIRFilter();
       }
+
+      /**
+       * @brief Set filter parameters
+       * @param filter struct of filtrt_t parameters
+       */
+      void SetFilter(filter_t filter)
+      {
+        j_pos_filter_->SetFilter(filter,chann_);
+        j_vel_filter_->SetFilter(filter,chann_);
+      };
 
       /**
        * @brief Initialize kinematics state.
@@ -55,8 +66,8 @@ namespace atk
        */
       bool Init(sensor_msgs::JointState js) 
       {
-        j_pos_filter->Init(js.position); 
-        j_vel_filter->Init(js.velocity); 
+        j_pos_filter_->Init(js.position); 
+        j_vel_filter_->Init(js.velocity); 
         Update(js);
         Update(js); //Double update ensure acceleration starting from zero
         return true;
@@ -68,11 +79,11 @@ namespace atk
        */
       void Update(sensor_msgs::JointState js)
       {
-        j_pos_filter->Update(js.position);
-        j_vel_filter->Update(js.velocity);
+        j_pos_filter_->Update(js.position);
+        j_vel_filter_->Update(js.velocity);
         
-        std::vector<double> j_position = j_pos_filter->Get();
-        std::vector<double> j_velocity = j_vel_filter->Get();
+        std::vector<double> j_position = j_pos_filter_->Get();
+        std::vector<double> j_velocity = j_vel_filter_->Get();
         for(int i = 0; i <js.name.size(); i++)
         {
           kinematic_state_->setJointPositions(js.name[i].c_str(), &j_position[i]);
@@ -168,6 +179,8 @@ namespace atk
 
     private:
 
+      int chann_;
+      
       const char* robot_description_;
       const char* srdf_group_;
       const char* target_frame_;
@@ -181,8 +194,8 @@ namespace atk
       KDL::ChainJntToJacDotSolver *dot_solver_;
       KDL::Chain robot_chain_;  
 
-      atk::BaseFilter* j_pos_filter;
-      atk::BaseFilter* j_vel_filter;  
+      atk::BaseIRFilter* j_pos_filter_;
+      atk::BaseIRFilter* j_vel_filter_;  
   };
 }
 

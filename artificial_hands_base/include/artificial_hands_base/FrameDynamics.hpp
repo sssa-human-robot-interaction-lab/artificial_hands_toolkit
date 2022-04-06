@@ -7,23 +7,20 @@
 namespace atk
 {
 
-  class FrameDynamics: public atk::FrameKinematics, public atk::BaseFTSensor<BaseFilter>
+  class FrameDynamics: public atk::FrameKinematics, public atk::BaseFTSensor<BaseIRFilter>
   {
     
     public:  
       /**
        * @brief Construct a new FrameDynamics object
-       * @param filter_length length in samples of FIR (simple moving average) filter on joint angles
        * @param controller_rate rate in Hz of the joint state controller
        * @param target_frame frame to compute for absolute kinematics
        * @param srdf_group name of the planning group for the target frame (according to robot SRDF)
        * @param robot_description name of XML robot description (robot URDF)
        */
-      FrameDynamics(int filter_length, const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
-        FrameKinematics(filter_length,controller_rate, target_frame, srdf_group, robot_description)
+      FrameDynamics(const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
+        FrameKinematics(controller_rate, target_frame, srdf_group, robot_description)
       {
-        BaseFTSensor::SetFilter(filter_length);
-
         gravity_.x = 0;
         gravity_.y = 0;
         gravity_.z = -9.81;
@@ -31,6 +28,24 @@ namespace atk
         x_.reserve(6*10*1000);
         y_.reserve(6*1000);
       }
+
+      /**
+       * @brief Set filter parameters for frame kinematics
+       * @param kin_filter struct of filter_t parameters
+       */
+      void SetKinematicsFilter(atk::filter_t kin_filter)
+      {
+        FrameKinematics::SetFilter(kin_filter);
+      };
+
+      /**
+       * @brief Set filter parameters for frame dynamics
+       * @param ft_filter struct of FT filter_t parameters
+       */
+      void SetFTFilter(atk::filter_t ft_filter)
+      {
+        BaseFTSensor::SetFilter(ft_filter,6);
+      };
 
       /**
        * @brief Initialize dynamics state.

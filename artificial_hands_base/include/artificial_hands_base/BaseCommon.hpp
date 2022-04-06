@@ -11,6 +11,15 @@
 
 namespace atk
 {  
+  /**
+   * @brief Stores coefficient based filter parameters
+   */
+  struct filter_t
+  {
+    int order;
+    double* num;
+    double* den;
+  };
 
   /**
    * @brief Stores 6D kinematics
