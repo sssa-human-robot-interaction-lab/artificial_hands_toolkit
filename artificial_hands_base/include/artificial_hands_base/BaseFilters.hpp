@@ -158,7 +158,7 @@ namespace atk{
        */
       void Init(std::vector<double> f)
       {
-        for(int i = 0; i < chann_; i++)for(int j = 0; j < order_; j++)z_[i][j] = .0;
+        for(int i = 0; i < chann_; i++)for(int j = 0; j <= order_; j++)z_[i][j] = .0;
         copyArray(&f_,f.data(),f.size());
       };
 
@@ -172,7 +172,7 @@ namespace atk{
         {
           z_[i][order_] = 0;
           f_[i] = num_[0] * f_new_[i] + z_[i][0];
-          for(int j = 1; j < order_; j++)
+          for(int j = 1; j <= order_; j++)
           {
             z_[i][j - 1] = num_[j] * f_new_[i] + z_[i][j] - den_[j] * f_[i];
           }   
@@ -195,12 +195,12 @@ namespace atk{
         {
           std::vector<double> z;
           z_.push_back(z);
-          for(int j = 0; j < order_; j++)z_[i].push_back(0);
+          for(int j = 0; j <= order_; j++)z_[i].push_back(0);
         }
         // z_ = new double*[chann_];
-        // for(int i = 0; i < order_; i++)z_[i] = new double[order_];
-        for(int i = 0; i < order_; i++)num_[i] = num_[i]/den_[0];
-        for(int i = 0; i < order_; i++)den_[i] = den_[i]/den_[0];
+        // for(int i = 0; i <= order_; i++)z_[i] = new double[order_];
+        for(int i = 0; i <= order_; i++)num_[i] = num_[i]/den_[0];
+        for(int i = 0; i <= order_; i++)den_[i] = den_[i]/den_[0];
       };
 
       int order_, chann_;

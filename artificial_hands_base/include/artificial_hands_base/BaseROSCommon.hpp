@@ -52,8 +52,8 @@ namespace rosatk
       if(nh_.hasParam(num_p))
       {
         nh_.getParam(num_p, ir_num_val);
-        filter.num = new double[filter.order];
-        for(int i = 0; i < filter.order; i++)
+        filter.num = new double[filter.order + 1];
+        for(int i = 0; i <= filter.order; i++)
         {
           filter.num[i]=(double)ir_num_val[i];
         }
@@ -62,8 +62,8 @@ namespace rosatk
         if(nh_.hasParam(den_p))
         {  
           nh_.getParam(den_p, ir_den_val);
-          filter.den = new double[filter.order];
-          for(int i = 0; i < filter.order; i++)
+          filter.den = new double[filter.order + 1];
+          for(int i = 0; i <= filter.order; i++)
           {
             filter.den[i]=(double)ir_den_val[i];
           }
@@ -71,21 +71,32 @@ namespace rosatk
         }
         else
         {
-          filter.den = new double[filter.order];
+          filter.den = new double[filter.order + 1];
           filter.den[0] = 1.0;
-          for(int i = 1; i < filter.order; i++)filter.den[i]=.0;
+          for(int i = 1; i <= filter.order; i++)filter.den[i]=.0;
           ROS_INFO("Starting FIR filters of order %i on %s",filter.order,ns.c_str());
         }
       }
       else
       {
-        filter.num = new double[filter.order];
-        filter.den = new double[filter.order];
+        filter.num = new double[filter.order + 1];
+        filter.den = new double[filter.order + 1];
         filter.den[0] = 1.0;
-        for(int i = 1; i < filter.order; i++)filter.den[i]=.0;
-        for(int i = 0; i < filter.order; i++)filter.num[i]=1.0/filter.order;
+        for(int i = 1; i <= filter.order; i++)filter.den[i]=.0;
+        for(int i = 0; i <= filter.order; i++)filter.num[i]=1.0/filter.order;
         ROS_INFO("Starting SMA filters with length %i samples on %s",filter.order, ns.c_str());
       }
+
+      std::cout << filter.order << '\n';
+      std::stringstream num_st;
+      std::stringstream den_st;
+      for(int i = 0; i <= filter.order; i++)
+      {
+        num_st << filter.num[i] << " ";
+        den_st << filter.den[i] << " ";
+      }
+      std::cout << num_st.str() << '\n';
+      std::cout << den_st.str() << '\n';
     }
 
     atk::filter_t filter;
