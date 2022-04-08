@@ -11,7 +11,7 @@ from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_l
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import *
 
 class CartesianTrajectoryGenerator:
-  traj_rate = 125
+  traj_rate = 500
   traj_feedback = TrajectoryGenerationFeedback()
   traj_result = TrajectoryGenerationResult()
 

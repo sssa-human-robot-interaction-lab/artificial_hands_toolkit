@@ -55,6 +55,7 @@ namespace rosatk
         addService("wrist_dynamics_mode/save_interaction", cmd::Request::MOD_SIN, this);
         addService("wrist_dynamics_mode/trigger_dynamics", cmd::Request::MOD_TDY, this);
         addService("wrist_dynamics_mode/save_calibration", cmd::Request::MOD_SCA, this);
+        addService("wrist_dynamics_macro/start_node", cmd::Request::MAC_STA, this);
         ROS_INFO("Node ready to take command.");
         if(autostart)
         {
@@ -204,7 +205,7 @@ namespace rosatk
           ROS_INFO("Executed command.");
           response.message = "Executed command.";
         }
-        else if(command <= 10 & command < 20)
+        else if(command >= 10 & command < 20)
         {
           mode_ = command;
           std::string msg = "Mode changed to ";

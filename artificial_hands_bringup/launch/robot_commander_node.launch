@@ -1,0 +1,21 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="false"/>
+
+  <!-- Run the controller manager -->
+  <node pkg="rqt_controller_manager" type="rqt_controller_manager" name="rqt_controller_manager" output="screen"/>
+
+  <!-- Launch planning and execution -->
+  <include file="$(find mia_hand_on_ur5_moveit_config)\launch\mia_hand_on_ur5_planning_and_execution.launch" pass_all_args="true"/>
+
+  <!-- Run the cartesian trajectory generator node -->
+  <node pkg="artificial_hands_nodes" type="cartesian_trajectory_generator_node.py" name="cartesian_trajectory_generator_node" output="screen"/>
+
+  <!-- Run the robot commander -->
+  <node pkg="artificial_hands_nodes" type="arm_commander_gui_node.py" name="arm_commander_gui_node" output="screen"/>
+
+  <!-- Run the frame kinematics node -->
+  <node pkg="artificial_hands_nodes" type="frame_kinematics_node" name="frame_kinematics_node" output="screen" args="--autostart true --filter 1"/>
+
+</launch>

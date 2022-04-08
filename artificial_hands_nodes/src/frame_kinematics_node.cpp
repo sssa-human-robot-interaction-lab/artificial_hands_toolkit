@@ -172,7 +172,7 @@ int main(int argc, char** argv)
     ("rate", po::value<int>(&rate)->default_value(100), "rosnode internal rate (in Hertz)")
     ("controller", po::value<std::string>(&controller)->default_value("/joint_states"), "name of the rostopic published by joint_state_controller") 
     ("controller_rate", po::value<std::string>(&controller_rate)->default_value("/joint_state_controller/publish_rate"), "rosparam name of the publish rate in joint_state_controller") 
-    ("target_frame", po::value<std::string>(&target_frame)->default_value("ft_sensor_frame"), "wrist F/T sensor frame id") 
+    ("target_frame", po::value<std::string>(&target_frame)->default_value("tool0"), "target frame id") 
     ;
   po::positional_options_description p;
   p.add("filter",  1);

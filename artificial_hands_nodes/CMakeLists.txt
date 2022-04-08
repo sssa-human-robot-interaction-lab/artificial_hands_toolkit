@@ -23,10 +23,10 @@ target_link_libraries(frame_kinematics_node ${catkin_LIBRARIES})
 target_link_libraries(wrist_dynamics_node ${catkin_LIBRARIES})
 
 catkin_install_python(PROGRAMS
+  scripts/arm_commander_gui_node.py
   scripts/cartesian_trajectory_generator_gui_node.py
   scripts/cartesian_trajectory_generator_node.py
   scripts/dmp_extended_servo_node.py
   scripts/fake_ft_sensor_node.py
-  scripts/robot_commander_gui_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

@@ -1,4 +1,8 @@
+import rospy
+
 from geometry_msgs.msg import Quaternion
+
+from artificial_hands_msgs.srv import WristDynamicsCommand
 
 def list_to_quat(q : list) -> Quaternion: 
   quat = Quaternion()
