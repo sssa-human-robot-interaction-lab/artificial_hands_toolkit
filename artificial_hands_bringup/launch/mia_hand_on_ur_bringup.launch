@@ -3,6 +3,7 @@
 
   <arg name="sim" default="true" />
   <arg name="robot_ip" default="192.168.1.7" doc="specify robot IP address"/>
+  <arg name="kinematics_config" default="$(arg robot_ip)" doc="specify robot calibration IP address"/>
   <arg name="ur_robot" default="ur10e" doc="choose robot type: ur5, ur10e" />
   <arg name="Mia_COM" default='0' doc="Int number of the Mia hand COM port" />
   <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
@@ -14,7 +15,7 @@
     <include file="$(find ur_gazebo)/launch/$(arg ur_robot)_bringup.launch" >
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_$(arg ur_robot).launch.xml" />
       <arg name="stopped_controllers" value="joint_group_pos_controller" />
-      <arg name="kinematics_params" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg robot_ip).yaml" />
+      <arg name="kinematics_params" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg kinematics_config).yaml" />
     </include>
 
     <!-- Load Mia hand controllers to parameter server -->
@@ -35,7 +36,7 @@
     <!-- Make use of UR robot bringup from ur_robot_driver-->
     <include file="$(find ur_robot_driver)/launch/$(arg ur_robot)_bringup.launch" >
       <arg name="robot_ip" value="$(arg robot_ip)" />
-      <arg name="kinematics_config" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg robot_ip).yaml" />
+      <arg name="kinematics_config" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg kinematics_config).yaml" />
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_$(arg ur_robot).launch.xml" />
       <arg name="controllers" default="joint_state_controller pos_joint_traj_controller force_torque_sensor_controller"/>
       <arg name="stopped_controllers" default="joint_group_vel_controller"/>

@@ -1,5 +1,6 @@
 from math import floor
-from threading import Thread
+from this import d
+from threading import Thread, Lock
 
 import rospy, actionlib
 import tf.transformations as ts
@@ -9,31 +10,75 @@ from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import *
+from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_plugins import *
 
 class CartesianTrajectoryGenerator:
-  traj_rate = 500
+  traj_rate = 125
   traj_feedback = TrajectoryGenerationFeedback()
   traj_result = TrajectoryGenerationResult()
 
+  dmp_plugin = DMPTrajectoryPlugin()
+
+  lock = Lock()
+
   def __init__(self) -> None:
     
+    self.gen_as = actionlib.SimpleActionServer('trajectory_plugin_manager', TrajectoryGenerationAction, execute_cb=self.trajectory_plugin_cb, auto_start = False)
     self.traj_as = actionlib.SimpleActionServer('cartesian_trajectory_generator', TrajectoryGenerationAction, execute_cb=self.trajectory_generation_cb, auto_start = False)
-
+    
     self.traj_pnt_pub = rospy.Publisher('target_traj_pnt',CartesianTrajectoryPointStamped,queue_size=1000)
 
     self.target = CartesianTrajectoryPoint()
-    self.target.pose.orientation.x = 1
+    self.target.pose.orientation.w = 1
     self.target.time_from_start = rospy.Duration.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
 
-    target_thread = Thread(target=self.trajectory_generator_target)
-    target_thread.start()
+    # target_thread = Thread(target=self.trajectory_generator_target)
+    # target_thread.start()
+    target_timer = rospy.Timer(rospy.Duration.from_sec(1/self.traj_rate),self.update)
 
+    self.plugin_thread = Thread()
+    self.plugin_running = False
+
+    self.gen_as.start()
     self.traj_as.start()
+
+  def copy_plugin_target(self, plugin_target : CartesianTrajectoryPoint):
+    msg = CartesianTrajectoryPointStamped()
+    self.plugin_running = True
+    while self.plugin_running:
+      self.target.pose = plugin_target.pose
+      self.target.twist = plugin_target.twist
+      self.target.acceleration = plugin_target.acceleration
+      self.rate.sleep()
+
+  def trajectory_plugin_cb(self, goal : TrajectoryGenerationGoal):
+    
+    self.traj_result.success = True
+
+    if self.plugin_thread.is_alive():
+      self.plugin_running = False
+      self.plugin_thread.join()
+
+    if goal.traj_type == goal.DMP:
+      self.plugin_thread = Thread(target=self.copy_plugin_target,args=(self.dmp_plugin.plugin_target,))
+      self.plugin_thread.start()
+    
+    self.gen_as.set_succeeded(self.traj_result)
 
   def trajectory_generation_cb(self, goal : TrajectoryGenerationGoal):
 
     self.traj_result.success = True
+
+    self.dmp_plugin.set_plugin_target(goal.traj_target)
+
+    if goal.traj_type == goal.FORWARD:
+      self.target = goal.traj_target
+      self.traj_as.set_succeeded(self.traj_result)
+      return
+    elif goal.traj_type == goal.DMP:   
+      self.traj_as.set_succeeded(self.traj_result)
+      return
 
     dt = 1/self.traj_rate
 
@@ -100,6 +145,7 @@ class CartesianTrajectoryGenerator:
 
       for c in range(0,c_max+1):
         
+        # self.lock.acquire()
         self.target.pose.position.x = c_target.pose.position.x + harmonic_pos(delta_target.pose.position.x,c*dt,goal_time)
         self.target.pose.position.y = c_target.pose.position.y + harmonic_pos(delta_target.pose.position.y,c*dt,goal_time)
         self.target.pose.position.z = c_target.pose.position.z + harmonic_pos(delta_target.pose.position.z,c*dt,goal_time)
@@ -116,20 +162,29 @@ class CartesianTrajectoryGenerator:
 
         self.traj_feedback.percentage = 100*c/c_max
         self.traj_as.publish_feedback(self.traj_feedback)
-        
+
+        # self.lock.release()
+
         self.rate.sleep()
       
       if self.traj_result.success:
         self.traj_as.set_succeeded(self.traj_result)
   
-  def trajectory_generator_target(self): 
-    
+  def update(self,event):
+    msg = CartesianTrajectoryPointStamped()
+    msg.header.stamp = rospy.Time.now()
+    msg.point = self.target
+    self.traj_pnt_pub.publish(msg) 
+  
+  def trajectory_generator_target(self):   
     msg = CartesianTrajectoryPointStamped()
     while not rospy.is_shutdown():
+      # self.lock.acquire()
       msg.header.stamp = rospy.Time.now()
       msg.point = self.target
-      self.traj_pnt_pub.publish(msg)
-      self.rate.sleep()
+      self.traj_pnt_pub.publish(msg) 
+      # self.lock.release()
+      self.rate.sleep()     
 
 def main():
 

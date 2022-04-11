@@ -20,6 +20,13 @@ class ArmCommanderGui(QWidget):
 
     self.arm = arm
 
+    self.gen_combo_box = QComboBox()
+    self.gen_combo_box.addItem('forward_trajectory_generator')
+    self.gen_combo_box.addItem('dmp_extended_trajectory_generator')
+    self.gen_combo_box.addItem('harmonic_trajectory_generator')
+    self.gen_combo_box.setCurrentText('harmonic_trajectory_generator')
+    self.gen_combo_box.currentIndexChanged.connect(self.on_gen_changed)
+
     self.ctrl_combo_box = QComboBox()
     self.ctrl_combo_box.addItems(list(arm.ctrl_dict.keys())[1:])
     self.ctrl_combo_box.currentIndexChanged.connect(self.on_ctrl_changed)
@@ -27,6 +34,7 @@ class ArmCommanderGui(QWidget):
     self.cart_traj_gen_widget = CartesianTrajectoryGeneratorGUI()
 
     main_layout = QVBoxLayout()
+    main_layout.addWidget(self.gen_combo_box)
     main_layout.addWidget(self.ctrl_combo_box)
     main_layout.addWidget(self.cart_traj_gen_widget)
 
@@ -43,9 +51,7 @@ class ArmCommanderGui(QWidget):
     self.cart_traj_gen_widget.target_orientation_group_box.y_spin_box.setValue(c_rot[1])
     self.cart_traj_gen_widget.target_orientation_group_box.z_spin_box.setValue(c_rot[2])
 
-    print(c_pose.position)
-    print(c_rot)
-
+    self.arm.switch_to_trajectory_generator(self.gen_combo_box.currentIndex())
     self.arm.switch_to_cartesian_controller(list(arm.ctrl_dict.keys())[1])
 
     self.cart_traj_gen_widget.send_push_button.clicked.connect(self.on_send_button)
@@ -79,6 +85,9 @@ class ArmCommanderGui(QWidget):
   
   def on_ctrl_changed(self):
     self.arm.switch_to_cartesian_controller(self.ctrl_combo_box.currentText())
+
+  def on_gen_changed(self):
+    self.arm.switch_to_trajectory_generator(self.gen_combo_box.currentIndex())
     
 def main():
 
@@ -87,21 +96,21 @@ def main():
   app = QApplication(sys.argv)
 
   j_traj_pos_ctrl = 'pos_joint_traj_controller'
-  c_eik_pos_ctrl = 'cartesian_eik_position_controller'
-  c_eik_vel_ctrl= 'cartesian_eik_velocity_controller'
   cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
   cart_mot_vel_ctrl = 'cartesian_motion_velocity_controller'
+  c_eik_pos_ctrl = 'cartesian_eik_position_controller'
+  c_eik_vel_ctrl= 'cartesian_eik_velocity_controller'
 
   ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
-              c_eik_pos_ctrl : MultiDOFJointTrajectory,
-              c_eik_vel_ctrl : MultiDOFJointTrajectory,
               cart_mot_pos_ctrl : PoseStamped,
-              cart_mot_vel_ctrl : PoseStamped}
+              cart_mot_vel_ctrl : PoseStamped,
+              c_eik_pos_ctrl : MultiDOFJointTrajectory,
+              c_eik_vel_ctrl : MultiDOFJointTrajectory}
 
-  cart_eik_pos_pub = CartesianMDOFPointPublisher(c_eik_pos_ctrl+'/command')
-  cart_eik_vel_pub = CartesianMDOFPointPublisher(c_eik_vel_ctrl+'/command')
   cart_mot_pos_pub = PoseStampedPublisher(cart_mot_pos_ctrl+'/command')
   cart_mot_vel_pub = PoseStampedPublisher(cart_mot_vel_ctrl+'/command')
+  cart_eik_pos_pub = CartesianMDOFPointPublisher(c_eik_pos_ctrl+'/command')
+  cart_eik_vel_pub = CartesianMDOFPointPublisher(c_eik_vel_ctrl+'/command')
 
   arm = ArmCommander(ctrl_dict=ctrl_dict)
 

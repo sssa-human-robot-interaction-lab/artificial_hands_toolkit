@@ -1,5 +1,7 @@
 #goal   
-int64 HARMONIC = 0
+int64 FORWARD = 0
+int64 DMP = 1
+int64 HARMONIC = 2
 int64 traj_type
 float64 traj_max_accel
 float64 traj_max_angaccel
