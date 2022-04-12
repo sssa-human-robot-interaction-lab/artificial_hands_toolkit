@@ -1,5 +1,4 @@
 from math import floor
-from this import d
 from threading import Thread, Lock
 
 import rospy, actionlib
@@ -23,7 +22,7 @@ class CartesianTrajectoryGenerator:
 
   def __init__(self) -> None:
     
-    self.gen_as = actionlib.SimpleActionServer('trajectory_plugin_manager', TrajectoryGenerationAction, execute_cb=self.trajectory_plugin_cb, auto_start = False)
+    self.gen_as = actionlib.SimpleActionServer('cartesian_trajectory_plugin_manager', TrajectoryGenerationAction, execute_cb=self.trajectory_plugin_cb, auto_start = False)
     self.traj_as = actionlib.SimpleActionServer('cartesian_trajectory_generator', TrajectoryGenerationAction, execute_cb=self.trajectory_generation_cb, auto_start = False)
     
     self.traj_pnt_pub = rospy.Publisher('target_traj_pnt',CartesianTrajectoryPointStamped,queue_size=1000)
@@ -33,8 +32,6 @@ class CartesianTrajectoryGenerator:
     self.target.time_from_start = rospy.Duration.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
 
-    # target_thread = Thread(target=self.trajectory_generator_target)
-    # target_thread.start()
     target_timer = rospy.Timer(rospy.Duration.from_sec(1/self.traj_rate),self.update)
 
     self.plugin_thread = Thread()
@@ -44,7 +41,6 @@ class CartesianTrajectoryGenerator:
     self.traj_as.start()
 
   def copy_plugin_target(self, plugin_target : CartesianTrajectoryPoint):
-    msg = CartesianTrajectoryPointStamped()
     self.plugin_running = True
     while self.plugin_running:
       self.target.pose = plugin_target.pose
@@ -145,7 +141,6 @@ class CartesianTrajectoryGenerator:
 
       for c in range(0,c_max+1):
         
-        # self.lock.acquire()
         self.target.pose.position.x = c_target.pose.position.x + harmonic_pos(delta_target.pose.position.x,c*dt,goal_time)
         self.target.pose.position.y = c_target.pose.position.y + harmonic_pos(delta_target.pose.position.y,c*dt,goal_time)
         self.target.pose.position.z = c_target.pose.position.z + harmonic_pos(delta_target.pose.position.z,c*dt,goal_time)
@@ -163,8 +158,6 @@ class CartesianTrajectoryGenerator:
         self.traj_feedback.percentage = 100*c/c_max
         self.traj_as.publish_feedback(self.traj_feedback)
 
-        # self.lock.release()
-
         self.rate.sleep()
       
       if self.traj_result.success:
@@ -179,11 +172,9 @@ class CartesianTrajectoryGenerator:
   def trajectory_generator_target(self):   
     msg = CartesianTrajectoryPointStamped()
     while not rospy.is_shutdown():
-      # self.lock.acquire()
       msg.header.stamp = rospy.Time.now()
       msg.point = self.target
       self.traj_pnt_pub.publish(msg) 
-      # self.lock.release()
       self.rate.sleep()     
 
 def main():
@@ -191,6 +182,8 @@ def main():
   rospy.init_node('cartesian_trajectory_generator_node')
 
   cart_traj_gen = CartesianTrajectoryGenerator()
+
+  rospy.loginfo('Cartesian trajectory generator ready!')
 
   rospy.spin()
 

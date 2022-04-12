@@ -13,7 +13,7 @@ def main():
 
   rate = rospy.Rate(200)
 
-  rospy.loginfo('Starting fake ft_sensor...')
+  rospy.loginfo('Fake FT sensor ready!')
 
   while not rospy.is_shutdown():
     pub.publish(ft)

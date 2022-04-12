@@ -4,7 +4,7 @@ from rqt_controller_manager.controller_manager import *
 
 class ControllerManagerBase:
   """ This base class provides methods to check and load required controllers,
-  switch to and command the active one.
+  switch to or pause the desired controller.
 
   Attributes
   ----------
@@ -17,8 +17,17 @@ class ControllerManagerBase:
 
   Methods
   -------
-  switch_to_controller(controller_name)
+  switch_to_controller
     make a controller active
+
+  pause_controller
+    pause the active controller active
+
+  unpause_controller
+    unppause the last active controller
+
+  pause_all_controllers
+    pause any active controller
   """
 
   def __init__(self,ns : str, ctrl_dict : dict) -> None:  

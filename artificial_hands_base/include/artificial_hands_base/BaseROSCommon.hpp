@@ -79,12 +79,12 @@ namespace rosatk
       }
       else
       {
-        filter.num = new double[filter.order + 1];
-        filter.den = new double[filter.order + 1];
+        filter.num = new double[filter.order];
+        filter.den = new double[filter.order];
         filter.den[0] = 1.0;
-        for(int i = 1; i <= filter.order; i++)filter.den[i]=.0;
-        for(int i = 0; i <= filter.order; i++)filter.num[i]=1.0/(filter.order + 1);
-        ROS_INFO("Starting SMA filters with length %i samples on %s",filter.order + 1, ns.c_str());
+        for(int i = 1; i < filter.order; i++)filter.den[i]=.0;
+        for(int i = 0; i < filter.order; i++)filter.num[i]=1.0/(filter.order);
+        ROS_INFO("Starting SMA filters with length %i samples on %s",filter.order, ns.c_str());
       }
 
       std::cout << filter.order << '\n';

@@ -28,6 +28,9 @@ add_service_files(
 
 add_action_files(
   FILES
+  ForceTorqueSensorCalibration.action
+  ObjectRecognition.action
+  RobotHumanHandoverReaching.action
   TrajectoryGeneration.action
 )
 

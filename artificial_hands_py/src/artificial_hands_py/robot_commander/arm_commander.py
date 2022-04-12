@@ -9,30 +9,20 @@ from artificial_hands_py.robot_commander.controller_manager_base  import Control
 
 class ArmCommander(ControllerManagerBase):
 
-  c_gen_cl = actionlib.SimpleActionClient('/trajectory_plugin_manager',TrajectoryGenerationAction)
+  c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
 
   tf_buffer = tf2_ros.Buffer(rospy.Duration(10.0))
 
   def __init__(self, ns: str = '', ref: str = 'base', eef: str = 'tool0', move_group: str = 'manipulator', ctrl_dict: dict = None) -> None:
     super().__init__(ns, ctrl_dict)
-    self.c_traj_type = 2
+    
     self.ref_frame = ref
     self.ee_frame = eef 
+
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)
 
-  def switch_to_trajectory_generator(self, gen_index : int):
-    goal = TrajectoryGenerationGoal()
-    
-    if gen_index == 0:
-      goal.traj_type = goal.FORWARD
-    elif gen_index == 1:
-      goal.traj_type = goal.DMP
-    elif gen_index == 2:
-      goal.traj_type = goal.HARMONIC
-
-    self.c_traj_type = goal.traj_type
-    self.c_gen_cl.send_goal(goal)
+    self.goal = TrajectoryGenerationGoal()
 
   def switch_to_cartesian_controller(self, ctrl_name : str):
     self.pause_all_controllers()
@@ -48,12 +38,28 @@ class ArmCommander(ControllerManagerBase):
     return cv.list_to_pose_stamped(cv.transform_to_list(ref_to_frame.transform),ref)
   
   def set_pose_target(self, pose_target : Pose, wait : bool = True):
-    goal = TrajectoryGenerationGoal()
-    goal.traj_type = self.c_traj_type
-    goal.traj_target.pose = pose_target
-    self.c_traj_cl.send_goal(goal)
+    self.goal.traj_target.pose = pose_target
+    self.c_traj_cl.send_goal(self.goal)
     if wait:
       self.c_traj_cl.wait_for_result()
   
   def cancel_pose_target(self):
     self.c_traj_cl.cancel_all_goals()
+
+  def set_forward_traj_point(self):
+    self.goal.traj_type = self.goal.FORWARD
+    self.c_gen_cl.send_goal(self.goal)
+  
+  def set_dmp_traj_generator(self):
+    self.goal.traj_type = self.goal.DMP
+    self.c_gen_cl.send_goal(self.goal)
+
+  def set_harmonic_traj_generator(self):
+    self.goal.traj_type = self.goal.HARMONIC
+    self.c_gen_cl.send_goal(self.goal)
+  
+  def set_max_accel(self,max_accel : float):
+    self.goal.traj_max_accel = max_accel
+  
+  def set_max_angaccel(self,max_angaccel : float):
+    self.goal.traj_max_angaccel = max_angaccel

@@ -21,7 +21,7 @@ class ArmCommanderGui(QWidget):
     self.arm = arm
 
     self.gen_combo_box = QComboBox()
-    self.gen_combo_box.addItem('forward_trajectory_generator')
+    self.gen_combo_box.addItem('forward_trajectory')
     self.gen_combo_box.addItem('dmp_extended_trajectory_generator')
     self.gen_combo_box.addItem('harmonic_trajectory_generator')
     self.gen_combo_box.setCurrentText('harmonic_trajectory_generator')
@@ -51,7 +51,7 @@ class ArmCommanderGui(QWidget):
     self.cart_traj_gen_widget.target_orientation_group_box.y_spin_box.setValue(c_rot[1])
     self.cart_traj_gen_widget.target_orientation_group_box.z_spin_box.setValue(c_rot[2])
 
-    self.arm.switch_to_trajectory_generator(self.gen_combo_box.currentIndex())
+    self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller(list(arm.ctrl_dict.keys())[1])
 
     self.cart_traj_gen_widget.send_push_button.clicked.connect(self.on_send_button)
@@ -87,7 +87,12 @@ class ArmCommanderGui(QWidget):
     self.arm.switch_to_cartesian_controller(self.ctrl_combo_box.currentText())
 
   def on_gen_changed(self):
-    self.arm.switch_to_trajectory_generator(self.gen_combo_box.currentIndex())
+    if self.ctrl_combo_box.currentText() == 'forward_trajectory':
+      self.arm.set_forward_traj_point()
+    elif self.ctrl_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      self.arm.set_dmp_traj_generator()
+    elif self.ctrl_combo_box.currentText() == 'harmonic_trajectory_generator':
+      self.arm.set_harmonic_traj_generator()
     
 def main():
 

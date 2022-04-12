@@ -1,0 +1,11 @@
+#goal   
+geometry_msgs/Pose home
+float64 max_accel
+float64 max_angaccel
+---
+#result
+int64 success
+---
+#feedback
+bool calib_ok
+int64 percentage

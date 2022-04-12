@@ -38,7 +38,7 @@
       <arg name="robot_ip" value="$(arg robot_ip)" />
       <arg name="kinematics_config" value="$(find artificial_hands_bringup)/config/kinematics_config_$(arg kinematics_config).yaml" />
       <arg name="robot_description_file" value="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_$(arg ur_robot).launch.xml" />
-      <arg name="controllers" default="joint_state_controller pos_joint_traj_controller force_torque_sensor_controller"/>
+      <arg name="controllers" default="joint_state_controller scaled_pos_joint_traj_controller force_torque_sensor_controller"/>
       <arg name="stopped_controllers" default="joint_group_vel_controller"/>
     </include>
 
