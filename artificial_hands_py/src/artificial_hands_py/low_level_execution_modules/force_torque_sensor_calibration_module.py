@@ -13,17 +13,17 @@ from artificial_hands_py.low_level_execution_modules.wrist_dynamics_module impor
 class ForceTorqueSensorCalibrationModule(WristDynamicsModule,RobotCommander):
   sleep_dur = rospy.Duration(0.5)
   calib_feedback = ForceTorqueSensorCalibrationFeedback()
-  calib_result = ForceTorqueSensorCalibrationActionResult()
+  calib_result = ForceTorqueSensorCalibrationResult()
 
   def __init__(self) -> None:
     super().__init__()
   
-    self.calib_as = actionlib.SimpleActionServer('force_torque_sensor_calibration',ForceTorqueSensorCalibrationAction,execute_cb=self.calibration_cb,auto_start=False)
+    self.calib_as = actionlib.SimpleActionServer('/force_torque_sensor_calibration',ForceTorqueSensorCalibrationAction,execute_cb=self.calibration_cb,auto_start=False)
 
     self.calib_as.start()
 
   def calibration_cb(self, goal : ForceTorqueSensorCalibrationGoal):
-    self.calib_result.result.success = True
+    self.calib_result.success = True
     self.calib_feedback.calib_ok = False
     self.calib_feedback.percentage = 40
 
@@ -84,9 +84,10 @@ class ForceTorqueSensorCalibrationModule(WristDynamicsModule,RobotCommander):
     self.estimate_calibration()
     self.stop_loop()
 
-    self.calib_as.set_succeeded(self.calib_result)
+    # stop controllers
     self.arm.pause_all_controllers()
-
+    self.calib_as.set_succeeded(self.calib_result)
+    
   def add_calibration_point(self, pose : Pose): 
     self.arm.set_pose_target(pose)
     self.set_save_calibration()
@@ -100,6 +101,8 @@ def main():
   rospy.init_node('force_torque_sensor_calibration_module_node')
 
   ft_cal_mod = ForceTorqueSensorCalibrationModule()
+
+  rospy.loginfo('FT sensor calibration module ready!')
 
   rospy.spin()
 

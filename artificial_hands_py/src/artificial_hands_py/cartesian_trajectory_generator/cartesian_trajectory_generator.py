@@ -106,12 +106,12 @@ class CartesianTrajectoryGenerator:
       goal.traj_max_accel = -goal.traj_max_accel
     elif goal.traj_max_accel == 0:
       goal.traj_max_accel = 0.5
-    elif goal.traj_max_accel > 1:
-      goal.traj_max_accel = 1
+    elif goal.traj_max_accel > 1.5:
+      goal.traj_max_accel = 1.5
     if goal.traj_max_angaccel < 0:
       goal.traj_max_angaccel = -goal.traj_max_angaccel
     elif goal.traj_max_angaccel == 0:
-      goal.traj_max_angaccel = 0.5
+      goal.traj_max_angaccel = 1.5
     elif goal.traj_max_angaccel > 1:
       goal.traj_max_angaccel = 1
 

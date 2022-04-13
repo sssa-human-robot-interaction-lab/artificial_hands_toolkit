@@ -6,9 +6,6 @@ from artificial_hands_msgs.msg import DetectionStamped
 from artificial_hands_msgs.srv import WristDynamicsCommand
 
 class WristDynamicsModule(ABC):
-
-  def __init__(self) -> None:
-    super().__init__()
     
   def wrist_dynamics_command(self,command) -> bool:
     res = rospy.ServiceProxy('wrist_dynamics_command/'+command,WristDynamicsCommand)

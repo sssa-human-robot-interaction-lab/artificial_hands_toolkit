@@ -7,17 +7,17 @@ from artificial_hands_py.low_level_execution_modules.wrist_dynamics_module impor
 class ObjectRecognitionModule(WristDynamicsModule,RobotCommander):
   sleep_dur = rospy.Duration(0.5)
   recog_feedback = ObjectRecognitionFeedback()
-  recog_result = ObjectRecognitionActionResult()
+  recog_result = ObjectRecognitionResult()
 
   def __init__(self) -> None:
     super().__init__()
   
-    self.recog_as = actionlib.SimpleActionServer('object_recognition',ObjectRecognitionAction,execute_cb=self.recognition_cb,auto_start=False)
+    self.recog_as = actionlib.SimpleActionServer('/object_recognition',ObjectRecognitionAction,execute_cb=self.recognition_cb,auto_start=False)
 
     self.recog_as.start()
 
   def recognition_cb(self, goal : ObjectRecognitionGoal):
-    self.recog_result.result.success = True
+    self.recog_result.success = True
     self.recog_feedback.percentage = 100
 
     # initialize wrist_dynamics_module making use of previous calibration (assumed valid)
@@ -42,14 +42,17 @@ class ObjectRecognitionModule(WristDynamicsModule,RobotCommander):
     self.stop_loop()
     self.build_model()
 
-    self.recog_as.set_succeeded(self.recog_result)
+    # stop controllers
     self.arm.pause_all_controllers()
+    self.recog_as.set_succeeded(self.recog_result)
 
 def main():
 
   rospy.init_node('object_recognition_module_node')
 
   obj_rec_mod = ObjectRecognitionModule()
+
+  rospy.loginfo('Object recognition module ready!')
 
   rospy.spin()
 

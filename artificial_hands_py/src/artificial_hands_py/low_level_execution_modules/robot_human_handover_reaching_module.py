@@ -1,4 +1,3 @@
-from time import sleep
 import rospy, actionlib
 
 from geometry_msgs.msg import Pose
@@ -9,13 +8,14 @@ from artificial_hands_py.robot_commander.robot_commander import RobotCommander
 from artificial_hands_py.low_level_execution_modules.wrist_dynamics_module import WristDynamicsModule
 
 class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
+  sleep_dur = rospy.Duration(0.5)
   r2h_handv_feedback = RobotHumanHandoverReachingFeedback()
-  r2h_handv_result = RobotHumanHandoverReachingActionResult()
+  r2h_handv_result = RobotHumanHandoverReachingResult()
 
   def __init__(self) -> None:
     super().__init__()
   
-    self.r2h_handv_as = actionlib.SimpleActionServer('robot_to_human_handover',RobotHumanHandoverReachingAction,execute_cb=self.r2h_handover_cb,auto_start=False)
+    self.r2h_handv_as = actionlib.SimpleActionServer('/robot_to_human_handover_reaching',RobotHumanHandoverReachingAction,execute_cb=self.r2h_handover_cb,auto_start=False)
 
     det_sub = rospy.Subscriber('wrist_dynamics_detection',DetectionStamped,callback=self.detection_cb)
     trg_sub = rospy.Subscriber("handover_target_point",CartesianTrajectoryPoint,callback=self.handover_target_cb)
@@ -32,11 +32,14 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     self.detection = msg.detection   
 
   def r2h_handover_cb(self, goal : RobotHumanHandoverReachingGoal):
-    self.r2h_handv_result.result.success = True
+    self.r2h_handv_result.success = True
     self.r2h_handv_feedback.percentage = 100
 
     # initialize wrist_dynamics_module making use of previous calibration (assumed valid)
     self.start_node(calib=True)
+
+    # start to produce proprioceptive information, but first wait a bit to get filter adapt to calib offset
+    sleep_dur = rospy.Duration(0.5)
     self.set_estimate_wrench()
     
     # move to start position
@@ -47,11 +50,10 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     self.arm.set_pose_target(goal.home)
 
     # change to dmp
-    self.arm.set_dmp_traj_generator()
+    # self.arm.set_dmp_traj_generator()
 
     # go to target pose
     self.arm.set_pose_target(goal.target)
-    sleep(3)
 
     # update dmp target according to human hand pose
     # rate = rospy.Rate(50)
@@ -61,11 +63,18 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     #   rate.sleep()
       
     # stop arm immediately after trigger
-    self.arm.pause_all_controllers()
+    # self.arm.pause_all_controllers()
     
-    # get wrist_dynamics_module to idle
+    # wait a bit before set wrist_dynamics_module to idle
+    rospy.sleep(rospy.Duration(goal.sleep))
     self.stop_loop()
 
+    # wait a bit and retire to back position
+    rospy.sleep(rospy.Duration(goal.sleep))
+    self.arm.set_pose_target(goal.back)
+
+    # stop controllers
+    self.arm.pause_all_controllers()
     self.r2h_handv_as.set_succeeded(self.r2h_handv_result)
 
 def main():
@@ -73,6 +82,8 @@ def main():
   rospy.init_node('robot_human_handover_reaching_module_node')
 
   r2h_handv_reach_mod = RobotHumanHandoverReachingModule()
+
+  rospy.loginfo('R2H handover reaching module ready!')
 
   rospy.spin()
 

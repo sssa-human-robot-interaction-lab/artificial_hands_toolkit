@@ -1,0 +1,25 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Run the wrist dynamics node -->
+  <!-- <node pkg="artificial_hands_nodes" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="-autostart true"/> -->
+
+  <!-- Bringup the FT sensor -->
+  <include file="$(find artificial_hands_bringup)/launch/onrobot_ft_sensor_bringup.launch"/>
+
+  <!-- Load dmp_extended node -->
+  <!-- <include file="$(find dmp_extended)/launch/dmp_node.launch"/> -->
+
+  <!-- Run the trajectory generator node -->
+  <node pkg="artificial_hands_nodes" type="cartesian_trajectory_generator_node.py" name="cartesian_trajectory_generator_node" output="screen"/>
+
+  <!-- Run the FT sensor calibration node -->
+  <node pkg="artificial_hands_nodes" type="force_torque_sensor_calibration_node.py" name="force_torque_sensor_calibration_node" output="screen"/>
+
+  <!-- Run the object recognition node -->
+  <node pkg="artificial_hands_nodes" type="object_recognition_node.py" name="object_recognition_node" output="screen"/>
+
+  <!-- Run the robot to human handover reaching node -->
+  <node pkg="artificial_hands_nodes" type="robot_human_handover_reaching_node.py" name="robot_human_handover_reaching_node" output="screen"/>
+
+</launch>

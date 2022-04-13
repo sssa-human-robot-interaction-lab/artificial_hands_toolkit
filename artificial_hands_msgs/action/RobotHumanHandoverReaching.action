@@ -1,6 +1,8 @@
 #goal   
 geometry_msgs/Pose home
 geometry_msgs/Pose target
+geometry_msgs/Pose back
+float64 sleep
 float64 max_accel
 float64 max_angaccel
 ---

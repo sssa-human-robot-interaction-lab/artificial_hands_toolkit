@@ -12,7 +12,7 @@ class ArmCommander(ControllerManagerBase):
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
 
-  tf_buffer = tf2_ros.Buffer(rospy.Duration(10.0))
+  tf_buffer = tf2_ros.Buffer(rospy.Duration(1))
 
   def __init__(self, ns: str = '', ref: str = 'base', eef: str = 'tool0', move_group: str = 'manipulator', ctrl_dict: dict = None) -> None:
     super().__init__(ns, ctrl_dict)
@@ -20,9 +20,9 @@ class ArmCommander(ControllerManagerBase):
     self.ref_frame = ref
     self.ee_frame = eef 
 
-    tf_listener = tf2_ros.TransformListener(self.tf_buffer)
-
     self.goal = TrajectoryGenerationGoal()
+
+    tf_listener = tf2_ros.TransformListener(self.tf_buffer)    
 
   def switch_to_cartesian_controller(self, ctrl_name : str):
     self.pause_all_controllers()
