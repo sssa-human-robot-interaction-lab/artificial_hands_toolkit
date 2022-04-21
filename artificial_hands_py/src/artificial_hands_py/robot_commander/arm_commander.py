@@ -11,6 +11,7 @@ class ArmCommander(ControllerManagerBase):
 
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
+  c_mon_cl = actionlib.SimpleActionClient('/cartesian_trajectory_tf_monitor',TrajectoryGenerationAction)
 
   tf_buffer = tf2_ros.Buffer(rospy.Duration(1))
 
@@ -20,7 +21,11 @@ class ArmCommander(ControllerManagerBase):
     self.ref_frame = ref
     self.ee_frame = eef 
 
+    self.percentage = 0
+
     self.goal = TrajectoryGenerationGoal()
+    self.goal.header.frame_id = ref
+    self.goal.controlled_frame = eef
 
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)    
 
@@ -63,3 +68,9 @@ class ArmCommander(ControllerManagerBase):
   
   def set_max_angaccel(self,max_angaccel : float):
     self.goal.traj_max_angaccel = max_angaccel
+
+  def update_trajectory_monitor(self):
+    self.c_mon_cl.send_goal(self.goal,feedback_cb=self.trajectory_monitor_cb)
+
+  def trajectory_monitor_cb(self, feedback : TrajectoryGenerationFeedback):
+    self.percentage = feedback.percentage

@@ -25,29 +25,29 @@ cartesian_motion_position_controller:
     error_scale: 4.0
     iterations: 10
 
-cartesian_motion_velocity_controller:
-  type: "velocity_controllers/CartesianMotionController"
-  end_effector_link: *ee
-  robot_base_link: *ref
-  target_frame_topic: "command"
-  joints: *robot_joints
+# cartesian_motion_velocity_controller:
+#   type: "velocity_controllers/CartesianMotionController"
+#   end_effector_link: *ee
+#   robot_base_link: *ref
+#   target_frame_topic: "command"
+#   joints: *robot_joints
 
-  pd_gains: *pd
+#   pd_gains: *pd
 
-cartesian_eik_position_controller:
-  type: "position_controllers/CartesianEikController"
-  end_effector_link: *ee
-  robot_base_link: *ref
-  target_traj_topic: "command"
-  joints: *robot_joints
+# cartesian_eik_position_controller:
+#   type: "position_controllers/CartesianEikController"
+#   end_effector_link: *ee
+#   robot_base_link: *ref
+#   target_traj_topic: "command"
+#   joints: *robot_joints
 
-  pd_gains: *pd
+#   pd_gains: *pd
 
-cartesian_eik_velocity_controller:
-  type: "velocity_controllers/CartesianEikController"
-  end_effector_link: *ee
-  robot_base_link: *ref
-  target_traj_topic: "command"
-  joints: *robot_joints
+# cartesian_eik_velocity_controller:
+#   type: "velocity_controllers/CartesianEikController"
+#   end_effector_link: *ee
+#   robot_base_link: *ref
+#   target_traj_topic: "command"
+#   joints: *robot_joints
 
-  pd_gains: *pd
+#   pd_gains: *pd

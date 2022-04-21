@@ -1,4 +1,4 @@
-import rospy
+import rospy, numpy as np
 
 from geometry_msgs.msg import Quaternion
 
@@ -19,3 +19,9 @@ def quat_to_list(quat : Quaternion) -> list:
   q.append(quat.z)
   q.append(quat.w)
   return q
+
+def norm_quat(quat : Quaternion):
+
+  q = quat_to_list(quat)
+  q_norm = np.linalg.norm(q)
+  return list_to_quat([q_/q_norm for q_ in q])

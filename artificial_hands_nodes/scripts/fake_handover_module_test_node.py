@@ -27,8 +27,8 @@ def main():
   cal_goal.home.orientation.z = 0
   cal_goal.home.orientation.w = 1
 
-  cal_goal.max_accel = 0.2
-  cal_goal.max_angaccel = 0.2
+  cal_goal.max_accel = 1
+  cal_goal.max_angaccel = 1
 
   ft_cal_cl.send_goal_and_wait(cal_goal)
 
@@ -53,8 +53,8 @@ def main():
     obj_rec_goal.target.orientation.z = 1
     obj_rec_goal.target.orientation.w = 1
 
-    obj_rec_goal.max_accel = 0.2
-    obj_rec_goal.max_angaccel = 0.2
+    obj_rec_goal.max_accel = 1
+    obj_rec_goal.max_angaccel = 1
 
     obj_rec_cl.send_goal_and_wait(obj_rec_goal)
 
@@ -85,8 +85,8 @@ def main():
     r2h_handv_goal.back.orientation.z = 1
     r2h_handv_goal.back.orientation.w = 1
 
-    r2h_handv_goal.max_accel = 0.8
-    r2h_handv_goal.max_angaccel = 0.8
+    r2h_handv_goal.max_accel = 1
+    r2h_handv_goal.max_angaccel = 1
     
     r2h_handv_goal.sleep = 1
 

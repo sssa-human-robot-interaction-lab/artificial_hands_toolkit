@@ -5,6 +5,8 @@ int64 HARMONIC = 2
 int64 traj_type
 float64 traj_max_accel
 float64 traj_max_angaccel
+string controlled_frame
+std_msgs/Header header
 cartesian_control_msgs/CartesianTrajectoryPoint traj_target
 ---
 #result

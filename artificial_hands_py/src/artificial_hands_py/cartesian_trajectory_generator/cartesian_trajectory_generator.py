@@ -18,8 +18,6 @@ class CartesianTrajectoryGenerator:
 
   dmp_plugin = DMPTrajectoryPlugin()
 
-  lock = Lock()
-
   def __init__(self) -> None:
     
     self.gen_as = actionlib.SimpleActionServer('cartesian_trajectory_plugin_manager', TrajectoryGenerationAction, execute_cb=self.trajectory_plugin_cb, auto_start = False)
@@ -57,6 +55,9 @@ class CartesianTrajectoryGenerator:
       self.plugin_thread.join()
 
     if goal.traj_type == goal.DMP:
+      while self.dmp_plugin.is_active():
+        self.rate.sleep()
+
       self.plugin_thread = Thread(target=self.copy_plugin_target,args=(self.dmp_plugin.plugin_target,))
       self.plugin_thread.start()
     
@@ -140,6 +141,11 @@ class CartesianTrajectoryGenerator:
       self.traj_feedback.max_accel.z = 2*pi*delta_target.pose.position.z/pow(goal_time,2)
 
       for c in range(0,c_max+1):
+
+        if self.traj_as.is_preempt_requested():
+          self.traj_result.success = False
+          self.traj_as.set_preempted()
+          break
         
         self.target.pose.position.x = c_target.pose.position.x + harmonic_pos(delta_target.pose.position.x,c*dt,goal_time)
         self.target.pose.position.y = c_target.pose.position.y + harmonic_pos(delta_target.pose.position.y,c*dt,goal_time)

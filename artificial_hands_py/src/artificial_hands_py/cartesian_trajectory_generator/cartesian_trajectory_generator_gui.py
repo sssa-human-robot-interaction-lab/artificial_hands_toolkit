@@ -124,10 +124,15 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     target.position.x = self.target_position_group_box.x_spin_box.value()
     target.position.y = self.target_position_group_box.y_spin_box.value()
     target.position.z = self.target_position_group_box.z_spin_box.value()
-    target.orientation = list_to_quat(ts.quaternion_from_euler(
-      self.target_orientation_group_box.x_spin_box.value(),
-      self.target_orientation_group_box.y_spin_box.value(),
-      self.target_orientation_group_box.z_spin_box.value()))
+    # target.orientation = list_to_quat(ts.quaternion_from_euler(
+    #   self.target_orientation_group_box.x_spin_box.value(),
+    #   self.target_orientation_group_box.y_spin_box.value(),
+    #   self.target_orientation_group_box.z_spin_box.value()))
+    target.orientation = list_to_quat(ts.quaternion_multiply(
+      ts.quaternion_about_axis(self.target_orientation_group_box.z_spin_box.value(),[0,0,1]),
+      ts.quaternion_multiply(
+      ts.quaternion_about_axis(self.target_orientation_group_box.y_spin_box.value(),[0,1,0]),
+      ts.quaternion_about_axis(self.target_orientation_group_box.x_spin_box.value(),[1,0,0]))))
     return target
 
   def on_add_button(self):

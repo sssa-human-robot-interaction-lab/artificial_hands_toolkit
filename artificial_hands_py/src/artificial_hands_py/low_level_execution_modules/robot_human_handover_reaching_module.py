@@ -1,3 +1,4 @@
+from time import sleep
 import rospy, actionlib
 
 from geometry_msgs.msg import Pose
@@ -38,9 +39,9 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     # initialize wrist_dynamics_module making use of previous calibration (assumed valid)
     self.start_node(calib=True)
 
-    # start to produce proprioceptive information, but first wait a bit to get filter adapt to calib offset
-    sleep_dur = rospy.Duration(0.5)
-    self.set_estimate_wrench()
+    # start to store proprioceptive information to further thresholding, but first wait a bit to get filter adapt to calib offset
+    rospy.sleep(self.sleep_dur)
+    self.set_save_interaction()
     
     # move to start position
     self.arm.set_max_accel(goal.max_accel)
@@ -50,20 +51,33 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     self.arm.set_pose_target(goal.home)
 
     # change to dmp
-    # self.arm.set_dmp_traj_generator()
+    self.arm.set_dmp_traj_generator()
 
     # go to target pose
     self.arm.set_pose_target(goal.target)
 
-    # update dmp target according to human hand pose
-    # rate = rospy.Rate(50)
-    # self.detection.trigger = False
-    # while not self.detection.trigger:
-    #   self.arm.set_pose_target(self.target)
-    #   rate.sleep()
+    # wait at least for half of the nominal trajectory, then start to trigger
+    rate = rospy.Rate(20)
+    # while self.arm.percentage < 50:
+      # self.set_trigger_dynamics()
+    while self.arm.percentage < 100:
+      rate.sleep()
+
+    return
+
+    # reaching control loop
+    while True:
+      if self.arm.percentage == 100:
+        break
+
+      # update dmp target according to human hand pose
+      self.arm.set_pose_target(self.target)
+      self.arm.update_trajectory_monitor()
+
+      rate.sleep()
       
-    # stop arm immediately after trigger
-    # self.arm.pause_all_controllers()
+    # stop arm immediately at the end of the loop
+    self.arm.set_pose_target(self.arm.get_current_frame().pose)
     
     # wait a bit before set wrist_dynamics_module to idle
     rospy.sleep(rospy.Duration(goal.sleep))

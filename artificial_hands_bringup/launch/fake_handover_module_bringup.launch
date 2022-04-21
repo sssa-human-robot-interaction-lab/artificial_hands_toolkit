@@ -1,17 +1,23 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="fake_ft" default="true" />
+
   <!-- Run the wrist dynamics node -->
   <!-- <node pkg="artificial_hands_nodes" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="-autostart true"/> -->
 
-  <!-- Bringup the FT sensor -->
-  <include file="$(find artificial_hands_bringup)/launch/onrobot_ft_sensor_bringup.launch"/>
+  <!-- Bringup the FT sensor (fake or real hw)-->
+  <node if="$(arg fake_ft)" pkg="artificial_hands_nodes" type="fake_ft_sensor_node.py" name="fake_ft_sensor" output="screen"/>
+  <include unless="$(arg fake_ft)" file="$(find artificial_hands_bringup)/launch/onrobot_ft_sensor_bringup.launch"/>
 
   <!-- Load dmp_extended node -->
-  <!-- <include file="$(find dmp_extended)/launch/dmp_node.launch"/> -->
+  <include file="$(find dmp_extended)/launch/dmp_node.launch"/>
 
   <!-- Run the trajectory generator node -->
   <node pkg="artificial_hands_nodes" type="cartesian_trajectory_generator_node.py" name="cartesian_trajectory_generator_node" output="screen"/>
+
+  <!-- Run the trajectory monitor node -->
+  <node pkg="artificial_hands_nodes" type="cartesian_trajectory_tf_monitor_node.py" name="cartesian_trajectory_tf_monitor_node" output="screen"/>
 
   <!-- Run the FT sensor calibration node -->
   <node pkg="artificial_hands_nodes" type="force_torque_sensor_calibration_node.py" name="force_torque_sensor_calibration_node" output="screen"/>
