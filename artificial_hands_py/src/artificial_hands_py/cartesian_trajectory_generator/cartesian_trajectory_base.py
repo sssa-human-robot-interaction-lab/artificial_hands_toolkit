@@ -43,19 +43,7 @@ def poly_345(h : float, ts : float, v0 : float = 0, a0 : float = 0, vf : float =
 
   return coeff
 
-def poly_pos(coeff : list, t : float):
-  y = coeff[0] + coeff[1]*t + coeff[2]*pow(t,2) + coeff[3]*pow(t,3) + coeff[4]*pow(t,4) + coeff[5]*pow(t,5)
-  return y
-
-def poly_vel(coeff : list, t : float):
-  y = coeff[1] + 2*coeff[2]*t + 3*coeff[3]*pow(t,2) + 4*coeff[4]*pow(t,3) + 5*coeff[5]*pow(t,4)
-  return y
-
-def poly_accel(coeff : list, t : float):
-  y = 2*coeff[2] + 6*coeff[3]*t + 12*coeff[4]*pow(t,2) + 20*coeff[5]*pow(t,3)
-  return y
-
-def poly_7(h : float, ts : float, v0 : float = 0, a0 : float = 0, vf : float = 0, af : float = 0, j0 : float = 0, jf : float = 0):
+def poly_567(h : float, ts : float, v0 : float = 0, a0 : float = 0, vf : float = 0, af : float = 0, j0 : float = 0, jf : float = 0):
   
   coeff = []
 
@@ -89,7 +77,7 @@ def poly_7(h : float, ts : float, v0 : float = 0, a0 : float = 0, vf : float = 0
   b = np.ndarray(shape=(4,1))
   b[0,0] = h - coeff[0] - coeff[1]*ts - coeff[2]*pow(ts,2) - coeff[3]*pow(ts,3)
   b[1,0] = vf - coeff[1] - 2*coeff[2]*ts - 3*coeff[3]*pow(ts,2)
-  b[2,0] = af - 2*coeff[2] - 6*coeff[3]*pow(ts,2)
+  b[2,0] = af - 2*coeff[2] - 6*coeff[3]*ts
   b[3,0] = jf - 6*coeff[3]
 
   x = np.linalg.solve(a,b)
@@ -101,14 +89,34 @@ def poly_7(h : float, ts : float, v0 : float = 0, a0 : float = 0, vf : float = 0
 
   return coeff
 
-def poly_pos_7(coeff : list, t : float):
-  y = coeff[0] + coeff[1]*t + coeff[2]*pow(t,2) + coeff[3]*pow(t,3) + coeff[4]*pow(t,4) + coeff[5]*pow(t,5) + coeff[6]*pow(t,6) + coeff[7]*pow(t,7)
+def poly_pos(coeff : list, t : float):
+  y = 0
+  n = 0
+  for c in coeff:
+    y += c*pow(t,n)
+    n += 1
   return y
 
-def poly_vel_7(coeff : list, t : float):
-  y = coeff[1] + 2*coeff[2]*t + 3*coeff[3]*pow(t,2) + 4*coeff[4]*pow(t,3) + 5*coeff[5]*pow(t,4) + 6*coeff[6]*pow(t,5) + 7*coeff[7]*pow(t,6) 
+def poly_vel(coeff : list, t : float):
+  y = 0
+  n = 1
+  for c in coeff[1:]:
+    y += n*c*pow(t,n-1)
+    n += 1
   return y
 
-def poly_accel_7(coeff : list, t : float):
-  y = 2*coeff[2] + 6*coeff[3]*t + 12*coeff[4]*pow(t,2) + 20*coeff[5]*pow(t,3) + 30*coeff[6]*pow(t,4) + 42*coeff[7]*pow(t,5) 
+def poly_accel(coeff : list, t : float):
+  y = 0
+  n = 2
+  for c in coeff[2:]:
+    y += n*(n-1)*c*pow(t,n-2)
+    n += 1
+  return y
+
+def poly_jerk(coeff : list, t : float):
+  y = 0
+  n = 3
+  for c in coeff[3:]:
+    y += n*(n-1)*(n-2)*c*pow(t,n-3)
+    n += 1
   return y

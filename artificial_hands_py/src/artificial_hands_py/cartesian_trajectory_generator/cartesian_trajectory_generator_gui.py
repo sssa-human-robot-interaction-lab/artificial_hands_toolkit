@@ -10,7 +10,7 @@ from geometry_msgs.msg import Pose
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
 
-def init_target_items(lab : str, max : float, step : float):
+def new_param_item(lab : str, max : float, step : float, slider : bool = False):
 
   label = QLabel(lab)
   label.setAlignment(Qt.AlignCenter | Qt.AlignRight)
@@ -18,21 +18,24 @@ def init_target_items(lab : str, max : float, step : float):
   spin_box.setDecimals(3)
   spin_box.setRange(-max,max)
   spin_box.setSingleStep(step)
-  sld = QSlider(Qt.Horizontal)
-  sld.setRange(-100, 100)
-  sld.setSingleStep(100/10)
-  sld.valueChanged.connect(lambda: spin_box.setValue(sld.value()/100*max))
-  spin_box.valueChanged.connect(lambda: sld.setValue(spin_box.value()*100/max))
-  return label,spin_box,sld
+  if slider:
+    sld = QSlider(Qt.Horizontal)
+    sld.setRange(-100, 100)
+    sld.setSingleStep(100/10)
+    sld.valueChanged.connect(lambda: spin_box.setValue(sld.value()/100*max))
+    spin_box.valueChanged.connect(lambda: sld.setValue(spin_box.value()*100/max))
+    return label,spin_box,sld
+  else:
+    return label,spin_box
  
 class TargetGroupBox(QGroupBox):
 
   def __init__(self,parent : QWidget = None, title : str = None, max : float = 1, step : float = .1):
     super().__init__()
 
-    x_label,self.x_spin_box,x_sld = init_target_items('x',max,step)
-    y_label,self.y_spin_box,y_sld = init_target_items('y',max,step)
-    z_label,self.z_spin_box,z_sld = init_target_items('z',max,step)
+    x_label,self.x_spin_box,x_sld = new_param_item('x',max,step,True)
+    y_label,self.y_spin_box,y_sld = new_param_item('y',max,step,True)
+    z_label,self.z_spin_box,z_sld = new_param_item('z',max,step,True)
 
     spin_box_layout = QHBoxLayout()
     spin_box_layout.addWidget(x_label)
@@ -88,10 +91,24 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
 
     self.setWindowTitle(title)
 
+    self.cart_traj_generator_combo_box = QComboBox()
+    self.cart_traj_generator_combo_box.addItem('dmp_extended_trajectory_generator')
+    self.cart_traj_generator_combo_box.addItem('harmonic_trajectory_generator')
+    self.cart_traj_generator_combo_box.addItem('polynomial_345_trajectory_generator')
+    self.cart_traj_generator_combo_box.addItem('polynomial_567_trajectory_generator')
+    self.cart_traj_generator_combo_box.setCurrentText('harmonic_trajectory_generator')
+
+    stop_time_label, self.stop_time_spin_box,  = new_param_item('Stop time [s]:',1,0.05)
+    stop_factor_label, self.stop_factor_spin_box,  = new_param_item('Stop factor [-]:',10,1)
+
+    self.stop_param_layout = QHBoxLayout()
+    self.stop_param_layout.addWidget(stop_time_label)
+    self.stop_param_layout.addWidget(self.stop_time_spin_box)
+    self.stop_param_layout.addWidget(stop_factor_label)
+    self.stop_param_layout.addWidget(self.stop_factor_spin_box)
+
     self.target_position_group_box = TargetGroupBox(self,'Position [m]',max=1,step=0.001)
     self.target_orientation_group_box = TargetGroupBox(self,'Orientation [rad]',max=pi,step=0.001)
-
-    self.target_table = TargetTable()
     
     self.add_push_button = QPushButton('Add')
     self.clear_push_button = QPushButton('Clear')
@@ -107,7 +124,11 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     buttons_row_layout.addWidget(self.send_push_button)
     buttons_row_layout.addWidget(self.stop_push_button)
 
+    self.target_table = TargetTable()
+
     main_layout = QVBoxLayout()
+    main_layout.addWidget(self.cart_traj_generator_combo_box)
+    main_layout.addLayout(self.stop_param_layout)
     main_layout.addWidget(self.target_position_group_box)  
     main_layout.addWidget(self.target_orientation_group_box) 
     main_layout.addLayout(buttons_row_layout)  
@@ -175,9 +196,14 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   def on_send_button(self):
     if self.target_table.rowCount() == 0:
       goal = TrajectoryGenerationGoal()
-      goal.traj_type = goal.HARMONIC
-      goal.stop_time = 0.2
-      goal.stop_factor = 2
+      if self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+        goal.traj_type = goal.HARMONIC
+      elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+        goal.traj_type = goal.POLY345
+      elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+        goal.traj_type = goal.POLY567
+      goal.stop_time = self.stop_time_spin_box.value()
+      goal.stop_factor = self.stop_factor_spin_box.value()
       goal.traj_target.pose = self.get_current_target()
       self.traj_cl.send_goal(goal)
     else:

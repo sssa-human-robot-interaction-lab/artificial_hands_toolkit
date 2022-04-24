@@ -4,6 +4,7 @@ int64 FORWARD = 1
 int64 DMP = 2
 int64 HARMONIC = 3
 int64 POLY345 = 4
+int64 POLY567 = 5
 int64 traj_type
 float64 stop_time
 float64 stop_factor
