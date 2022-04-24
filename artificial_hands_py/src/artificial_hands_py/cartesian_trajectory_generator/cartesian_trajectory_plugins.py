@@ -7,7 +7,9 @@ from dmp_extended.msg import MJerkTrackTarget, DesiredTrajectory
 
 class DMPTrajectoryPlugin:
   lin_vel_tolerance = 1e-02
+  lin_accel_tolerance = 1e-02
   ang_vel_tolerance = 1e-02
+  ang_accel_tolerance = 1e-02
 
   def __init__(self) -> None:
     
@@ -38,6 +40,8 @@ class DMPTrajectoryPlugin:
     self.rot_pub.publish(self.target_rot)
   
   def is_active(self) -> bool:
-    active = self.plugin_target.twist.linear.x + self.plugin_target.twist.linear.y + self.plugin_target.twist.linear.z > self.lin_vel_tolerance
-    active = active and self.plugin_target.twist.angular.x + self.plugin_target.twist.angular.y + self.plugin_target.twist.angular.z > self.ang_vel_tolerance
+    active = abs(self.plugin_target.twist.linear.x) + abs(self.plugin_target.twist.linear.y) + abs(self.plugin_target.twist.linear.z) > self.lin_vel_tolerance
+    active = active or abs(self.plugin_target.acceleration.linear.x) + abs(self.plugin_target.acceleration.linear.y) + abs(self.plugin_target.acceleration.linear.z) > self.lin_accel_tolerance
+    active = active or abs(self.plugin_target.twist.angular.x) + abs(self.plugin_target.twist.angular.y) + abs(self.plugin_target.twist.angular.z) > self.ang_vel_tolerance
+    active = active or abs(self.plugin_target.acceleration.angular.x) + abs(self.plugin_target.acceleration.angular.y) + abs(self.plugin_target.acceleration.angular.z) > self.ang_accel_tolerance
     return active

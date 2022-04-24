@@ -1,8 +1,12 @@
 #goal   
-int64 FORWARD = 0
-int64 DMP = 1
-int64 HARMONIC = 2
+int64 STOP = 0
+int64 FORWARD = 1
+int64 DMP = 2
+int64 HARMONIC = 3
+int64 POLY345 = 4
 int64 traj_type
+float64 stop_time
+float64 stop_factor
 float64 traj_max_accel
 float64 traj_max_angaccel
 string controlled_frame

@@ -117,17 +117,13 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
 
   def connect(self):
     self.send_push_button.clicked.connect(self.on_send_button)
-    self.stop_push_button.clicked.connect(self.on_cancel_button) 
+    self.stop_push_button.clicked.connect(self.on_stop_button) 
   
   def get_current_target(self):
     target = Pose()
     target.position.x = self.target_position_group_box.x_spin_box.value()
     target.position.y = self.target_position_group_box.y_spin_box.value()
     target.position.z = self.target_position_group_box.z_spin_box.value()
-    # target.orientation = list_to_quat(ts.quaternion_from_euler(
-    #   self.target_orientation_group_box.x_spin_box.value(),
-    #   self.target_orientation_group_box.y_spin_box.value(),
-    #   self.target_orientation_group_box.z_spin_box.value()))
     target.orientation = list_to_quat(ts.quaternion_multiply(
       ts.quaternion_about_axis(self.target_orientation_group_box.z_spin_box.value(),[0,0,1]),
       ts.quaternion_multiply(
@@ -179,15 +175,21 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   def on_send_button(self):
     if self.target_table.rowCount() == 0:
       goal = TrajectoryGenerationGoal()
+      goal.traj_type = goal.HARMONIC
+      goal.stop_time = 0.2
+      goal.stop_factor = 2
       goal.traj_target.pose = self.get_current_target()
-      self.traj_cl.send_goal_and_wait(goal)
+      self.traj_cl.send_goal(goal)
     else:
       self.cancel_send_thread = False
       send_thread = Thread(target=self.send_goals)
       send_thread.start()
 
-  def on_cancel_button(self):
+  def on_stop_button(self):
     self.cancel_send_thread = True
+    goal = TrajectoryGenerationGoal()
+    goal.traj_type = goal.STOP
+    self.traj_cl.send_goal_and_wait(goal)
     
 def main():
 

@@ -37,13 +37,15 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     self.r2h_handv_feedback.percentage = 100
 
     # initialize wrist_dynamics_module making use of previous calibration (assumed valid)
-    self.start_node(calib=True)
+    # self.start_node(calib=True)
 
     # start to store proprioceptive information to further thresholding, but first wait a bit to get filter adapt to calib offset
     rospy.sleep(self.sleep_dur)
-    self.set_save_interaction()
+    # self.set_save_interaction()
     
     # move to start position
+    self.arm.set_stop_time(goal.stop_time)
+    self.arm.set_stop_factor(goal.stop_factor)
     self.arm.set_max_accel(goal.max_accel)
     self.arm.set_max_angaccel(goal.max_angaccel)
     self.arm.set_harmonic_traj_generator()
@@ -51,41 +53,36 @@ class RobotHumanHandoverReachingModule(WristDynamicsModule,RobotCommander):
     self.arm.set_pose_target(goal.home)
 
     # change to dmp
-    self.arm.set_dmp_traj_generator()
+    # self.arm.set_dmp_traj_generator()
 
-    # go to target pose
-    self.arm.set_pose_target(goal.target)
+    # go to target pose and monitor execution
+    self.arm.set_pose_target(goal.target,False)
+    self.arm.update_trajectory_monitor()
 
     # wait at least for half of the nominal trajectory, then start to trigger
     rate = rospy.Rate(20)
-    # while self.arm.percentage < 50:
-      # self.set_trigger_dynamics()
-    while self.arm.percentage < 100:
-      rate.sleep()
+    while self.arm.percentage < 50:
+      rate.sleep()  
+    # self.set_trigger_dynamics()
 
-    return
-
-    # reaching control loop
+    # update dmp target according to human hand pose, break on detection
     while True:
-      if self.arm.percentage == 100:
+      if self.arm.percentage > 70:
         break
-
-      # update dmp target according to human hand pose
-      self.arm.set_pose_target(self.target)
-      self.arm.update_trajectory_monitor()
-
+      # self.arm.set_pose_target(self.target)
+      # self.arm.update_trajectory_monitor()
       rate.sleep()
       
     # stop arm immediately at the end of the loop
-    self.arm.set_pose_target(self.arm.get_current_frame().pose)
-    
+    self.arm.stop()
+
     # wait a bit before set wrist_dynamics_module to idle
     rospy.sleep(rospy.Duration(goal.sleep))
-    self.stop_loop()
+    # self.stop_loop()
 
     # wait a bit and retire to back position
-    rospy.sleep(rospy.Duration(goal.sleep))
-    self.arm.set_pose_target(goal.back)
+    # rospy.sleep(rospy.Duration(goal.sleep))
+    # self.arm.set_pose_target(goal.back)
 
     # stop controllers
     self.arm.pause_all_controllers()

@@ -2,7 +2,7 @@ import rospy,actionlib
 import tf2_ros
 import moveit_commander.conversions as cv
 
-from geometry_msgs.msg import Pose, PoseStamped
+from geometry_msgs.msg import Pose, PoseStamped, Point
 
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.robot_commander.controller_manager_base  import ControllerManagerBase
@@ -48,21 +48,41 @@ class ArmCommander(ControllerManagerBase):
     if wait:
       self.c_traj_cl.wait_for_result()
   
+  def set_position_target(self, position_target : Point, wait : bool = True):
+    self.goal.traj_target.pose.position = position_target
+    self.c_traj_cl.send_goal(self.goal)
+    if wait:
+      self.c_traj_cl.wait_for_result()
+  
+  def stop(self):
+    self.goal.traj_type = self.goal.STOP
+    self.c_traj_cl.send_goal_and_wait(self.goal)
+  
   def cancel_pose_target(self):
     self.c_traj_cl.cancel_all_goals()
+  
+  def set_stop_time(self,stop_time):
+    self.goal.stop_time = stop_time
+
+  def set_stop_factor(self,stop_factor):
+    self.goal.stop_factor = stop_factor
 
   def set_forward_traj_point(self):
     self.goal.traj_type = self.goal.FORWARD
-    self.c_gen_cl.send_goal(self.goal)
+    self.c_gen_cl.send_goal_and_wait(self.goal)
   
   def set_dmp_traj_generator(self):
     self.goal.traj_type = self.goal.DMP
-    self.c_gen_cl.send_goal(self.goal)
+    self.c_gen_cl.send_goal_and_wait(self.goal)
 
   def set_harmonic_traj_generator(self):
     self.goal.traj_type = self.goal.HARMONIC
-    self.c_gen_cl.send_goal(self.goal)
+    self.c_gen_cl.send_goal_and_wait(self.goal)
   
+  def set_poly_345_traj_generator(self):
+    self.goal.traj_type = self.goal.POLY345
+    self.c_gen_cl.send_goal_and_wait(self.goal)
+
   def set_max_accel(self,max_accel : float):
     self.goal.traj_max_accel = max_accel
   
@@ -70,7 +90,14 @@ class ArmCommander(ControllerManagerBase):
     self.goal.traj_max_angaccel = max_angaccel
 
   def update_trajectory_monitor(self):
+    self.percentage = 0
     self.c_mon_cl.send_goal(self.goal,feedback_cb=self.trajectory_monitor_cb)
+  
+  def wait_for_trajectory_monitor(self):
+    self.update_trajectory_monitor()
+    rate = rospy.Rate(30)
+    while self.percentage < 100:
+      rate.sleep()
 
   def trajectory_monitor_cb(self, feedback : TrajectoryGenerationFeedback):
     self.percentage = feedback.percentage

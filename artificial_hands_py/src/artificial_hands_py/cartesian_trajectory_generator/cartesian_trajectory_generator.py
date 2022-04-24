@@ -1,9 +1,9 @@
 from math import floor
-from threading import Thread, Lock
+from threading import Thread
 
 import rospy, actionlib
 import tf.transformations as ts
-from geometry_msgs.msg import Quaternion
+from geometry_msgs.msg import Quaternion, Twist
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 from artificial_hands_msgs.msg import *
@@ -11,7 +11,7 @@ from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_l
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import *
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_plugins import *
 
-class CartesianTrajectoryGenerator:
+class CartesianTrajectoryGenerator:  
   traj_rate = 125
   traj_feedback = TrajectoryGenerationFeedback()
   traj_result = TrajectoryGenerationResult()
@@ -51,6 +51,10 @@ class CartesianTrajectoryGenerator:
     self.traj_result.success = True
 
     if self.plugin_thread.is_alive():
+
+      while self.dmp_plugin.is_active():
+        self.rate.sleep()
+
       self.plugin_running = False
       self.plugin_thread.join()
 
@@ -66,6 +70,11 @@ class CartesianTrajectoryGenerator:
   def trajectory_generation_cb(self, goal : TrajectoryGenerationGoal):
 
     self.traj_result.success = True
+
+    if goal.traj_type == goal.STOP:
+      # self.dmp_plugin.set_plugin_target(self.target)
+      self.traj_as.set_succeeded(self.traj_result)
+      return
 
     self.dmp_plugin.set_plugin_target(goal.traj_target)
 
@@ -103,6 +112,13 @@ class CartesianTrajectoryGenerator:
     delta_rot = ts.quaternion_matrix(quat_to_list(delta_target.pose.orientation))
     delta_angle,delta_axis,delta_point = ts.rotation_from_matrix(delta_rot)
 
+    h = max(abs(delta_target.pose.position.x),abs(delta_target.pose.position.y),abs(delta_target.pose.position.z))
+    h_rot = abs(delta_angle)
+
+    if h == 0 and h_rot == 0:
+      self.traj_as.set_succeeded(self.traj_result)
+      return
+
     if goal.traj_max_accel < 0:
       goal.traj_max_accel = -goal.traj_max_accel
     elif goal.traj_max_accel == 0:
@@ -116,21 +132,18 @@ class CartesianTrajectoryGenerator:
     elif goal.traj_max_angaccel > 1:
       goal.traj_max_angaccel = 1
 
+    if goal.stop_factor < 0 or goal.stop_factor > 10:
+      goal.stop_factor = 10
+    
+    if goal.stop_time < 0 or goal.stop_time > 0.5:
+      goal.stop_time = 0.5
+
     if goal.traj_type == goal.HARMONIC:
       
-      h = max(abs(delta_target.pose.position.x),abs(delta_target.pose.position.y),abs(delta_target.pose.position.z))
-      h_rot = abs(delta_angle)
-
-      if h == 0 and h_rot == 0:
-        self.traj_as.set_succeeded(self.traj_result)
-        return
-
       goal_time = max(pow(2*pi*h/goal.traj_max_accel,.5),pow(2*pi*h_rot/goal.traj_max_angaccel,.5))
 
-      c_max = goal_time/dt
-      if floor(c_max) != c_max:
-        c_max = floor(c_max) + 1
-        goal_time = c_max*dt
+      c_max = floor(goal_time/dt) + 1
+      goal_time = c_max*dt
 
       self.traj_feedback.goal_time = goal_time
       self.traj_feedback.max_vel.x = 2*delta_target.pose.position.x/goal_time
@@ -143,6 +156,38 @@ class CartesianTrajectoryGenerator:
       for c in range(0,c_max+1):
 
         if self.traj_as.is_preempt_requested():
+
+          c_twist = Twist()
+          c_twist.linear.x = self.target.twist.linear.x
+          c_twist.linear.y = self.target.twist.linear.y
+          c_twist.linear.z = self.target.twist.linear.z
+
+          def down_scaling_hann(n,m):
+            return 0.5 - 0.5*np.cos(pi*(n+m)/m)
+
+          c_max = floor(goal.stop_time/dt) + 1
+          for k in range(0,c_max+1):
+            x_vel = harmonic_vel(delta_target.pose.position.x,(c+k)*dt,goal_time)*down_scaling_hann(k,c_max)
+            # self.target.twist.linear.y = harmonic_vel(delta_target.pose.position.y,(c+k)*dt,goal_time)*down_scaling_hann(k,c_max)
+            # self.target.twist.linear.z = harmonic_vel(delta_target.pose.position.z,(c+k)*dt,goal_time)*down_scaling_hann(k,c_max)
+            self.target.pose.position.x = self.target.pose.position.x + x_vel*dt
+            # self.target.pose.position.y = self.target.pose.position.y + self.target.twist.linear.y*dt
+            # self.target.pose.position.z = self.target.pose.position.z + self.target.twist.linear.z*dt
+            self.target.acceleration.linear.x = (x_vel - self.target.twist.linear.x)/dt
+
+            self.target.twist.linear.x = x_vel
+            # self.target.acceleration.linear.y = self.target.twist.linear.y/dt
+            # self.target.acceleration.linear.z = self.target.twist.linear.z/dt
+
+            self.rate.sleep()
+          
+          self.target.twist.linear.x = 0
+          self.target.twist.linear.y = 0
+          self.target.twist.linear.z = 0
+          self.target.acceleration.linear.x = 0
+          self.target.acceleration.linear.y = 0
+          self.target.acceleration.linear.z = 0
+
           self.traj_result.success = False
           self.traj_as.set_preempted()
           break
@@ -168,6 +213,44 @@ class CartesianTrajectoryGenerator:
       
       if self.traj_result.success:
         self.traj_as.set_succeeded(self.traj_result)
+    
+    elif goal.traj_type == goal.POLY345:
+
+      goal_time = max(pow(2*pi*h/goal.traj_max_accel,.5),pow(2*pi*h_rot/goal.traj_max_angaccel,.5))
+
+      c_max = floor(goal_time/dt) + 1
+      goal_time = c_max*dt
+
+      x_345 = poly_345(delta_target.pose.position.x,goal_time,self.target.twist.linear.x,self.target.acceleration.linear.x,goal.traj_target.twist.linear.x,goal.traj_target.acceleration.linear.x)
+      y_345 = poly_345(delta_target.pose.position.y,goal_time,self.target.twist.linear.y,self.target.acceleration.linear.y,goal.traj_target.twist.linear.y,goal.traj_target.acceleration.linear.y)
+      z_345 = poly_345(delta_target.pose.position.z,goal_time,self.target.twist.linear.z,self.target.acceleration.linear.z,goal.traj_target.twist.linear.z,goal.traj_target.acceleration.linear.z)
+      
+      rot_345 = poly_345(delta_angle,goal_time)
+    
+      for c in range(0,c_max+1):
+        
+        self.target.pose.position.x = c_target.pose.position.x + poly_pos(x_345,c*dt)
+        self.target.pose.position.y = c_target.pose.position.y + poly_pos(y_345,c*dt)
+        self.target.pose.position.z = c_target.pose.position.z + poly_pos(z_345,c*dt)
+        self.target.twist.linear.x = poly_vel(x_345,c*dt)
+        self.target.twist.linear.y = poly_vel(y_345,c*dt)
+        self.target.twist.linear.z = poly_vel(z_345,c*dt)
+        self.target.acceleration.linear.x = poly_accel(x_345,c*dt)
+        self.target.acceleration.linear.y = poly_accel(y_345,c*dt)
+        self.target.acceleration.linear.z = poly_accel(z_345,c*dt)
+
+        angle = poly_pos(rot_345,c*dt)
+        self.target.pose.orientation = list_to_quat(
+          ts.quaternion_multiply(ts.quaternion_from_matrix(ts.rotation_matrix(angle,delta_axis,delta_point)),quat_to_list(c_target.pose.orientation)))
+
+        self.traj_feedback.percentage = 100*c/c_max
+        self.traj_as.publish_feedback(self.traj_feedback)
+
+        self.rate.sleep()
+      
+      if self.traj_result.success:
+        self.traj_as.set_succeeded(self.traj_result)
+
   
   def update(self,event):
     msg = CartesianTrajectoryPointStamped()

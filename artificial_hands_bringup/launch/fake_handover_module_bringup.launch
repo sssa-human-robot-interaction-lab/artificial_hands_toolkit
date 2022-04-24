@@ -3,8 +3,11 @@
 
   <arg name="fake_ft" default="true" />
 
+  <!-- Load filter param for wrist dynamics -->
+  <rosparam command="load" file="$(find artificial_hands_bringup)/config/wrist_dynamics_filters.yaml"/>
+
   <!-- Run the wrist dynamics node -->
-  <!-- <node pkg="artificial_hands_nodes" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="-autostart true"/> -->
+  <node pkg="artificial_hands_nodes" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="--autostart true"/>
 
   <!-- Bringup the FT sensor (fake or real hw)-->
   <node if="$(arg fake_ft)" pkg="artificial_hands_nodes" type="fake_ft_sensor_node.py" name="fake_ft_sensor" output="screen"/>

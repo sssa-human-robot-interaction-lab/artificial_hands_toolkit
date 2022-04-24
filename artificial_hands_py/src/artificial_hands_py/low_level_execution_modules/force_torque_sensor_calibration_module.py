@@ -31,6 +31,13 @@ class ForceTorqueSensorCalibrationModule(WristDynamicsModule,RobotCommander):
     self.subscribe()
     self.set_publish()
 
+    # go to home position
+    self.arm.set_max_accel(goal.max_accel)
+    self.arm.set_max_angaccel(goal.max_angaccel)
+    self.arm.set_harmonic_traj_generator()
+    self.arm.switch_to_cartesian_controller('cartesian_motion_position_controller')
+    self.arm.set_pose_target(goal.home)
+
     # check current (if any) calibration
     self.apply_calibration()
     self.start_loop()
@@ -43,12 +50,6 @@ class ForceTorqueSensorCalibrationModule(WristDynamicsModule,RobotCommander):
     # unload current calibration and start node again
     self.stop_loop()
     self.start_node(calib = False)
-    
-    self.arm.set_max_accel(goal.max_accel)
-    self.arm.set_max_angaccel(goal.max_angaccel)
-    self.arm.set_harmonic_traj_generator()
-    self.arm.switch_to_cartesian_controller('cartesian_motion_position_controller')
-    self.arm.set_pose_target(goal.home)
 
     c_pose = Pose()
     c_pose.position = goal.home.position
