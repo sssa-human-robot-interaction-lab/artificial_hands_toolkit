@@ -1,12 +1,8 @@
-from time import sleep
-
-import rospy
-
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory, JointTrajectoryPoint
 from std_msgs.msg import Float64MultiArray
 
-from controller_manager_base import ControllerManagerBase
+from artificial_hands_py.robot_commander.controller_manager_base import *
 
 class MiaHandCommander(ControllerManagerBase):
   """ Simple commander for Mia hand: grasps using ROS control
@@ -28,7 +24,7 @@ class MiaHandCommander(ControllerManagerBase):
 
   Methods
   -------
-  joint_states_callback(msg : JointStates)
+  joint_states_callback(msg : JointState)
     callback to update current joint angles
   
   close_cyl(autoswitch : bool, rest: bool, timeout : float)
@@ -40,24 +36,21 @@ class MiaHandCommander(ControllerManagerBase):
   rest(autoswitch : bool)
     stop mia hand motors to the current position
   """
-  
-  traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
-  vel_ctrl = 'mia_hand_joint_group_vel_controller'
-  joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']
+  joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']  
 
-  def __init__(self,ns=''):
-    super().__init__(ns,{self.traj_ctrl : JointTrajectory, self.vel_ctrl: Float64MultiArray})
-    sub = rospy.Subscriber(ns+"/joint_states",JointState,self.joint_states_callback)
+  def __init__(self,ns='',ctrl_dict : dict = {}):
+    super().__init__(ns,ctrl_dict)
+    sub = rospy.Subscriber("mia_hand_joint_states",JointState,self.joint_states_callback)
     self.pos = [.0,.0,.0]
   
-  def joint_states_callback(self,msg):
+  def joint_states_callback(self,msg : JointState):
     robot_joints = msg.name
     c = 0
     for j in self.joint_names:
       self.pos[c] = msg.position[robot_joints.index(j)]    
       c += 1                              
 
-  def close_cyl(self,autoswitch=True,rest=True,timeout=1.5):
+  def close_cylindrical_grasp(self,autoswitch=True,rest=True,timeout=1.5):
     if autoswitch:
       self.switch_to_controller(self.traj_ctrl)
     cmd = JointTrajectory()
@@ -68,7 +61,7 @@ class MiaHandCommander(ControllerManagerBase):
     cmd.points[0].time_from_start = rospy.Time.from_sec(1.5)
     self.controller_command(cmd)
     if rest:
-      sleep(timeout)
+      rospy.sleep(rospy.Duration().from_sec(timeout))
       self.rest(True)
   
   def open(self,autoswitch=True,vel=.5):

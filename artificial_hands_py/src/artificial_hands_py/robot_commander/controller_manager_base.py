@@ -9,9 +9,9 @@ class ControllerManagerBase:
   Attributes
   ----------
   sw_ser : rospy.ServiceProxy
-    proxy to controller_manager/switch_controller
+    proxy to rosservice controller_manager/switch_controller
   ctrl_dict : dict
-    dictionaries of command publisher for a given controller
+    dictionaries of command publishers for given controllers
   ctrl : str
     name of the active controller
 
@@ -28,6 +28,9 @@ class ControllerManagerBase:
 
   pause_all_controllers
     pause any active controller
+  
+  controller_command
+    send command to the active controller
   """
 
   def __init__(self,ns : str, ctrl_dict : dict) -> None:  
@@ -61,3 +64,6 @@ class ControllerManagerBase:
 
   def pause_all_controllers(self) -> None:
     return self.sw_ser([],list(self.ctrl_dict.keys()),1,False,5).ok
+  
+  def controller_command(self,cmd) -> None:
+    self.ctrl_dict[self.ctrl].publish(cmd)

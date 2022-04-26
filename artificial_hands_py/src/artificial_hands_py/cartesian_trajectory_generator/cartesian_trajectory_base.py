@@ -1,6 +1,9 @@
 from cmath import pi
 import numpy as np
 
+def down_scaling_hann(n,m):
+  return 0.5 - 0.5*np.cos(pi*(n+m)/m)
+
 def harmonic_pos(h : float, t : float, ts : float):
   y = h*(t/ts - 1/(2*pi)*np.sin(2*pi*t/ts))
   return y

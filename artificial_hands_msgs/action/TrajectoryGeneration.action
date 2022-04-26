@@ -7,7 +7,6 @@ int64 POLY345 = 4
 int64 POLY567 = 5
 int64 traj_type
 float64 stop_time
-float64 stop_factor
 float64 traj_max_accel
 float64 traj_max_angaccel
 string controlled_frame

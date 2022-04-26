@@ -88,6 +88,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.cancel_send_thread = False
 
     self.traj_cl = actionlib.SimpleActionClient('cartesian_trajectory_generator',TrajectoryGenerationAction)
+    self.gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
 
     self.setWindowTitle(title)
 
@@ -99,13 +100,11 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.cart_traj_generator_combo_box.setCurrentText('harmonic_trajectory_generator')
 
     stop_time_label, self.stop_time_spin_box,  = new_param_item('Stop time [s]:',1,0.05)
-    stop_factor_label, self.stop_factor_spin_box,  = new_param_item('Stop factor [-]:',10,1)
+    self.stop_time_spin_box.setValue(0.3)
 
     self.stop_param_layout = QHBoxLayout()
     self.stop_param_layout.addWidget(stop_time_label)
     self.stop_param_layout.addWidget(self.stop_time_spin_box)
-    self.stop_param_layout.addWidget(stop_factor_label)
-    self.stop_param_layout.addWidget(self.stop_factor_spin_box)
 
     self.target_position_group_box = TargetGroupBox(self,'Position [m]',max=1,step=0.001)
     self.target_orientation_group_box = TargetGroupBox(self,'Orientation [rad]',max=pi,step=0.001)
@@ -139,6 +138,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   def connect(self):
     self.send_push_button.clicked.connect(self.on_send_button)
     self.stop_push_button.clicked.connect(self.on_stop_button) 
+    self.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed)
   
   def get_current_target(self):
     target = Pose()
@@ -177,8 +177,10 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
       msg.buttonClicked.connect(self.clear_table)
       msg.show()
 
-  def send_goals(self):
+  def send_goals(self,traj_type):
     goal = TrajectoryGenerationGoal()
+    goal.stop_time = self.stop_time_spin_box.value()
+    goal.traj_type = traj_type
     for r in range(0,self.target_table.rowCount()):
       if self.cancel_send_thread:
         self.traj_cl.cancel_all_goals()
@@ -194,28 +196,43 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
       self.traj_cl.send_goal_and_wait(goal)
 
   def on_send_button(self):
+    goal = TrajectoryGenerationGoal()
+    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      goal.traj_type = goal.DMP
+    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+      goal.traj_type = goal.HARMONIC
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+      goal.traj_type = goal.POLY345
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+      goal.traj_type = goal.POLY567
+    
     if self.target_table.rowCount() == 0:
-      goal = TrajectoryGenerationGoal()
-      if self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
-        goal.traj_type = goal.HARMONIC
-      elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
-        goal.traj_type = goal.POLY345
-      elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
-        goal.traj_type = goal.POLY567
       goal.stop_time = self.stop_time_spin_box.value()
-      goal.stop_factor = self.stop_factor_spin_box.value()
       goal.traj_target.pose = self.get_current_target()
       self.traj_cl.send_goal(goal)
     else:
       self.cancel_send_thread = False
-      send_thread = Thread(target=self.send_goals)
+      send_thread = Thread(target=self.send_goals,args=(goal.traj_type,))
       send_thread.start()
 
   def on_stop_button(self):
     self.cancel_send_thread = True
     goal = TrajectoryGenerationGoal()
     goal.traj_type = goal.STOP
+    goal.stop_time = self.stop_time_spin_box.value()
     self.traj_cl.send_goal_and_wait(goal)
+
+  def on_gen_changed(self):
+    goal = TrajectoryGenerationGoal()
+    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      goal.traj_type = goal.DMP
+    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+      goal.traj_type = goal.HARMONIC
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+      goal.traj_type = goal.POLY345
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+      goal.traj_type = goal.POLY567
+    self.gen_cl.send_goal_and_wait(goal)
     
 def main():
 

@@ -20,17 +20,6 @@ class ArmCommanderGui(QWidget):
 
     self.arm = arm
 
-    self.arm.set_stop_factor(2)
-    self.arm.set_stop_time(0.2)
-
-    self.cart_traj_generator_combo_box = QComboBox()
-    self.cart_traj_generator_combo_box.addItem('forward_trajectory')
-    self.cart_traj_generator_combo_box.addItem('dmp_extended_trajectory_generator')
-    self.cart_traj_generator_combo_box.addItem('harmonic_trajectory_generator')
-    self.cart_traj_generator_combo_box.addItem('polynomial_345_trajectory_generator')
-    self.cart_traj_generator_combo_box.setCurrentText('harmonic_trajectory_generator')
-    self.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed)
-
     self.cart_motion_ctrl_combo_box = QComboBox()
     self.cart_motion_ctrl_combo_box.addItems(list(arm.ctrl_dict.keys())[1:])
     self.cart_motion_ctrl_combo_box.currentIndexChanged.connect(self.on_ctrl_changed)
@@ -90,7 +79,7 @@ class ArmCommanderGui(QWidget):
       send_thread = Thread(target=self.send_goals)
       send_thread.start()
 
-  def on_cancel_button(self):
+  def on_stop_button(self):
     self.cancel_send_thread = True
     self.arm.stop()
     self.on_gen_changed()
@@ -99,14 +88,16 @@ class ArmCommanderGui(QWidget):
     self.arm.switch_to_cartesian_controller(self.cart_motion_ctrl_combo_box.currentText())
 
   def on_gen_changed(self):
-    if self.cart_traj_generator_combo_box.currentText() == 'forward_trajectory':
+    if self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'forward_trajectory':
       self.arm.set_forward_traj_point()
-    elif self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
       self.arm.set_dmp_traj_generator()
-    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
       self.arm.set_harmonic_traj_generator()
-    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
       self.arm.set_poly_345_traj_generator()
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+      self.arm.set_poly_567_traj_generator()
   
   def update_traj_percentage(self):
     rate = rospy.Rate(10)

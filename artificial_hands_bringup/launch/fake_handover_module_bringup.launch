@@ -22,13 +22,16 @@
   <!-- Run the trajectory monitor node -->
   <node pkg="artificial_hands_nodes" type="cartesian_trajectory_tf_monitor_node.py" name="cartesian_trajectory_tf_monitor_node" output="screen"/>
 
+  <!-- Run the robot commander node -->
+  <node pkg="artificial_hands_nodes" type="robot_commander_node.py" name="robot_commander_node" output="screen"/>
+
   <!-- Run the FT sensor calibration node -->
   <node pkg="artificial_hands_nodes" type="force_torque_sensor_calibration_node.py" name="force_torque_sensor_calibration_node" output="screen"/>
 
   <!-- Run the object recognition node -->
-  <node pkg="artificial_hands_nodes" type="object_recognition_node.py" name="object_recognition_node" output="screen"/>
+  <!-- <node pkg="artificial_hands_nodes" type="object_recognition_node.py" name="object_recognition_node" output="screen"/> -->
 
   <!-- Run the robot to human handover reaching node -->
-  <node pkg="artificial_hands_nodes" type="robot_human_handover_reaching_node.py" name="robot_human_handover_reaching_node" output="screen"/>
+  <!-- <node pkg="artificial_hands_nodes" type="robot_human_handover_reaching_node.py" name="robot_human_handover_reaching_node" output="screen"/> -->
 
 </launch>

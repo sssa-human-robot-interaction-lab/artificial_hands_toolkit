@@ -10,10 +10,10 @@ from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_bas
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_plugins import *
 
 class CartesianTrajectoryTFMonitor:
-  angle_tol = 1e-03
+  angle_tol = 1e-02
   position_tol = 1e-04
   
-  mon_rate = 20
+  mon_rate = 40
   mon_feedback = TrajectoryGenerationFeedback()
   mon_result = TrajectoryGenerationResult()
 

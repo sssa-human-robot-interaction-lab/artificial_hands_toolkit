@@ -1,7 +1,6 @@
-from artificial_hands_py.artificial_hands_py_base import norm_quat
-import rospy, actionlib
+import rospy
 
-from geometry_msgs.msg import Quaternion, QuaternionStamped
+from geometry_msgs.msg import QuaternionStamped
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 from dmp_extended.msg import MJerkTrackTarget, DesiredTrajectory
 
@@ -32,8 +31,6 @@ class DMPTrajectoryPlugin:
     self.target_pos.vel = target.twist.linear
     self.target_pos.acc = target.acceleration.linear
 
-    # self.target_rot.quaternion = norm_quat(target.pose.orientation)
-
     self.target_rot.quaternion = target.pose.orientation
 
     self.pos_pub.publish(self.target_pos)
@@ -45,3 +42,4 @@ class DMPTrajectoryPlugin:
     active = active or abs(self.plugin_target.twist.angular.x) + abs(self.plugin_target.twist.angular.y) + abs(self.plugin_target.twist.angular.z) > self.ang_vel_tolerance
     active = active or abs(self.plugin_target.acceleration.angular.x) + abs(self.plugin_target.acceleration.angular.y) + abs(self.plugin_target.acceleration.angular.z) > self.ang_accel_tolerance
     return active
+    

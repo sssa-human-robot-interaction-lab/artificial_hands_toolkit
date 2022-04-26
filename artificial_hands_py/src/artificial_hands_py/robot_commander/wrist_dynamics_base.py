@@ -1,11 +1,22 @@
-from abc import ABC
-
 import rospy
 
 from artificial_hands_msgs.msg import DetectionStamped
 from artificial_hands_msgs.srv import WristDynamicsCommand
 
-class WristDynamicsModule(ABC):
+class DetectionSubscriber:
+
+  def __init__(self) -> None:   
+    sub = rospy.Subscriber('wrist_contact_detection',DetectionStamped,self.detection_cb)
+
+    self.static_contact = False
+    self.dynamic_contact = False
+  
+  def detection_cb(self, msg : DetectionStamped):
+    self.static_contact = msg.detection.trigger or msg.detection.backtrig
+    self.dynamic_contact = msg.detection.trigger
+
+class WristDynamics:
+  detection = DetectionSubscriber()
     
   def wrist_dynamics_command(self,command) -> bool:
     res = rospy.ServiceProxy('wrist_dynamics_command/'+command,WristDynamicsCommand)

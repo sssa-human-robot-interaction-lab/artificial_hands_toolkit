@@ -108,7 +108,7 @@ namespace atk
       
     private:
 
-      int th_, order_ = 3, chann_ = 6;
+      int th_, order_ = 2, chann_ = 6;
       double rto_, dev_, factor_, t_dev_th_, t_sk_th_, f_mag_ = .0;
       double num_[3] = {0.0099537574599431831, -0.019594794464524581, 0.0099537574599431831};
       double den_[3] = {1.0, -1.9749591089928671, 0.97527182944822877};

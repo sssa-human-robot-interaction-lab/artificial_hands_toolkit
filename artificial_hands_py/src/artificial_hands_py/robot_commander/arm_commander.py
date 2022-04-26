@@ -1,4 +1,4 @@
-import rospy,actionlib
+import rospy, actionlib
 import tf2_ros
 import moveit_commander.conversions as cv
 
@@ -64,9 +64,6 @@ class ArmCommander(ControllerManagerBase):
   def set_stop_time(self,stop_time):
     self.goal.stop_time = stop_time
 
-  def set_stop_factor(self,stop_factor):
-    self.goal.stop_factor = stop_factor
-
   def set_forward_traj_point(self):
     self.goal.traj_type = self.goal.FORWARD
     self.c_gen_cl.send_goal_and_wait(self.goal)
@@ -81,6 +78,10 @@ class ArmCommander(ControllerManagerBase):
   
   def set_poly_345_traj_generator(self):
     self.goal.traj_type = self.goal.POLY345
+    self.c_gen_cl.send_goal_and_wait(self.goal)
+  
+  def set_poly_567_traj_generator(self):
+    self.goal.traj_type = self.goal.POLY567
     self.c_gen_cl.send_goal_and_wait(self.goal)
 
   def set_max_accel(self,max_accel : float):

@@ -197,7 +197,7 @@ namespace rosatk
             ROS_INFO("Checking force/torque sensor calibration (unzeroing sensor).");
             WristFTContactDetection::SetZero(false);
             WristFTContactDetection::SetOffset(WristFTCalibration::Get());
-            c_mass_ = 100*(atk::magnitudeVector3(force_lp)/(WristFTCalibration::GetMass()*9.81) - 1);
+            c_mass_ = 100*(atk::magnitudeVector3(force_dyn)/(WristFTCalibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
             (abs(c_mass_) > 6 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;            
