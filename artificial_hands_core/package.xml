@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>artificial_hands_nodes</name>
+  <name>artificial_hands_core</name>
   <version>0.0.0</version>
-  <description>The artificial_hands_nodes package</description>
+  <description>The artificial_hands_core package</description>
 
   <!-- One maintainer tag required, multiple allowed, one person per tag -->
   <!-- Example:  -->
@@ -19,7 +19,7 @@
   <!-- Url tags are optional, but multiple are allowed, one per tag -->
   <!-- Optional attribute type can be: website, bugtracker, or repository -->
   <!-- Example: -->
-  <!-- <url type="website">http://wiki.ros.org/artificial_hands_nodes</url> -->
+  <!-- <url type="website">http://wiki.ros.org/artificial_hands_core</url> -->
 
 
   <!-- Author tags are optional, multiple are allowed, one per tag -->
@@ -49,13 +49,15 @@
   <!-- Use doc_depend for packages you need only for building documentation: -->
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
-  <depend>roscpp</depend>
-  <depend>artificial_hands_py</depend>
 
+  <exec_depend>artificial_hands_base</exec_depend>
+  <exec_depend>wrist_frame_dynamics</exec_depend>
+
+  <doc_depend>doxygen</doc_depend>
 
   <!-- The export tag contains other, unspecified, tags -->
   <export>
     <!-- Other tools can request additional information be placed here -->
-
+    <metapackage/>
   </export>
 </package>

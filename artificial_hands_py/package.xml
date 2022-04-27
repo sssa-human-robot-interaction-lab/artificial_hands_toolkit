@@ -51,7 +51,7 @@
   <buildtool_depend>catkin</buildtool_depend>
 
   <depend>pybind11_catkin</depend>
-  <depend>artificial_hands_base</depend>
+  <depend>artificial_hands_core</depend>
   <depend>artificial_hands_msgs</depend>
   <depend>actionlib_msgs</depend>
   <depend>cartesian_control_msgs</depend>
