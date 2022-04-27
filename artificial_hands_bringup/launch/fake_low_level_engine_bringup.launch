@@ -7,7 +7,7 @@
   <rosparam command="load" file="$(find artificial_hands_bringup)/config/wrist_dynamics_filters.yaml"/>
 
   <!-- Run the wrist dynamics node -->
-  <node pkg="artificial_hands_nodes" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="--autostart true"/>
+  <node pkg="wrist_frame_dynamics" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="--autostart true"/>
 
   <!-- Bringup the FT sensor (fake or real hw)-->
   <node if="$(arg fake_ft)" pkg="artificial_hands_nodes" type="fake_ft_sensor_node.py" name="fake_ft_sensor" output="screen"/>
@@ -24,14 +24,5 @@
 
   <!-- Run the low level engine node -->
   <node pkg="artificial_hands_nodes" type="fake_low_level_engine_node.py" name="fake_low_level_engine_node" output="screen"/>
-
-  <!-- Run the FT sensor calibration node -->
-  <!-- <node pkg="artificial_hands_nodes" type="force_torque_sensor_calibration_node.py" name="force_torque_sensor_calibration_node" output="screen"/> -->
-
-  <!-- Run the object recognition node -->
-  <!-- <node pkg="artificial_hands_nodes" type="object_recognition_node.py" name="object_recognition_node" output="screen"/> -->
-
-  <!-- Run the robot to human handover reaching node -->
-  <!-- <node pkg="artificial_hands_nodes" type="robot_human_handover_reaching_node.py" name="robot_human_handover_reaching_node" output="screen"/> -->
 
 </launch>

@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- rviz -->
+  <node pkg="rviz" type="rviz" name="rviz_demo_config" output="screen" args="-d $(find artificial_hands_description)/etc/rviz_config.rviz"/>
+  
+</launch>
