@@ -56,7 +56,7 @@ class CartesianTrajectoryTFMonitor:
 
     delta_position = pow(pow(delta_target.pose.position.x,2)+pow(delta_target.pose.position.y,2)+pow(delta_target.pose.position.z,2),.5)
 
-    while self.mon_feedback.percentage < 99.9 and not self.mon_as.is_preempt_requested():
+    while self.mon_feedback.percentage < 99.9 and not self.mon_as.is_preempt_requested() and not rospy.is_shutdown():
 
       a_ref_to_frame = self.tf_buffer.lookup_transform(goal.header.frame_id,goal.controlled_frame,rospy.Time(0),timeout=rospy.Duration(1))
 

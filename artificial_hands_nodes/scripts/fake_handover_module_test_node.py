@@ -13,8 +13,8 @@ def main():
   r2h_handv_cl = actionlib.SimpleActionClient('/robot_to_human_handover_reaching',RobotHumanHandoverReachingAction)
 
   ft_cal_cl.wait_for_server()
-  # obj_rec_cl.wait_for_server()
-  # r2h_handv_cl.wait_for_server()
+  obj_rec_cl.wait_for_server()
+  r2h_handv_cl.wait_for_server()
 
   cal_goal = ForceTorqueSensorCalibrationGoal()
 
@@ -88,9 +88,9 @@ def main():
 
   # high level control loop
   ft_cal_cl.send_goal_and_wait(cal_goal)
-  # for c in range(0,1):
-    # obj_rec_cl.send_goal_and_wait(obj_rec_goal)
-    # r2h_handv_cl.send_goal_and_wait(r2h_handv_goal)
+  for c in range(0,3):
+    obj_rec_cl.send_goal_and_wait(obj_rec_goal)
+    r2h_handv_cl.send_goal_and_wait(r2h_handv_goal)
 
   rospy.loginfo('bye!')
 

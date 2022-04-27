@@ -30,6 +30,7 @@ catkin_install_python(PROGRAMS
   scripts/fake_ft_sensor_node.py
   scripts/force_torque_sensor_calibration_node.py
   scripts/fake_handover_module_test_node.py
+  scripts/fake_low_level_engine_node.py
   scripts/object_recognition_node.py
   scripts/robot_commander_node.py
   scripts/robot_human_handover_reaching_node.py

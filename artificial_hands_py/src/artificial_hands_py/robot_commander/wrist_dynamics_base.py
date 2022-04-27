@@ -2,6 +2,7 @@ import rospy
 
 from artificial_hands_msgs.msg import DetectionStamped
 from artificial_hands_msgs.srv import WristDynamicsCommand
+from artificial_hands_py.artificial_hands_py_base import singleton
 
 class DetectionSubscriber:
 
@@ -15,6 +16,7 @@ class DetectionSubscriber:
     self.static_contact = msg.detection.trigger or msg.detection.backtrig
     self.dynamic_contact = msg.detection.trigger
 
+@singleton
 class WristDynamics:
   detection = DetectionSubscriber()
     

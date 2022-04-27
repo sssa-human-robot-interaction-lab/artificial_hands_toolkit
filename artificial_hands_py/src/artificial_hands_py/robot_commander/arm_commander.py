@@ -5,8 +5,10 @@ import moveit_commander.conversions as cv
 from geometry_msgs.msg import Pose, PoseStamped, Point
 
 from artificial_hands_msgs.msg import *
+from artificial_hands_py.artificial_hands_py_base import singleton
 from artificial_hands_py.robot_commander.controller_manager_base  import ControllerManagerBase
 
+@singleton
 class ArmCommander(ControllerManagerBase):
 
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
@@ -27,7 +29,7 @@ class ArmCommander(ControllerManagerBase):
     self.goal.header.frame_id = ref
     self.goal.controlled_frame = eef
 
-    tf_listener = tf2_ros.TransformListener(self.tf_buffer)    
+    tf_listener = tf2_ros.TransformListener(self.tf_buffer)   
 
   def switch_to_cartesian_controller(self, ctrl_name : str):
     self.pause_all_controllers()
