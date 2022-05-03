@@ -42,7 +42,7 @@ class MiaHandCommander(ControllerManagerBase):
 
   def __init__(self,ns='',ctrl_dict : dict = {}):
     super().__init__(ns,ctrl_dict)
-    sub = rospy.Subscriber("mia_hand_joint_states",JointState,self.joint_states_callback)
+    sub = rospy.Subscriber(ns+"/joint_states",JointState,self.joint_states_callback)
     self.pos = [.0,.0,.0]
   
   def joint_states_callback(self,msg : JointState):
@@ -52,13 +52,13 @@ class MiaHandCommander(ControllerManagerBase):
       self.pos[c] = msg.position[robot_joints.index(j)]    
       c += 1                              
 
-  def close_cylindrical_grasp(self,autoswitch=True,rest=True,timeout=1.5):
+  def close(self, target_joints : list = [1.3,1.3,0.3], autoswitch=True,rest=True,timeout=1.5):
     if autoswitch:
-      self.switch_to_controller(self.traj_ctrl)
+      self.switch_to_controller('mia_hand_hw_vel_trajectory_controller')
     cmd = JointTrajectory()
     cmd.joint_names = self.joint_names
     cmd.points = [JointTrajectoryPoint()]
-    cmd.points[0].positions = [1.3,1.3,0.3]
+    cmd.points[0].positions = target_joints
     cmd.points[0].velocities = [.0,.0,.0]
     cmd.points[0].time_from_start = rospy.Time.from_sec(1.5)
     self.controller_command(cmd)
@@ -68,7 +68,7 @@ class MiaHandCommander(ControllerManagerBase):
   
   def open(self,autoswitch=True,vel=.5):
     if autoswitch:
-      self.switch_to_controller(self.vel_ctrl)
+      self.switch_to_controller('mia_hand_joint_group_vel_controller')
     j_vel = Float64MultiArray()
     j_vel.data = [-vel,-vel,-vel/2]
     j_is_open = [False,False,False]
@@ -87,7 +87,7 @@ class MiaHandCommander(ControllerManagerBase):
       
   def rest(self,autoswitch=True):
     if autoswitch:
-      self.switch_to_controller(self.vel_ctrl)
+      self.switch_to_controller('mia_hand_joint_group_vel_controller')
     j_vel = Float64MultiArray()
     j_vel.data = [.0,.0,.0]
     self.controller_command(j_vel)

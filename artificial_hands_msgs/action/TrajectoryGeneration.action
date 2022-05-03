@@ -5,10 +5,15 @@ int64 DMP = 2
 int64 HARMONIC = 3
 int64 POLY345 = 4
 int64 POLY567 = 5
+int64 TRAPZMOD = 6
 int64 traj_type
 float64 stop_time
 float64 traj_max_accel
 float64 traj_max_angaccel
+float64 trapz_max_vel
+float64 trapz_max_angvel
+float64 trapz_alpha
+float64 dmp_ratio
 string controlled_frame
 std_msgs/Header header
 cartesian_control_msgs/CartesianTrajectoryPoint traj_target

@@ -10,13 +10,13 @@ from geometry_msgs.msg import Pose
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
 
-def new_param_item(lab : str, max : float, step : float, slider : bool = False):
+def new_param_item(lab : str, min : float, max : float, step : float, slider : bool = False):
 
   label = QLabel(lab)
   label.setAlignment(Qt.AlignCenter | Qt.AlignRight)
   spin_box = QDoubleSpinBox()
   spin_box.setDecimals(3)
-  spin_box.setRange(-max,max)
+  spin_box.setRange(min,max)
   spin_box.setSingleStep(step)
   if slider:
     sld = QSlider(Qt.Horizontal)
@@ -33,9 +33,9 @@ class TargetGroupBox(QGroupBox):
   def __init__(self,parent : QWidget = None, title : str = None, max : float = 1, step : float = .1):
     super().__init__()
 
-    x_label,self.x_spin_box,x_sld = new_param_item('x',max,step,True)
-    y_label,self.y_spin_box,y_sld = new_param_item('y',max,step,True)
-    z_label,self.z_spin_box,z_sld = new_param_item('z',max,step,True)
+    x_label,self.x_spin_box,x_sld = new_param_item('x',-max,max,step,True)
+    y_label,self.y_spin_box,y_sld = new_param_item('y',-max,max,step,True)
+    z_label,self.z_spin_box,z_sld = new_param_item('z',-max,max,step,True)
 
     spin_box_layout = QHBoxLayout()
     spin_box_layout.addWidget(x_label)
@@ -85,10 +85,11 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   def __init__(self,title : str = 'ATK Cartesian Trajectory Generator GUI') -> None:
     super().__init__()
 
-    self.cancel_send_thread = False
-
     self.traj_cl = actionlib.SimpleActionClient('cartesian_trajectory_generator',TrajectoryGenerationAction)
     self.gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
+
+    self.teleop_running = False
+    self.cancel_send_thread = False
 
     self.setWindowTitle(title)
 
@@ -97,14 +98,25 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.cart_traj_generator_combo_box.addItem('harmonic_trajectory_generator')
     self.cart_traj_generator_combo_box.addItem('polynomial_345_trajectory_generator')
     self.cart_traj_generator_combo_box.addItem('polynomial_567_trajectory_generator')
+    self.cart_traj_generator_combo_box.addItem('modified_trapezoidal_trajectory_genreator')
     self.cart_traj_generator_combo_box.setCurrentText('harmonic_trajectory_generator')
 
-    stop_time_label, self.stop_time_spin_box,  = new_param_item('Stop time [s]:',1,0.05)
+    self.teleop_check_box = QCheckBox('Telop')
+    self.teleop_check_box.setChecked(False)
+    self.teleop_check_box.setDisabled(True)
+
+    dmp_ratio_label, self.dmp_ratio_spin_box  = new_param_item('Dmp ratio [-]:',0.1,1,0.05)
+    self.dmp_ratio_spin_box.setValue(0.2)
+
+    stop_time_label, self.stop_time_spin_box  = new_param_item('Stop time [s]:',0,1,0.05)
     self.stop_time_spin_box.setValue(0.3)
 
-    self.stop_param_layout = QHBoxLayout()
-    self.stop_param_layout.addWidget(stop_time_label)
-    self.stop_param_layout.addWidget(self.stop_time_spin_box)
+    self.params_layout = QHBoxLayout()
+    self.params_layout.addWidget(self.teleop_check_box)
+    self.params_layout.addWidget(dmp_ratio_label)
+    self.params_layout.addWidget(self.dmp_ratio_spin_box)
+    self.params_layout.addWidget(stop_time_label)
+    self.params_layout.addWidget(self.stop_time_spin_box)
 
     self.target_position_group_box = TargetGroupBox(self,'Position [m]',max=1,step=0.001)
     self.target_orientation_group_box = TargetGroupBox(self,'Orientation [rad]',max=pi,step=0.001)
@@ -113,9 +125,6 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.clear_push_button = QPushButton('Clear')
     self.send_push_button = QPushButton('Send')
     self.stop_push_button = QPushButton('Stop')
-
-    self.add_push_button.clicked.connect(self.on_add_button)
-    self.clear_push_button.clicked.connect(self.on_clear_button)
     
     buttons_row_layout = QHBoxLayout()
     buttons_row_layout.addWidget(self.add_push_button)
@@ -127,30 +136,49 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
 
     main_layout = QVBoxLayout()
     main_layout.addWidget(self.cart_traj_generator_combo_box)
-    main_layout.addLayout(self.stop_param_layout)
+    main_layout.addLayout(self.params_layout)
     main_layout.addWidget(self.target_position_group_box)  
     main_layout.addWidget(self.target_orientation_group_box) 
     main_layout.addLayout(buttons_row_layout)  
     main_layout.addWidget(self.target_table) 
 
+    self.add_push_button.clicked.connect(self.on_add_button)
+    self.clear_push_button.clicked.connect(self.on_clear_button)
+
     self.setLayout(main_layout)  
 
   def connect(self):
+    self.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed)
+    self.teleop_check_box.clicked.connect(self.on_teleop_check_box)
     self.send_push_button.clicked.connect(self.on_send_button)
     self.stop_push_button.clicked.connect(self.on_stop_button) 
-    self.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed)
-  
-  def get_current_target(self):
-    target = Pose()
-    target.position.x = self.target_position_group_box.x_spin_box.value()
-    target.position.y = self.target_position_group_box.y_spin_box.value()
-    target.position.z = self.target_position_group_box.z_spin_box.value()
-    target.orientation = list_to_quat(ts.quaternion_multiply(
-      ts.quaternion_about_axis(self.target_orientation_group_box.z_spin_box.value(),[0,0,1]),
-      ts.quaternion_multiply(
-      ts.quaternion_about_axis(self.target_orientation_group_box.y_spin_box.value(),[0,1,0]),
-      ts.quaternion_about_axis(self.target_orientation_group_box.x_spin_box.value(),[1,0,0]))))
-    return target
+    
+  def on_gen_changed(self):
+    goal = TrajectoryGenerationGoal()
+    self.teleop_check_box.setChecked(False)
+    self.teleop_check_box.setDisabled(True)
+    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      goal.traj_type = goal.DMP
+      goal.dmp_ratio = self.dmp_ratio_spin_box.value()
+      self.teleop_check_box.setEnabled(True)
+    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+      goal.traj_type = goal.HARMONIC
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+      goal.traj_type = goal.POLY345
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+      goal.traj_type = goal.POLY567
+    elif self.cart_traj_generator_combo_box.currentText() == 'modified_trapezoidal_trajectory_genreator':
+      goal.traj_type = goal.TRAPZMOD
+    self.gen_cl.send_goal_and_wait(goal)
+
+  def on_teleop_check_box(self):
+    if self.teleop_check_box.isChecked():
+      self.teleop_thread = Thread(target=self.update_teleop_target)
+      self.teleop_running = True
+      self.teleop_thread.start()
+    else:
+      self.teleop_running = False
+      self.teleop_thread.join()
 
   def on_add_button(self):
     indices = self.target_table.selectionModel().selectedRows() 
@@ -159,10 +187,6 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     else:
       self.target_table.add_pose_target(self.get_current_target())
 
-  def clear_table(self,msgbtn):
-    if msgbtn.text() == '&OK':
-      self.target_table.setRowCount(0)
-  
   def on_clear_button(self):  
     if self.target_table.rowCount() == 0:
       return
@@ -176,8 +200,39 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
       msg.setStandardButtons(QMessageBox.Ok | QMessageBox.Cancel)
       msg.buttonClicked.connect(self.clear_table)
       msg.show()
+  
+  def on_send_button(self):
+    goal = TrajectoryGenerationGoal()
+    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      goal.traj_type = goal.DMP
+    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+      goal.traj_type = goal.HARMONIC
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+      goal.traj_type = goal.POLY345
+    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+      goal.traj_type = goal.POLY567
+    elif self.cart_traj_generator_combo_box.currentText() == 'modified_trapezoidal_trajectory_genreator':
+      goal.traj_type = goal.TRAPZMOD
 
-  def send_goals(self,traj_type):
+    if self.target_table.rowCount() == 0:
+      goal.stop_time = self.stop_time_spin_box.value()
+      goal.traj_target.pose = self.get_current_target()
+      self.traj_cl.send_goal(goal)
+    else:
+      self.cancel_send_thread = False
+      if self.send_waypoints_thread.is_alive():
+        self.send_waypoints_thread.join()
+      self.send_waypoints_thread = Thread(target=self.send_waypoints,args=(goal.traj_type,))
+      self.send_waypoints_thread.start()
+    
+  def on_stop_button(self):
+    self.cancel_send_thread = True
+    goal = TrajectoryGenerationGoal()
+    goal.traj_type = goal.STOP
+    goal.stop_time = self.stop_time_spin_box.value()
+    self.traj_cl.send_goal_and_wait(goal)
+
+  def send_waypoints(self,traj_type):
     goal = TrajectoryGenerationGoal()
     goal.stop_time = self.stop_time_spin_box.value()
     goal.traj_type = traj_type
@@ -194,46 +249,32 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
           float(self.target_table.item(r,4).text()),
           float(self.target_table.item(r,5).text())))
       self.traj_cl.send_goal_and_wait(goal)
-
-  def on_send_button(self):
+  
+  def update_teleop_target(self):
     goal = TrajectoryGenerationGoal()
-    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
-      goal.traj_type = goal.DMP
-    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
-      goal.traj_type = goal.HARMONIC
-    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
-      goal.traj_type = goal.POLY345
-    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
-      goal.traj_type = goal.POLY567
-    
-    if self.target_table.rowCount() == 0:
-      goal.stop_time = self.stop_time_spin_box.value()
+    goal.traj_type = goal.DMP
+    rate = rospy.Rate(30)
+    while self.teleop_running:
       goal.traj_target.pose = self.get_current_target()
       self.traj_cl.send_goal(goal)
-    else:
-      self.cancel_send_thread = False
-      send_thread = Thread(target=self.send_goals,args=(goal.traj_type,))
-      send_thread.start()
+      rate.sleep()
+  
+  def clear_table(self,msgbtn):
+    if msgbtn.text() == '&OK':
+      self.target_table.setRowCount(0)
+  
+  def get_current_target(self):
+    target = Pose()
+    target.position.x = self.target_position_group_box.x_spin_box.value()
+    target.position.y = self.target_position_group_box.y_spin_box.value()
+    target.position.z = self.target_position_group_box.z_spin_box.value()
+    target.orientation = list_to_quat(ts.quaternion_multiply(
+      ts.quaternion_about_axis(self.target_orientation_group_box.z_spin_box.value(),[0,0,1]),
+      ts.quaternion_multiply(
+      ts.quaternion_about_axis(self.target_orientation_group_box.y_spin_box.value(),[0,1,0]),
+      ts.quaternion_about_axis(self.target_orientation_group_box.x_spin_box.value(),[1,0,0]))))
+    return target
 
-  def on_stop_button(self):
-    self.cancel_send_thread = True
-    goal = TrajectoryGenerationGoal()
-    goal.traj_type = goal.STOP
-    goal.stop_time = self.stop_time_spin_box.value()
-    self.traj_cl.send_goal_and_wait(goal)
-
-  def on_gen_changed(self):
-    goal = TrajectoryGenerationGoal()
-    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
-      goal.traj_type = goal.DMP
-    elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
-      goal.traj_type = goal.HARMONIC
-    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
-      goal.traj_type = goal.POLY345
-    elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
-      goal.traj_type = goal.POLY567
-    self.gen_cl.send_goal_and_wait(goal)
-    
 def main():
 
   rospy.init_node('cartesian_trajectory_generator_gui_node')

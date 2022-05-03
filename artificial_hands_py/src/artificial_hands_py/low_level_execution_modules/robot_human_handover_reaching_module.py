@@ -59,11 +59,11 @@ class RobotHumanHandoverReachingModule(RobotCommander):
     self.wrist_dyn.set_trigger_dynamics()
 
     # update dmp target according to human hand pose, break on detection
-    # self.wrist_dyn.detection.dynamic_contact = False
-    # while not self.wrist_dyn.detection.dynamic_contact:
+    self.wrist_dyn.detection.dynamic_contact = False
+    while not self.wrist_dyn.detection.dynamic_contact:
       # self.arm.set_pose_target(self.target)
       # self.arm.update_trajectory_monitor()
-      # rate.sleep()
+      rate.sleep()
       
     # stop arm immediately at the end of the loop
     self.arm.stop()

@@ -54,6 +54,7 @@
   <exec_depend>artificial_hands_bringup</exec_depend>
   <exec_depend>artificial_hands_config</exec_depend>
   <exec_depend>artificial_hands_description</exec_depend>
+  <exec_depend>artificial_hands_dynamics</exec_depend>
   <exec_depend>artificial_hands_msgs</exec_depend>
   <exec_depend>artificial_hands_py</exec_depend>
 

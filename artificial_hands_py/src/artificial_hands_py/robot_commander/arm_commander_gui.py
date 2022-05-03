@@ -22,7 +22,6 @@ class ArmCommanderGui(QWidget):
 
     self.cart_motion_ctrl_combo_box = QComboBox()
     self.cart_motion_ctrl_combo_box.addItems(list(arm.ctrl_dict.keys())[1:])
-    self.cart_motion_ctrl_combo_box.currentIndexChanged.connect(self.on_ctrl_changed)
     
     self.cart_traj_gen_widget = CartesianTrajectoryGeneratorGUI()
 
@@ -31,7 +30,6 @@ class ArmCommanderGui(QWidget):
     self.cart_traj_feedback_thread.start()
 
     main_layout = QVBoxLayout()
-    main_layout.addWidget(self.cart_traj_generator_combo_box)
     main_layout.addWidget(self.cart_motion_ctrl_combo_box)
     main_layout.addWidget(self.cart_traj_gen_widget)
     main_layout.addWidget(self.cart_traj_progress_bar)
@@ -52,10 +50,64 @@ class ArmCommanderGui(QWidget):
     self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller(list(arm.ctrl_dict.keys())[1])
 
+    self.cart_motion_ctrl_combo_box.currentIndexChanged.connect(self.on_ctrl_changed)
+    self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed) 
+    self.cart_traj_gen_widget.teleop_check_box.clicked.connect(self.on_teleop_check_box) 
+    self.cart_traj_gen_widget.dmp_ratio_spin_box.valueChanged.connect(self.on_dmp_ratio_changed) 
+    self.cart_traj_gen_widget.stop_time_spin_box.valueChanged.connect(self.on_stop_time_changed)
     self.cart_traj_gen_widget.send_push_button.clicked.connect(self.on_send_button)
-    self.cart_traj_gen_widget.stop_push_button.clicked.connect(self.on_cancel_button) 
+    self.cart_traj_gen_widget.stop_push_button.clicked.connect(self.on_stop_button) 
+  
+  def on_ctrl_changed(self):
+    self.arm.switch_to_cartesian_controller(self.cart_motion_ctrl_combo_box.currentText())
+  
+  def on_gen_changed(self):
+    self.cart_traj_gen_widget.teleop_check_box.setChecked(False)
+    self.cart_traj_gen_widget.teleop_check_box.setDisabled(True)
+    if self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      self.arm.set_dmp_traj_generator()
+      self.cart_traj_gen_widget.teleop_check_box.setEnabled(True)
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
+      self.arm.set_harmonic_traj_generator()
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
+      self.arm.set_poly_345_traj_generator()
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
+      self.arm.set_poly_567_traj_generator()
+    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'modified_trapezoidal_trajectory_genreator':
+      self.arm.set_mod_trapz_traj_generator()
+  
+  def on_teleop_check_box(self):
+    if self.cart_traj_gen_widget.teleop_check_box.isChecked():
+      self.teleop_thread = Thread(target=self.update_teleop_target)
+      self.cart_traj_gen_widget.teleop_running = True
+      self.teleop_thread.start()
+    else:
+      self.cart_traj_gen_widget.teleop_running = False
+      self.teleop_thread.join()
+  
+  def on_dmp_ratio_changed(self):
+    self.arm.set_dmp_ratio(self.cart_traj_gen_widget.dmp_ratio_spin_box.value())
 
-  def send_goals(self):
+  def on_stop_time_changed(self):
+    self.arm.set_stop_time(self.cart_traj_gen_widget.stop_time_spin_box.value())
+
+  def on_send_button(self):
+    if self.cart_traj_gen_widget.target_table.rowCount() == 0:
+      self.arm.set_pose_target(self.cart_traj_gen_widget.get_current_target(),False)
+      self.arm.update_trajectory_monitor()
+    else:
+      self.cancel_send_thread = False
+      if self.send_waypoints_thread.is_alive():
+        self.send_waypoints_thread.join()
+      self.send_waypoints_thread = Thread(target=self.send_waypoints)
+      self.send_waypoints_thread.start()
+
+  def on_stop_button(self):
+    self.cancel_send_thread = True
+    self.arm.stop()
+    self.on_gen_changed()
+  
+  def send_waypoints(self):
     target = Pose()
     for r in range(0,self.cart_traj_gen_widget.target_table.rowCount()):
       if self.cancel_send_thread:
@@ -69,35 +121,12 @@ class ArmCommanderGui(QWidget):
           float(self.cart_traj_gen_widget.target_table.item(r,4).text()),
           float(self.cart_traj_gen_widget.target_table.item(r,5).text())))
       self.arm.set_pose_target(target)
-
-  def on_send_button(self):
-    if self.cart_traj_gen_widget.target_table.rowCount() == 0:
-      self.arm.set_pose_target(self.cart_traj_gen_widget.get_current_target(),False)
-      self.arm.update_trajectory_monitor()
-    else:
-      self.cancel_send_thread = False
-      send_thread = Thread(target=self.send_goals)
-      send_thread.start()
-
-  def on_stop_button(self):
-    self.cancel_send_thread = True
-    self.arm.stop()
-    self.on_gen_changed()
   
-  def on_ctrl_changed(self):
-    self.arm.switch_to_cartesian_controller(self.cart_motion_ctrl_combo_box.currentText())
-
-  def on_gen_changed(self):
-    if self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'forward_trajectory':
-      self.arm.set_forward_traj_point()
-    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
-      self.arm.set_dmp_traj_generator()
-    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
-      self.arm.set_harmonic_traj_generator()
-    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
-      self.arm.set_poly_345_traj_generator()
-    elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'polynomial_567_trajectory_generator':
-      self.arm.set_poly_567_traj_generator()
+  def update_teleop_target(self):
+    rate = rospy.Rate(30)
+    while self.cart_traj_gen_widget.teleop_running:
+      self.arm.set_pose_target(self.cart_traj_gen_widget.get_current_target(),False)
+      rate.sleep()
   
   def update_traj_percentage(self):
     rate = rospy.Rate(10)

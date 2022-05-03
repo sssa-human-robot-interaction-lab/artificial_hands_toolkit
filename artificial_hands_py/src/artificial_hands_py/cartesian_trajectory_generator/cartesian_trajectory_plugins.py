@@ -1,5 +1,6 @@
 import rospy
 
+from std_msgs.msg import Float64
 from geometry_msgs.msg import QuaternionStamped
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 from dmp_extended.msg import MJerkTrackTarget, DesiredTrajectory
@@ -14,18 +15,24 @@ class DMPTrajectoryPlugin:
     
     self.pos_pub = rospy.Publisher('/dmp/target_position_state',MJerkTrackTarget,queue_size=1000)
     self.rot_pub = rospy.Publisher('/dmp/target_orientation',QuaternionStamped,queue_size=1000)
+    self.ratio_pub = rospy.Publisher('/dmp/desired_ratio',Float64,queue_size=1000)
     sub = rospy.Subscriber("/target_traj",DesiredTrajectory,callback=self.target_cb)
 
     self.plugin_target = CartesianTrajectoryPoint()
     self.target_pos = MJerkTrackTarget()
     self.target_rot = QuaternionStamped()
+    self.target_ratio = Float64()
   
   def target_cb(self, msg : DesiredTrajectory):
     self.plugin_target.pose = msg.pose
     self.plugin_target.twist = msg.twist
     self.plugin_target.acceleration = msg.twd
+  
+  def set_plugin_target(self, target : CartesianTrajectoryPoint, ratio : float = 0.2):
 
-  def set_plugin_target(self, target : CartesianTrajectoryPoint):
+    self.target_ratio.data = ratio
+
+    self.ratio_pub.publish(self.target_ratio)
     
     self.target_pos.pos = target.pose.position
     self.target_pos.vel = target.twist.linear

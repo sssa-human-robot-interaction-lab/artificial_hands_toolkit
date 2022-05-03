@@ -14,7 +14,7 @@ class RobotCommander(ABC):
 
   def __init__(self) -> None:
 
-    #TO DO Make use of yaml to load controllers
+    #TO DO Make use of yaml or args to load required controllers
 
     j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
     cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
@@ -26,12 +26,12 @@ class RobotCommander(ABC):
 
     self.arm = ArmCommander(ctrl_dict=arm_ctrl_dict) 
 
-    mia_j_traj_ctrl = 'mia_hand_vel_trajectory_controller'
+    mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
     mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
     
     mia_ctrl_dict = {mia_j_traj_ctrl : JointTrajectory,
                 mia_j_vel_ctrl : Float64MultiArray}
 
-    # self.hand = MiaHandCommander(ns='mia_hand_sim',ctrl_dict=mia_ctrl_dict)
+    self.hand = MiaHandCommander(ns='mia_hand',ctrl_dict=mia_ctrl_dict)
 
     self.wrist_dyn = WristDynamics()

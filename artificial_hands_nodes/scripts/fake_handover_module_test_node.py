@@ -27,8 +27,8 @@ def main():
   cal_goal.home.orientation.z = 0
   cal_goal.home.orientation.w = 1
 
-  cal_goal.max_accel = 0.2
-  cal_goal.max_angaccel = 0.2
+  cal_goal.max_accel = 0.4
+  cal_goal.max_angaccel = 0.4
 
   obj_rec_goal = ObjectRecognitionGoal()
 
@@ -43,14 +43,17 @@ def main():
 
   obj_rec_goal.target.position.x = 0.5
   obj_rec_goal.target.position.y = 0.2
-  obj_rec_goal.target.position.z = 0.6
-  obj_rec_goal.target.orientation.x = 1
-  obj_rec_goal.target.orientation.y = 1
+  obj_rec_goal.target.position.z = 0.3
+  obj_rec_goal.target.orientation.x = 0.4
+  obj_rec_goal.target.orientation.y = 0.8
   obj_rec_goal.target.orientation.z = 1
   obj_rec_goal.target.orientation.w = 1
 
-  obj_rec_goal.max_accel = 0.2
-  obj_rec_goal.max_angaccel = 0.2
+  obj_rec_goal.max_accel = 0.4
+  obj_rec_goal.max_angaccel = 0.4
+  obj_rec_goal.max_vel = 0.8
+  obj_rec_goal.max_angvel = 0.8
+  obj_rec_goal.alpha = 0.2
 
   r2h_handv_goal = RobotHumanHandoverReachingGoal()
 
@@ -90,7 +93,7 @@ def main():
   ft_cal_cl.send_goal_and_wait(cal_goal)
   for c in range(0,3):
     obj_rec_cl.send_goal_and_wait(obj_rec_goal)
-    r2h_handv_cl.send_goal_and_wait(r2h_handv_goal)
+    # r2h_handv_cl.send_goal_and_wait(r2h_handv_goal)
 
   rospy.loginfo('bye!')
 

@@ -123,3 +123,34 @@ def poly_jerk(coeff : list, t : float):
     y += n*(n-1)*(n-2)*c*pow(t,n-3)
     n += 1
   return y
+
+def trapz_mod_pos(h : float, T : float, alpha : float, t : float):
+  Ta = alpha*T
+  if 0 <= t and t <= Ta:
+    y = pow(t,2)/4 + 1/2*pow(Ta/(2*pi),2)*(np.cos(2*pi*t/Ta) - 1)
+  elif Ta < t and t < T - Ta:
+    y = Ta/2*t - pow(Ta,2)/4
+  elif T - Ta <= t and t <= T:
+    c2 = -pow(Ta,2)/2 + Ta*T/2 - pow(T,2)/4 + 1/2*pow(Ta/(2*pi),2)*np.cos(2*pi*(T-t)/Ta)
+    y = -pow(t,2)/4 - 1/2*pow(Ta/(2*pi),2)*np.cos(2*pi*(T-t)/Ta) + T/2*t + c2
+  return y*abs(2/(alpha*(alpha-1)))*h/pow(T,2)
+
+def trapz_mod_vel(h : float, T : float, alpha : float, t : float):
+  Ta = alpha*T
+  if 0 <= t and t <= Ta:
+    y = t/2 - Ta/(4*pi)*np.sin(2*pi*t/Ta)
+  elif Ta < t and t < T - Ta:
+    y = Ta/2
+  elif T - Ta <= t and t <= T:
+    y = -t/2 - Ta/(4*pi)*np.sin(2*pi*(T-t)/Ta) + T/2
+  return y*abs(2/(alpha*(alpha-1)))*h/pow(T,2)
+
+def trapz_mod_accel(h : float, T : float, alpha : float, t : float):
+  Ta = alpha*T
+  if 0 <= t and t <= Ta:
+    y = 1/2 - 1/2*np.cos(2*pi*t/Ta)
+  elif Ta < t and t < T - Ta:
+    y = 0
+  elif T - Ta <= t and t <= T:
+    y = -1/2 + 1/2*np.cos(2*pi*(T-t)/Ta)
+  return y*abs(2/(alpha*(alpha-1)))*h/pow(T,2)

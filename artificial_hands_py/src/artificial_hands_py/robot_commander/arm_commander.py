@@ -63,6 +63,9 @@ class ArmCommander(ControllerManagerBase):
   def cancel_pose_target(self):
     self.c_traj_cl.cancel_all_goals()
   
+  def set_dmp_ratio(self,dmp_ratio):
+    self.goal.dmp_ratio = dmp_ratio
+  
   def set_stop_time(self,stop_time):
     self.goal.stop_time = stop_time
 
@@ -85,6 +88,19 @@ class ArmCommander(ControllerManagerBase):
   def set_poly_567_traj_generator(self):
     self.goal.traj_type = self.goal.POLY567
     self.c_gen_cl.send_goal_and_wait(self.goal)
+
+  def set_mod_trapz_traj_generator(self):
+    self.goal.traj_type = self.goal.TRAPZMOD
+    self.c_gen_cl.send_goal_and_wait(self.goal)
+
+  def set_alpha(self, alpha : float): 
+    self.goal.trapz_alpha = alpha
+  
+  def set_max_vel(self, max_vel : float):
+    self.goal.trapz_max_vel = max_vel
+  
+  def set_max_angvel(self, max_angvel : float):
+    self.goal.trapz_max_angvel = max_angvel
 
   def set_max_accel(self,max_accel : float):
     self.goal.traj_max_accel = max_accel

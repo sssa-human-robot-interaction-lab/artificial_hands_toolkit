@@ -63,6 +63,9 @@ class CartesianTrajectoryGenerator:
 
     if goal.stop_time < 0.1 or goal.stop_time > 0.5:
       goal.stop_time = 0.1
+    
+    if goal.dmp_ratio < 0.1 or goal.dmp_ratio > 1:
+      goal.dmp_ratio = 0.1
 
     if goal.traj_type == goal.STOP:
       if self.plugin_running:
@@ -70,7 +73,7 @@ class CartesianTrajectoryGenerator:
       self.traj_as.set_succeeded(self.traj_result)
       return
 
-    self.dmp_plugin.set_plugin_target(goal.traj_target)
+    self.dmp_plugin.set_plugin_target(goal.traj_target,goal.dmp_ratio)
 
     if goal.traj_type == goal.FORWARD:
       self.target = goal.traj_target
@@ -111,16 +114,13 @@ class CartesianTrajectoryGenerator:
       self.traj_as.set_succeeded(self.traj_result)
       return
 
-    if goal.traj_max_accel < 0:
-      goal.traj_max_accel = -goal.traj_max_accel
-    elif goal.traj_max_accel == 0:
+    if goal.traj_max_accel <= 0:
       goal.traj_max_accel = 0.5
     elif goal.traj_max_accel > 1.5:
       goal.traj_max_accel = 1.5
-    if goal.traj_max_angaccel < 0:
-      goal.traj_max_angaccel = -goal.traj_max_angaccel
-    elif goal.traj_max_angaccel == 0:
-      goal.traj_max_angaccel = 1.5
+
+    if goal.traj_max_angaccel <= 0:
+      goal.traj_max_angaccel = 0.5
     elif goal.traj_max_angaccel > 1:
       goal.traj_max_angaccel = 1    
 
@@ -286,6 +286,81 @@ class CartesianTrajectoryGenerator:
         self.target.jerk.linear.z = poly_jerk(z_567,c*dt)
 
         angle = poly_pos(rot_567,c*dt)
+        self.target.pose.orientation = list_to_quat(
+          ts.quaternion_multiply(ts.quaternion_from_matrix(ts.rotation_matrix(angle,delta_axis,delta_point)),quat_to_list(c_target.pose.orientation)))
+
+        self.traj_feedback.percentage = 100*c/c_max
+        self.traj_as.publish_feedback(self.traj_feedback)
+
+        self.rate.sleep()
+
+      if self.traj_result.success:
+        self.traj_as.set_succeeded(self.traj_result)
+
+    elif goal.traj_type == goal.TRAPZMOD:
+
+      if goal.trapz_max_vel <= 0:
+        goal.trapz_max_vel = 0.5
+      elif goal.trapz_max_vel > 1.5:
+        goal.trapz_max_vel = 1.5
+      
+      if goal.trapz_max_angvel <= 0:
+        goal.trapz_max_angvel = 0.5
+      elif goal.trapz_max_angvel > 1:
+        goal.trapz_max_angvel = 1 
+      
+      if goal.trapz_alpha <= 0:
+        goal.trapz_alpha = 0.2
+      elif goal.trapz_alpha > 0.5:
+        goal.trapz_alpha = 0.5 
+
+      max_vel = goal.trapz_max_vel
+      max_angvel = goal.trapz_max_angvel
+      while True:
+        c_v = abs(1/(goal.trapz_alpha-1))
+        goal_time = max(h*c_v/max_vel,h_rot*c_v/max_angvel)
+        c_a = abs(2/(goal.trapz_alpha*(goal.trapz_alpha-1)))
+        max_accel = c_a*h/pow(goal_time,2)
+        max_angaccel = c_a*h_rot/pow(goal_time,2)
+        if max_accel <= goal.traj_max_accel and max_angaccel <= goal.traj_max_angaccel:
+          break
+        max_vel = max_vel*0.99
+        max_angvel = max_angvel*0.99
+
+      c_max = floor(goal_time/dt) + 1
+      goal_time = c_max*dt
+
+      for c in range(1,c_max+1):
+
+        if self.traj_as.is_preempt_requested():
+
+          c_max = floor(goal.stop_time/dt) + 1
+          goal.stop_time = c_max*dt
+          
+          stop_twist = Twist()
+          for k in range(1,c_max+1):
+            stop_twist.linear.x = trapz_mod_vel(delta_target.pose.position.x,goal_time,goal.trapz_alpha,c*dt)*down_scaling_hann(k,c_max)
+            stop_twist.linear.y = trapz_mod_vel(delta_target.pose.position.y,goal_time,goal.trapz_alpha,c*dt)*down_scaling_hann(k,c_max)
+            stop_twist.linear.z = trapz_mod_vel(delta_target.pose.position.z,goal_time,goal.trapz_alpha,c*dt)*down_scaling_hann(k,c_max)
+            self.target_from_twist(stop_twist,dt)
+            self.rate.sleep()
+    
+          self.stop_target()
+          self.traj_result.success = False
+          self.traj_as.set_preempted()
+          break
+
+        self.target.pose.position.x = c_target.pose.position.x + trapz_mod_pos(delta_target.pose.position.x,goal_time,goal.trapz_alpha,c*dt)
+        self.target.pose.position.y = c_target.pose.position.y + trapz_mod_pos(delta_target.pose.position.y,goal_time,goal.trapz_alpha,c*dt)
+        self.target.pose.position.z = c_target.pose.position.z + trapz_mod_pos(delta_target.pose.position.z,goal_time,goal.trapz_alpha,c*dt)
+        self.target.twist.linear.x = trapz_mod_vel(delta_target.pose.position.x,goal_time,goal.trapz_alpha,c*dt)
+        self.target.twist.linear.y = trapz_mod_vel(delta_target.pose.position.y,goal_time,goal.trapz_alpha,c*dt)
+        self.target.twist.linear.z = trapz_mod_vel(delta_target.pose.position.z,goal_time,goal.trapz_alpha,c*dt)
+        self.target.acceleration.linear.x = trapz_mod_accel(delta_target.pose.position.x,goal_time,goal.trapz_alpha,c*dt)
+        self.target.acceleration.linear.y = trapz_mod_accel(delta_target.pose.position.y,goal_time,goal.trapz_alpha,c*dt)
+        self.target.acceleration.linear.z = trapz_mod_accel(delta_target.pose.position.z,goal_time,goal.trapz_alpha,c*dt)
+
+        angle = trapz_mod_pos(delta_angle,goal_time,goal.trapz_alpha,c*dt)
         self.target.pose.orientation = list_to_quat(
           ts.quaternion_multiply(ts.quaternion_from_matrix(ts.rotation_matrix(angle,delta_axis,delta_point)),quat_to_list(c_target.pose.orientation)))
 
