@@ -1,0 +1,11 @@
+# Butter low pass 3rd order 10 Hz
+
+frame_kinematics_filter:
+  order: 3
+  num: [0.010183,0.030548,0.030548,0.010183]
+  den: [1.0,-2.0038,1.4471,-0.3618]
+
+ft_sensor_filter:
+  order: 3
+  num: [0.00021961,0.00065882,0.00065882,0.00021961]
+  den: [1.0,-2.7488,2.5282,-0.77764]

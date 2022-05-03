@@ -22,9 +22,6 @@ add_library(${PROJECT_NAME}
   include/${PROJECT_NAME}/BaseMath.hpp
   include/${PROJECT_NAME}/FrameDynamics.hpp
   include/${PROJECT_NAME}/FrameKinematics.hpp
-  include/${PROJECT_NAME}/WristFTCalibration.hpp
-  include/${PROJECT_NAME}/WristFTContactDetection.hpp
-  include/${PROJECT_NAME}/WristFTProprioception.hpp
 )
 
 add_dependencies(${PROJECT_NAME} ${${PROJECT_NAME}_EXPORTED_TARGETS} ${catkin_EXPORTED_TARGETS})

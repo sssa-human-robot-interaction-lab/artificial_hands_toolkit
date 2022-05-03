@@ -2,7 +2,7 @@
 #define ATK_WRIST_FT_INTERACTION
 
 #include <artificial_hands_base/FrameDynamics.hpp>
-#include <wrist_frame_dynamics/WristFTContactDetection.hpp>
+#include <artificial_hands_dynamics/WristFTContactDetection.hpp>
 
 namespace atk
 {

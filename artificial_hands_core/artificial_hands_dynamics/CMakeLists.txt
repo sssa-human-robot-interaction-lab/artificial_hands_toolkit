@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(artificial_hands_nodes)
+project(artificial_hands_dynamics)
 
 find_package(catkin REQUIRED COMPONENTS artificial_hands_base)
 
@@ -10,7 +10,8 @@ catkin_package(
 )
 
 include_directories(
- ${catkin_INCLUDE_DIRS}
+  include
+  ${catkin_INCLUDE_DIRS}
 )
 
 add_executable(frame_kinematics_node src/frame_kinematics_node.cpp)

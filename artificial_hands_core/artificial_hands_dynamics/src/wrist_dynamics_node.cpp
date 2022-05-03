@@ -2,8 +2,8 @@
 #include <artificial_hands_msgs/DetectionStamped.h>
 #include <artificial_hands_msgs/WristDynamicsStamped.h>
 #include <artificial_hands_msgs/WristDynamicsCommand.h>
-#include <wrist_frame_dynamics/WristFTCalibration.hpp>
-#include <wrist_frame_dynamics/WristFTProprioception.hpp>
+#include <artificial_hands_dynamics/WristFTCalibration.hpp>
+#include <artificial_hands_dynamics/WristFTProprioception.hpp>
 
 #include <geometry_msgs/WrenchStamped.h>
 #include <control_msgs/JointControllerState.h>
