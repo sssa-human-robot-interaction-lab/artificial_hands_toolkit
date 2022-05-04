@@ -6,6 +6,7 @@
 
   <!-- Remap to hw controller -->
   <remap unless="$(arg sim)" from="/mia_hand_vel_trajectory_controller/follow_joint_trajectory" to="/mia_hand/mia_hand_hw_vel_trajectory_controller/follow_joint_trajectory"/>
+  <remap if="$(arg sim)" from="/scaled_pos_joint_controller/follow_joint_trajectory" to="/pos_joint_trajectory_controller/follow_joint_trajectory"/>
 
   <!-- Launch moveit -->
   <include file="$(find mia_hand_on_ur10e_moveit_config)/launch/move_group.launch">

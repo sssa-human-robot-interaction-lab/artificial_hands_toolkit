@@ -5,6 +5,8 @@ from geometry_msgs.msg import QuaternionStamped
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 from dmp_extended.msg import MJerkTrackTarget, DesiredTrajectory
 
+from artificial_hands_py.artificial_hands_py_base import norm_quat
+
 class DMPTrajectoryPlugin:
   lin_vel_tolerance = 1e-02
   lin_accel_tolerance = 1e-02
@@ -38,7 +40,7 @@ class DMPTrajectoryPlugin:
     self.target_pos.vel = target.twist.linear
     self.target_pos.acc = target.acceleration.linear
 
-    self.target_rot.quaternion = target.pose.orientation
+    self.target_rot.quaternion = norm_quat(target.pose.orientation)
 
     self.pos_pub.publish(self.target_pos)
     self.rot_pub.publish(self.target_rot)

@@ -78,9 +78,9 @@ class ForceTorqueSensorCalibrationModule(RobotCommander):
     rot = ts.quaternion_matrix(quat_to_list(c_pose.orientation))
     c_pose.orientation = list_to_quat(ts.quaternion_multiply(ts.quaternion_about_axis(-pi/2,rot[:,0]),quat_to_list(c_pose.orientation)))
     self.arm.set_pose_target(c_pose)
-    rot = ts.quaternion_matrix(quat_to_list(c_pose.orientation))
-    c_pose.orientation = list_to_quat(ts.quaternion_multiply(ts.quaternion_about_axis(-pi/2,rot[:,0]),quat_to_list(c_pose.orientation)))
-    self.arm.set_pose_target(c_pose)
+    # rot = ts.quaternion_matrix(quat_to_list(c_pose.orientation))
+    # c_pose.orientation = list_to_quat(ts.quaternion_multiply(ts.quaternion_about_axis(-pi/2,rot[:,0]),quat_to_list(c_pose.orientation)))
+    # self.arm.set_pose_target(c_pose)
 
     # estimate calibration and get wrist_dynamics_module to idle
     self.wrist_dyn.estimate_calibration()

@@ -13,7 +13,7 @@ class DetectionSubscriber:
     self.dynamic_contact = False
   
   def detection_cb(self, msg : DetectionStamped):
-    self.static_contact = msg.detection.trigger or msg.detection.backtrig
+    self.static_contact = msg.detection.backtrig #or msg.detection.trigger
     self.dynamic_contact = msg.detection.trigger
 
 @singleton

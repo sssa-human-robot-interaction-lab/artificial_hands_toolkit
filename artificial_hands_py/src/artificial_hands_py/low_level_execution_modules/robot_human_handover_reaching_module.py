@@ -1,3 +1,5 @@
+from threading import Thread
+
 import rospy, actionlib
 
 from geometry_msgs.msg import Pose
@@ -37,15 +39,23 @@ class RobotHumanHandoverReachingModule(RobotCommander):
     self.wrist_dyn.set_save_interaction()
     
     # move to start position
+    self.arm.set_dmp_ratio(1) #just to make the dmp following faster the current target
     self.arm.set_stop_time(goal.stop_time)
-    self.arm.set_max_accel(goal.max_accel)
-    self.arm.set_max_angaccel(goal.max_angaccel)
+    self.arm.set_max_accel(0.2) # use lower accelration to reach the home position
+    self.arm.set_max_angaccel(0.2)
     self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller('cartesian_motion_position_controller')
     self.arm.set_pose_target(goal.home)
 
+    # prepare hand to open in a separate thread
+    self.hand.switch_to_controller('mia_hand_joint_group_vel_controller')
+    open_thread = Thread(target=self.hand.open,args=[False,3])
+
     # change to dmp
-    self.arm.set_dmp_traj_generator()
+    # self.arm.set_dmp_traj_generator()
+    # self.arm.set_dmp_ratio(.2) #just to set a reasonable ratio for reaching
+    self.arm.set_max_accel(goal.max_accel) # not rqeuired for dmp
+    self.arm.set_max_angaccel(goal.max_angaccel)
     rospy.sleep(self.sleep_dur)
 
     # go to target pose and monitor execution
@@ -65,7 +75,8 @@ class RobotHumanHandoverReachingModule(RobotCommander):
       # self.arm.update_trajectory_monitor()
       rate.sleep()
       
-    # stop arm immediately at the end of the loop
+    # open the hand, stop arm immediately at the end of the loop
+    open_thread.start()
     self.arm.stop()
 
     # wait a bit before set wrist_dynamics_module to idle
@@ -73,8 +84,15 @@ class RobotHumanHandoverReachingModule(RobotCommander):
     self.wrist_dyn.stop_loop()
 
     # wait a bit and retire to back position
-    # rospy.sleep(rospy.Duration(goal.sleep))
-    # self.arm.set_pose_target(goal.back)
+    rospy.sleep(rospy.Duration(goal.sleep))
+    self.arm.set_max_accel(0.2) # use lower accelration to reach the back position
+    self.arm.set_max_angaccel(0.2)
+    self.arm.set_harmonic_traj_generator()
+    self.arm.switch_to_cartesian_controller('cartesian_motion_position_controller')
+    self.arm.set_pose_target(goal.back)
+
+    # join the open thread
+    open_thread.join()
 
     # stop controllers
     self.arm.pause_all_controllers()

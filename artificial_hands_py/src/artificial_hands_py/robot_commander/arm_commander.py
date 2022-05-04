@@ -63,10 +63,11 @@ class ArmCommander(ControllerManagerBase):
   def cancel_pose_target(self):
     self.c_traj_cl.cancel_all_goals()
   
-  def set_dmp_ratio(self,dmp_ratio):
+  def set_dmp_ratio(self,dmp_ratio : float):
     self.goal.dmp_ratio = dmp_ratio
+    self.c_traj_cl.send_goal_and_wait(self.goal)
   
-  def set_stop_time(self,stop_time):
+  def set_stop_time(self,stop_time : float):
     self.goal.stop_time = stop_time
 
   def set_forward_traj_point(self):
