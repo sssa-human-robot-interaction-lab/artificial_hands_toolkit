@@ -44,15 +44,20 @@ class MiaHandCommanderGui(QWidget):
     self.hand = hand
 
     self.cyl_grasp_group_box = GraspGroupBox(self,'CYL')
-    self.cyl_grasp_group_box.j_spin_box.setValue(1.10)
+    self.cyl_grasp_group_box.j_spin_box.setValue(1.20)
     self.cyl_grasp_group_box.m_spin_box.setValue(1.10)
     self.cyl_grasp_group_box.t_spin_box.setValue(0.60)
     self.cyl_grasp_group_box.setChecked(True)
 
     self.pin_grasp_group_box = GraspGroupBox(self,'PIN')
-    self.pin_grasp_group_box.j_spin_box.setValue(1.04)
+    self.pin_grasp_group_box.j_spin_box.setValue(1.22)
     self.pin_grasp_group_box.m_spin_box.setValue(0.40)
-    self.pin_grasp_group_box.t_spin_box.setValue(0.64)
+    self.pin_grasp_group_box.t_spin_box.setValue(0.60)
+
+    self.tri_grasp_group_box = GraspGroupBox(self,'TRI')
+    self.tri_grasp_group_box.j_spin_box.setValue(1.20)
+    self.tri_grasp_group_box.m_spin_box.setValue(1.10)
+    self.tri_grasp_group_box.t_spin_box.setValue(0.80)
 
     self.close_push_button = QPushButton('Close')
     self.open_push_button = QPushButton('Open')
@@ -76,11 +81,13 @@ class MiaHandCommanderGui(QWidget):
     main_layout = QVBoxLayout()
     main_layout.addWidget(self.cyl_grasp_group_box)
     main_layout.addWidget(self.pin_grasp_group_box)
+    main_layout.addWidget(self.tri_grasp_group_box)
     main_layout.addLayout(open_vel_layout)
     main_layout.addLayout(buttons_layout)
 
     self.cyl_grasp_group_box.clicked.connect(self.on_cyl_grasp_checked)
     self.pin_grasp_group_box.clicked.connect(self.on_pin_grasp_checked)
+    self.tri_grasp_group_box.clicked.connect(self.on_tri_grasp_checked)
     self.close_push_button.clicked.connect(self.on_close_button)
     self.open_push_button.clicked.connect(self.on_open_button)
 
@@ -88,21 +95,30 @@ class MiaHandCommanderGui(QWidget):
   
   def on_cyl_grasp_checked(self):
     self.pin_grasp_group_box.setChecked(False)
+    self.tri_grasp_group_box.setChecked(False)
   
   def on_pin_grasp_checked(self):
     self.cyl_grasp_group_box.setChecked(False)
+    self.tri_grasp_group_box.setChecked(False)
+  
+  def on_tri_grasp_checked(self):
+    self.cyl_grasp_group_box.setChecked(False)
+    self.pin_grasp_group_box.setChecked(False)
   
   def on_close_button(self):
     if self.cyl_grasp_group_box.isChecked():
       j = self.cyl_grasp_group_box.j_spin_box.value()
       m = self.cyl_grasp_group_box.m_spin_box.value()
       t = self.cyl_grasp_group_box.t_spin_box.value()
-      self.hand.close([j,m,t])
     elif self.pin_grasp_group_box.isChecked():
       j = self.pin_grasp_group_box.j_spin_box.value()
       m = self.pin_grasp_group_box.m_spin_box.value()
       t = self.pin_grasp_group_box.t_spin_box.value()
-      self.hand.close([j,m,t])
+    elif self.tri_grasp_group_box.isChecked():
+      j = self.tri_grasp_group_box.j_spin_box.value()
+      m = self.tri_grasp_group_box.m_spin_box.value()
+      t = self.tri_grasp_group_box.t_spin_box.value()
+    self.hand.close([j,m,t])
 
   def on_open_button(self):
     self.hand.open(vel=self.open_vel_slider.value()*3/100)
