@@ -29,6 +29,9 @@ class ForceTorqueSensorCalibrationModule(RobotCommander):
     self.wrist_dyn.subscribe()
     self.wrist_dyn.set_publish()
 
+    # get hand in open position
+    self.hand.open()
+
     # go to home position
     self.arm.set_max_accel(goal.max_accel)
     self.arm.set_max_angaccel(goal.max_angaccel)

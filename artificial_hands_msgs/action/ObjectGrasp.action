@@ -1,0 +1,17 @@
+#goal   
+geometry_msgs/Pose home
+geometry_msgs/Pose target
+geometry_msgs/Pose back
+std_msgs/Float64MultiArray preshape
+std_msgs/Float64MultiArray shape
+float64 alpha
+float64 max_vel
+float64 max_angvel
+float64 max_accel
+float64 max_angaccel
+---
+#result
+int64 success
+---
+#feedback
+int64 percentage

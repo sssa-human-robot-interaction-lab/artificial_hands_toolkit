@@ -23,11 +23,7 @@ class ObjectRecognitionModule(RobotCommander):
     self.wrist_dyn.start_node(calib=True)
     self.wrist_dyn.set_publish()
     
-    # set parameters for the trapz trajectory
-    # self.arm.set_alpha(goal.alpha)
-    # self.arm.set_max_vel(goal.max_vel)
-    # self.arm.set_max_angvel(goal.max_angvel)
-
+    # go to home
     self.arm.set_max_accel(goal.max_accel)
     self.arm.set_max_angaccel(goal.max_angaccel)
     self.arm.set_harmonic_traj_generator()
@@ -38,8 +34,7 @@ class ObjectRecognitionModule(RobotCommander):
     self.wrist_dyn.set_save_dynamics()
     rospy.sleep(self.sleep_dur)
 
-    # go to target pose with a trapz trajectory
-    # self.arm.set_mod_trapz_traj_generator()
+    # go to target pose
     self.arm.set_pose_target(goal.target)
     rospy.sleep(self.sleep_dur)
 

@@ -1,8 +1,6 @@
-import rospy, numpy as np
+import numpy as np
 
-from geometry_msgs.msg import Quaternion
-
-from artificial_hands_msgs.srv import WristDynamicsCommand
+from geometry_msgs.msg import Quaternion,Pose
 
 def singleton(cls, *args, **kw):
      instances = {}
@@ -29,7 +27,17 @@ def quat_to_list(quat : Quaternion) -> list:
   return q
 
 def norm_quat(quat : Quaternion):
-
   q = quat_to_list(quat)
   q_norm = np.linalg.norm(q)
   return list_to_quat([q_/q_norm for q_ in q])
+
+def pose_copy(pose : Pose) -> Pose:
+  p = Pose()
+  p.position.x = pose.position.x
+  p.position.y = pose.position.y
+  p.position.z = pose.position.z
+  p.orientation.x = pose.orientation.x
+  p.orientation.y = pose.orientation.y
+  p.orientation.z = pose.orientation.z
+  p.orientation.w = pose.orientation.w
+  return p
