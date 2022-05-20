@@ -53,11 +53,11 @@
     output="screen" respawn="false" />
 
   <!-- Load publisher to remap joint state from the simulated hand to the one on the robot arm -->
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" ns="/mia_hand_sim">
+  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false" ns="/mia_hand">
     <remap from="/mia_hand/joint_states" to="/mia_hand_sim/miaviz_joint_states"/>
   </node>
 
   <!-- rviz -->
-  <node if="$(arg rviz)" pkg="rviz" type="rviz" name="rviz_demo_config" output="screen" args="-d $(find artificial_hands_bringup)/etc/rviz_config.rviz"/>
+  <include file="$(find artificial_hands_description)/launch/rviz_bringup.launch"/>
   
 </launch>

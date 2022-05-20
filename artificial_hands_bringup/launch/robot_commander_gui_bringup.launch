@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="fake_ft" default="true" />
+  <arg name="hand_cmd" default="false" />
 
   <!-- Load dmp_extended node -->
   <include file="$(find dmp_extended)/launch/dmp_node.launch"/>
@@ -12,7 +12,8 @@
   <!-- Run the trajectory monitor node -->
   <node pkg="artificial_hands_nodes" type="cartesian_trajectory_tf_monitor_node.py" name="cartesian_trajectory_tf_monitor_node" output="screen"/>
 
-  <!-- Run the robot commander gui node -->
-  <node pkg="artificial_hands_nodes" type="robot_commander_gui_node.py" name="cobot_rommander_gui_node" output="screen"/>
+  <!-- Run the arm/robot commander gui node -->
+  <node if="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="robot_commander_gui_node.py" name="robot_rommander_gui_node" output="screen"/>
+  <node unless="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="arm_commander_gui_node.py" name="robot_rommander_gui_node" output="screen"/>
 
 </launch>

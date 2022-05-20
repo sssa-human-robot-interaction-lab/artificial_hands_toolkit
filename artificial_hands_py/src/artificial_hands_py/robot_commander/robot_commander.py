@@ -18,20 +18,29 @@ class RobotCommander(ABC):
 
     j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
     cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
+    cart_mot_vel_ctrl = 'cartesian_motion_position_controller'
+    cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
+    cart_eik_vel_ctrl = 'cartesian_eik_position_controller'
 
     arm_ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
-                cart_mot_pos_ctrl : PoseStamped}
+                cart_mot_pos_ctrl : PoseStamped,
+                cart_mot_vel_ctrl : PoseStamped,
+                cart_eik_pos_ctrl : MultiDOFJointTrajectory,
+                cart_eik_vel_ctrl : MultiDOFJointTrajectory}
 
     cart_mot_pos_pub = PoseStampedPublisher(cart_mot_pos_ctrl+'/command')
+    cart_mot_vel_pub = PoseStampedPublisher(cart_mot_vel_ctrl+'/command')
+    cart_eik_pos_pub = CartesianMDOFPointPublisher(cart_eik_pos_ctrl+'/command')
+    cart_eik_vel_pub = CartesianMDOFPointPublisher(cart_eik_vel_ctrl+'/command')
 
     self.arm = ArmCommander(ctrl_dict=arm_ctrl_dict) 
 
-    mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
+    mia_j_traj_ctrl = 'mia_hand_vel_trajectory_controller'
     mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
     
     mia_ctrl_dict = {mia_j_traj_ctrl : JointTrajectory,
                 mia_j_vel_ctrl : Float64MultiArray}
 
-    self.hand = MiaHandCommander(ns='mia_hand',ctrl_dict=mia_ctrl_dict)
+    self.hand = MiaHandCommander(ns='mia_hand_sim',ctrl_dict=mia_ctrl_dict)
 
     self.wrist_dyn = WristDynamics()

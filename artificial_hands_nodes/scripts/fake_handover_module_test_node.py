@@ -27,10 +27,7 @@ def main():
   ft_cal_goal.home.position.x = 0.5
   ft_cal_goal.home.position.y = 0.2
   ft_cal_goal.home.position.z = 0.5
-  ft_cal_goal.home.orientation.x = 0
-  ft_cal_goal.home.orientation.y = 0
-  ft_cal_goal.home.orientation.z = 0
-  ft_cal_goal.home.orientation.w = 1
+  ft_cal_goal.home.orientation = list_to_quat([0,0,0,1])
   ft_cal_goal.max_accel = 0.4
   ft_cal_goal.max_angaccel = 0.2
 
@@ -74,38 +71,16 @@ def main():
   r2h_handv_goal.target.position.y = 0.58
   r2h_handv_goal.target.position.z = 0.21
   r2h_handv_goal.back = pose_copy(ft_cal_goal.home)
-  r2h_handv_goal.max_accel = 1.0
-  r2h_handv_goal.max_angaccel = 1.0
+  r2h_handv_goal.max_accel = 0.4
+  r2h_handv_goal.max_angaccel = 0.4
   r2h_handv_goal.stop_time = 0.2
   r2h_handv_goal.sleep = 1
-
-  # robot = RobotCommander()
-  # rate = rospy.Rate(30)
 
   # high level control loop: start with a calibration
   ft_cal_cl.send_goal_and_wait(ft_cal_goal)
   while True:
     
-    # open the hand and wait for an object to grasp
-    # robot.hand.open()
-    # robot.wrist_dyn.start_node()
-    # robot.wrist_dyn.do_zero()
-    # sleep(1)
-    # robot.wrist_dyn.set_trigger_static()
-    # robot.wrist_dyn.detection.static_contact = False
-    # while not robot.wrist_dyn.detection.static_contact:
-    #   if rospy.is_shutdown():
-    #     robot.wrist_dyn.stop_loop()
-    #     break
-    #   rate.sleep()
-
-    # if rospy.is_shutdown():
-    #   break
-      
-    # sleep(2)
-    # robot.hand.close()
-
-    # do object recognition
+    # grasp
     obj_grasp_cl.send_goal_and_wait(obj_grasp_goal)
     
     # do object recognition
