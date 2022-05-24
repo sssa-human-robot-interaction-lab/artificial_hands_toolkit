@@ -29,7 +29,7 @@ def main():
   ft_cal_goal.home.position.z = 0.5
   ft_cal_goal.home.orientation = list_to_quat([0,0,0,1])
   ft_cal_goal.max_accel = 0.4
-  ft_cal_goal.max_angaccel = 0.2
+  ft_cal_goal.max_angaccel = 0.4
 
   # grasp the object
   obj_grasp_goal = ObjectGraspGoal()
@@ -40,10 +40,10 @@ def main():
   obj_grasp_goal.home.orientation.y = 0.674
   obj_grasp_goal.home.orientation.z = -0.695
   obj_grasp_goal.home.orientation.w = 0.253
-  obj_grasp_goal.preshape.data = [0.4,0.3,0.0]
+  obj_grasp_goal.preshape.data = [0.3,0.3,0.0]
   obj_grasp_goal.target = pose_copy(obj_grasp_goal.home)
   obj_grasp_goal.target.position.y = -0.342
-  obj_grasp_goal.shape.data = [1.2,1.1,0.6]
+  obj_grasp_goal.shape.data = [1.2,1.2,0.6]
   obj_grasp_goal.back = pose_copy(obj_grasp_goal.target)
   obj_grasp_goal.back.position.z = 0.010
   obj_grasp_goal.max_vel = 0.4

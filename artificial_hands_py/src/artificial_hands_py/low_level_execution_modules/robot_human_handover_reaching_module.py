@@ -52,8 +52,8 @@ class RobotHumanHandoverReachingModule(RobotCommander):
     open_thread = Thread(target=self.hand.open,args=[False,3])
 
     # change to dmp
-    self.arm.set_dmp_traj_generator()
-    self.arm.set_dmp_ratio(.2) #just to set a reasonable ratio for reaching
+    # self.arm.set_dmp_traj_generator()
+    # self.arm.set_dmp_ratio(.2) #just to set a reasonable ratio for reaching
     self.arm.set_max_accel(goal.max_accel) # not rqeuired for dmp
     self.arm.set_max_angaccel(goal.max_angaccel)
     rospy.sleep(self.sleep_dur)
@@ -70,8 +70,8 @@ class RobotHumanHandoverReachingModule(RobotCommander):
 
     # update dmp target according to human hand pose, break on detection
     self.wrist_dyn.detection.dynamic_contact = False
-    while self.arm.percentage < 100:
-    # while not self.wrist_dyn.detection.dynamic_contact:
+    # while self.arm.percentage < 100:
+    while not self.wrist_dyn.detection.dynamic_contact:
       # self.arm.set_pose_target(self.target)
       # self.arm.update_trajectory_monitor()
       rate.sleep()

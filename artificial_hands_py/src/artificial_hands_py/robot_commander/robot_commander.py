@@ -35,12 +35,12 @@ class RobotCommander(ABC):
 
     self.arm = ArmCommander(ctrl_dict=arm_ctrl_dict) 
 
-    mia_j_traj_ctrl = 'mia_hand_vel_trajectory_controller'
+    mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
     mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
     
     mia_ctrl_dict = {mia_j_traj_ctrl : JointTrajectory,
                 mia_j_vel_ctrl : Float64MultiArray}
 
-    self.hand = MiaHandCommander(ns='mia_hand_sim',ctrl_dict=mia_ctrl_dict)
+    self.hand = MiaHandCommander(ns='mia_hand',ctrl_dict=mia_ctrl_dict)
 
     self.wrist_dyn = WristDynamics()
