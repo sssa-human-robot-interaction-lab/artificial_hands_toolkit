@@ -24,7 +24,7 @@ class ControllerManagerBase:
     pause the active controller active
 
   unpause_controller
-    unppause the last active controller
+    unpause the last active controller
 
   pause_all_controllers
     pause any active controller
@@ -39,7 +39,10 @@ class ControllerManagerBase:
     self.sw_ser = rospy.ServiceProxy(ns+'/controller_manager/switch_controller',SwitchController) 
     self.ctrl_dict = {}
     self.ctrl = ''
-    
+
+    # for y in ctrl_dict.keys():
+    #   self.ctrl_dict[rospy.remap_name(y).replace('/','',1)] = ctrl_dict[y]
+
     ls_ctrl = ls_ser()
     for y in ctrl_dict.keys():
       self.ctrl_dict[y] = rospy.Publisher(ns+'/'+y+'/command',ctrl_dict[y],queue_size=1000)

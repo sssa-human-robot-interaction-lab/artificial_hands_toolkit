@@ -66,6 +66,14 @@ class MiaHandCommanderGui(QWidget):
     buttons_layout.addWidget(self.close_push_button)
     buttons_layout.addWidget(self.open_push_button)
 
+    close_time_label,self.close_time_spin_box = new_param_item('Close time [s]',0.2,2.0,0.2,False)
+    self.close_rest_check_box = QCheckBox('Rest')
+
+    close_p_layout = QHBoxLayout()
+    close_p_layout.addWidget(close_time_label)
+    close_p_layout.addWidget(self.close_time_spin_box)
+    close_p_layout.addWidget(self.close_rest_check_box)
+
     open_vel_label = QLabel('Opening velocity [%]')
     open_vel_label.setAlignment(Qt.AlignCenter | Qt.AlignRight)
 
@@ -118,7 +126,7 @@ class MiaHandCommanderGui(QWidget):
       j = self.tri_grasp_group_box.j_spin_box.value()
       m = self.tri_grasp_group_box.m_spin_box.value()
       t = self.tri_grasp_group_box.t_spin_box.value()
-    self.hand.close([j,m,t])
+    self.hand.close([j,m,t],rest=self.close_rest_check_box.isChecked(),close_time=self.close_time_spin_box.value())
 
   def on_open_button(self):
     self.hand.open(vel=self.open_vel_slider.value()*3/100)

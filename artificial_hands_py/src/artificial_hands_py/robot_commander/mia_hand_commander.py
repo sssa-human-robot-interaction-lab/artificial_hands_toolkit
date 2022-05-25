@@ -52,7 +52,7 @@ class MiaHandCommander(ControllerManagerBase):
       self.pos[c] = msg.position[robot_joints.index(j)]    
       c += 1                              
 
-  def close(self, target_joints : list = [1.3,1.3,0.3], autoswitch=True,rest=True,timeout=1.5):
+  def close(self, target_joints : list = [1.3,1.3,0.3], autoswitch=True,rest=True,close_time=1.5):
     if autoswitch:
       self.switch_to_controller('mia_hand_hw_vel_trajectory_controller')
     cmd = JointTrajectory()
@@ -60,10 +60,10 @@ class MiaHandCommander(ControllerManagerBase):
     cmd.points = [JointTrajectoryPoint()]
     cmd.points[0].positions = target_joints
     cmd.points[0].velocities = [.0,.0,.0]
-    cmd.points[0].time_from_start = rospy.Time.from_sec(1.5)
+    cmd.points[0].time_from_start = rospy.Time.from_sec(close_time)
     self.controller_command(cmd)
     if rest:
-      rospy.sleep(rospy.Duration().from_sec(timeout))
+      rospy.sleep(rospy.Duration().from_sec(close_time))
       self.rest(True)
   
   def open(self,autoswitch=True,vel=.5):

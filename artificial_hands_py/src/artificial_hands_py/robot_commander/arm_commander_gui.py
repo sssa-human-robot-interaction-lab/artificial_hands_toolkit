@@ -20,6 +20,8 @@ class ArmCommanderGui(QWidget):
 
     self.arm = arm
 
+    self.send_waypoints_thread = Thread()
+
     self.cart_motion_ctrl_combo_box = QComboBox()
     self.cart_motion_ctrl_combo_box.addItems(list(arm.ctrl_dict.keys())[1:])
     

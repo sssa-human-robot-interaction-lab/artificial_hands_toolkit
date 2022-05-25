@@ -1,6 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="sim" default="true" />
   <arg name="hand_cmd" default="false" />
 
   <!-- Load dmp_extended node -->
@@ -11,6 +12,10 @@
 
   <!-- Run the trajectory monitor node -->
   <node pkg="artificial_hands_nodes" type="cartesian_trajectory_tf_monitor_node.py" name="cartesian_trajectory_tf_monitor_node" output="screen"/>
+
+  <!-- Remap controllers as needed -->
+  <remap if="$(arg sim)" from="scaled_pos_joint_traj_controller" to="pos_joint_traj_controller"/>
+  <remap if="$(arg sim)" from="mia_hand/scaled_pos_joint_traj_controller" to="pos_joint_traj_controller"/>
 
   <!-- Run the arm/robot commander gui node -->
   <node if="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="robot_commander_gui_node.py" name="robot_rommander_gui_node" output="screen"/>

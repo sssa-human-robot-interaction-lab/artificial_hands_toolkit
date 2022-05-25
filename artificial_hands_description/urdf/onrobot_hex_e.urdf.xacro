@@ -24,27 +24,27 @@
     </collision>
   </link>
 
-  <link name="hex_ee_mounting_plate"/>
-
-  <joint name="hex_ee_mounting_joint" type="fixed">
-    <origin xyz="0 0 0.037" rpy="0 0 0" />
-    <parent link="hex_mounting_plate" />
-    <child link="hex_ee_mounting_plate" />
-  </joint>
+  <gazebo reference="hex_mounting_plate">
+    <selfCollide>false</selfCollide>
+  </gazebo>
 
   <link name="hex_sensor_frame"/>
 
   <joint name="hex_sensor_joint" type="fixed">
-    <origin xyz="0 0 0" rpy="0 0 0" />
-    <parent link="hex_ee_mounting_plate" />
+    <origin xyz="0 0 0.037" rpy="0 0 0" />
+    <parent link="hex_mounting_plate" />
     <child link="hex_sensor_frame" />
   </joint>
 
-  <gazebo reference="hex_mounting_plate">
-    <selfCollide>False</selfCollide>
-  </gazebo>
+  <link name="hex_ee_mounting_plate"/>
 
-    <!-- Enable joint feedback representing the ft_sensor-->
+  <joint name="hex_ee_mounting_joint" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0" />
+    <parent link="hex_sensor_frame" />
+    <child link="hex_ee_mounting_plate" />
+  </joint>
+
+  <!-- Enable joint feedback representing the ft_sensor-->
   <gazebo reference="hex_sensor_joint">
     <preserveFixedJoint>true</preserveFixedJoint>
     <provideFeedback>true</provideFeedback>
@@ -54,7 +54,7 @@
   <gazebo>
     <plugin name="gazebo_ft_sensor" filename="libgazebo_ros_ft_sensor.so">
       <updateRate>500.0</updateRate>
-        <topicName>hex_ft_sensor</topicName>
+        <topicName>gazebo/ft_sensor</topicName>
         <!-- <gaussianNoise>0.0</gaussianNoise> -->
         <jointName>hex_sensor_joint</jointName>
     </plugin>
