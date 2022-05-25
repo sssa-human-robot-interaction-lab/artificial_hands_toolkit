@@ -90,6 +90,7 @@ class MiaHandCommanderGui(QWidget):
     main_layout.addWidget(self.cyl_grasp_group_box)
     main_layout.addWidget(self.pin_grasp_group_box)
     main_layout.addWidget(self.tri_grasp_group_box)
+    main_layout.addLayout(close_p_layout)
     main_layout.addLayout(open_vel_layout)
     main_layout.addLayout(buttons_layout)
 
