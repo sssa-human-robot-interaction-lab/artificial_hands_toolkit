@@ -4,3 +4,14 @@ mia_hand_joint_group_vel_controller:
     - j_index_fle
     - j_mrl_fle
     - j_thumb_fle
+
+mia_hand_j_index_fle_pos_vel_controller:
+  type: velocity_controllers/JointPositionController
+  joint: j_index_fle
+  pid:
+    p: 8.0
+    i: 0.1
+    d: 0.1
+    antiwindup: true
+    i_clamp_max: 5.0
+    i_clamp_min: -5.0
