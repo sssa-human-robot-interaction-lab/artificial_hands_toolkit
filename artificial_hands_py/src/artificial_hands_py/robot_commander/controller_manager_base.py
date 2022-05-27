@@ -53,6 +53,11 @@ class ControllerManagerBase:
           break
       if not c:
         ld_ser(y)
+  
+  def start_controllers(self,start_ctrl : list) -> None:
+    self.ctrl = None
+    stop_ctrl = self.ctrl_dict.keys() - start_ctrl
+    return self.sw_ser(start_ctrl,stop_ctrl,1,False,5).ok
 
   def switch_to_controller(self,start_ctrl : str) -> None:
     self.ctrl = start_ctrl
@@ -68,5 +73,11 @@ class ControllerManagerBase:
   def pause_all_controllers(self) -> None:
     return self.sw_ser([],list(self.ctrl_dict.keys()),1,False,5).ok
   
-  def controller_command(self,cmd) -> None:
+  def controller_command(self,cmd,ctrl : str = None) -> None:
+    if ctrl is None and self.ctrl is None:
+      rospy.logerr('No controller selected to forward command.')
+      return
+    if self.ctrl is None:
+      self.ctrl_dict[ctrl].publish(cmd)
+      return
     self.ctrl_dict[self.ctrl].publish(cmd)
