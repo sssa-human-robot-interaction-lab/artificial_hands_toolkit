@@ -11,3 +11,11 @@ Task oriented low-level modules, each of them has control of the robot (arm + en
 ## robot_commander
 
 Interface to control the whole robot trough simple python functions to set pose targets for the manipulator, send end-effector joint commands, manage sensors.
+
+### arm_commander/arm_commander_gui
+
+Interface to control the manipulator with the cartesian_trajectory_generator package
+
+### mia_hand_commander/mia_hand_commander_gui
+
+Interface to control the Mia hand gripper with single chain feedback controllers.
