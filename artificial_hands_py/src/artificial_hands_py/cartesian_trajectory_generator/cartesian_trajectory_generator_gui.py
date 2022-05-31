@@ -18,12 +18,13 @@ def new_param_item(lab : str, min : float, max : float, step : float, slider : b
   spin_box.setDecimals(3)
   spin_box.setRange(min,max)
   spin_box.setSingleStep(step)
+  spin_box.setValue(min)
   if slider:
     sld = QSlider(Qt.Horizontal)
     sld.setRange(0, 100)
     sld.setSingleStep(5)
     sld.valueChanged.connect(lambda: spin_box.setValue(min + sld.value()/100*(max-min)))
-    spin_box.valueChanged.connect(lambda: sld.setValue(100 - (max - spin_box.value())*100/(max-min)))
+    spin_box.valueChanged.connect(lambda: sld.setValue(100 - (max - spin_box.value())/(max-min)*100))
     return label,spin_box,sld
   else:
     return label,spin_box
