@@ -1,12 +1,12 @@
 cmake_minimum_required(VERSION 3.0.2)
 project(artificial_hands_base)
 
-find_package(catkin REQUIRED COMPONENTS roscpp moveit_ros_planning eigen_conversions artificial_hands_msgs)
+find_package(catkin REQUIRED COMPONENTS roscpp moveit_ros_planning eigen_conversions artificial_hands_msgs kalmancpp)
 
 catkin_package(
  INCLUDE_DIRS include
  LIBRARIES artificial_hands_base alglib
- CATKIN_DEPENDS moveit_ros_planning eigen_conversions artificial_hands_msgs
+ CATKIN_DEPENDS moveit_ros_planning eigen_conversions artificial_hands_msgs kalmancpp
 )
 
 include_directories(

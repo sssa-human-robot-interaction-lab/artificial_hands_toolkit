@@ -7,6 +7,7 @@
 #include <kdl/chainjnttojacdotsolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <eigen_conversions/eigen_msg.h>
+#include <kalmancpp/kalman.hpp>
 
 #include <artificial_hands_base/BaseFilters.hpp>
 
@@ -40,13 +41,16 @@ namespace atk
         kdl_parser::treeFromUrdfModel(*robot_model_loader.getURDF(),robot_kin);
         robot_kin.getChain(kinematic_model->getRootLinkName(),target_frame_,robot_chain_);
 
+        chann_ = robot_chain_.getNrOfJoints();
+
         jac_solver_ = new KDL::ChainJntToJacSolver(robot_chain_);
         dot_solver_ = new KDL::ChainJntToJacDotSolver(robot_chain_);
 
-        chann_ = robot_chain_.getNrOfJoints();
-
         j_pos_filter_ = new atk::BaseIRFilter();
         j_vel_filter_ = new atk::BaseIRFilter();
+
+        F_.resize(3*chann_,j_kal_init_obs_);
+
       }
 
       /**
@@ -66,6 +70,8 @@ namespace atk
        */
       bool Init(sensor_msgs::JointState js) 
       {
+        j_kal_init_ = false;
+        j_kal_init_counter_ = 0;
         j_pos_filter_->Init(js.position); 
         j_vel_filter_->Init(js.velocity); 
         Update(js);
@@ -86,19 +92,82 @@ namespace atk
         std::vector<double> j_velocity = j_vel_filter_->Get();
         for(int i = 0; i <js.name.size(); i++)
         {
-          kinematic_state_->setJointPositions(js.name[i].c_str(), &j_position[i]);
+          kinematic_state_->setJointPositions(kinematic_state_->getJointModel(js.name[i].c_str()), &j_position[i]);
           kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_velocity[i]);
         }
 
-        std::vector<double> j_vel_new;
-        kinematic_state_->copyJointGroupVelocities(joint_model_group_, j_vel_new);
+        double j_vel_new;
         std::vector<double> j_acc_new;
-        for(int i = 0; i < j_vel_new.size(); i++)
+        for(int i = 0; i <js.name.size(); i++)
         {
-          j_acc_new.push_back((j_vel_new[i] - j_vel_[i])*controller_rate_);
-          j_vel_[i] = j_vel_new[i];
+          j_vel_new = kinematic_state_->getJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()))[0];
+          j_acc_new.push_back((j_vel_new - j_vel_[i])*controller_rate_);
+          j_vel_[i] = j_vel_new;
         }
-        kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
+
+        if(!j_kal_init_)
+        {
+          for(int i = 0; i < chann_; i++)
+          {
+            F_(3*i,j_kal_init_counter_) = j_position[i];
+            F_(3*i+1,j_kal_init_counter_) = j_velocity[i];
+            F_(3*i+2,j_kal_init_counter_) = j_acc_new[i];
+          }
+
+          if(j_kal_init_counter_ == j_kal_init_obs_ - 1)
+          {
+            double dt = 1.0/controller_rate_;
+
+            Eigen::VectorXd n(j_kal_init_obs_);
+            Eigen::MatrixXd A(3*chann_,3*chann_);
+            Eigen::MatrixXd C(3*chann_,3*chann_);
+            Eigen::MatrixXd Q(3*chann_,3*chann_);
+            Eigen::MatrixXd R(3*chann_,3*chann_);
+            Eigen::MatrixXd P(3*chann_,3*chann_);
+
+            n.setOnes();
+            A.setZero();
+            for(int i = 0; i < chann_; i++)
+            {
+              A(3*i,3*i) = 1;
+              A(3*i,3*i+1) = dt;
+              A(3*i,3*i+2) = dt*dt/2;
+              A(3*i+1,3*i+1) = 1;
+              A(3*i+1,3*i+2) = dt;
+              A(3*i+2,3*i+2) = 1;
+            }
+            C.setIdentity();
+            Q = 1.0/((double)j_kal_init_obs_-1.0)*(F_-F_.rowwise().mean()*n.transpose())*(F_-F_.rowwise().mean()*n.transpose()).transpose();
+            R.setOnes()*0.05;            
+            P.setOnes()*0.05;
+            
+            j_kal_filter_ = new kalmancpp::KalmanFilter(dt,A,C,Q,R,P);
+            j_kal_filter_->init();
+            j_kal_init_ = true;
+          }
+
+          j_kal_init_counter_ += 1;
+        }
+        else
+        {
+          Eigen::VectorXd j_state(3*chann_);
+          for(int i = 0; i < chann_; i++)
+          {
+            j_state(3*i) = j_position[i];
+            j_state(3*i+1) = j_velocity[i];
+            j_state(3*i+2) = j_acc_new[i];
+          }
+          j_kal_filter_->update(j_state);
+
+          j_state = j_kal_filter_->state();
+          for(int i = 0; i <js.name.size(); i++)
+          {
+            kinematic_state_->setJointPositions(kinematic_state_->getJointModel(js.name[i].c_str()), &j_state(3*i));
+            kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_state(3*i+1));
+            j_acc_new[i] = j_state(3*i+2);
+          }
+          kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
+        }
 
         transform_ = kinematic_state_->getGlobalLinkTransform(target_frame_);
         rotation_ = transform_.rotation().inverse();
@@ -179,12 +248,14 @@ namespace atk
 
     private:
 
-      int chann_;
-      
       const char* robot_description_;
       const char* srdf_group_;
       const char* target_frame_;
       const char* model_frame_;
+      bool j_kal_init_;
+      unsigned int chann_;
+      unsigned int j_kal_init_counter_;
+      const unsigned int j_kal_init_obs_ = 10;
       const double controller_rate_;
       double j_pos_[20] = {0};
       double j_vel_[20] = {0};
@@ -192,10 +263,12 @@ namespace atk
       moveit::core::RobotState *kinematic_state_;
       KDL::ChainJntToJacSolver *jac_solver_;
       KDL::ChainJntToJacDotSolver *dot_solver_;
-      KDL::Chain robot_chain_;  
+      KDL::Chain robot_chain_; 
+      Eigen::MatrixXd F_; 
 
       atk::BaseIRFilter* j_pos_filter_;
       atk::BaseIRFilter* j_vel_filter_;  
+      kalmancpp::KalmanFilter* j_kal_filter_;
   };
 }
 
