@@ -3,13 +3,24 @@ import tf2_ros
 import moveit_commander.conversions as cv
 
 from geometry_msgs.msg import Pose, PoseStamped, Point
+from trajectory_msgs.msg import JointTrajectory
+from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import singleton
 from artificial_hands_py.robot_commander.controller_manager_base  import ControllerManagerBase
+from artificial_hands_py.cartesian_trajectory_generator.cartesian_publishers import CartesianTrajectoryPointPublisher, PoseStampedPublisher
 
 @singleton
 class ArmCommander(ControllerManagerBase):
+
+  j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
+  cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
+  cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
+
+  ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
+               cart_mot_pos_ctrl : PoseStamped,
+               cart_eik_pos_ctrl : CartesianTrajectoryPoint}
 
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
@@ -17,9 +28,9 @@ class ArmCommander(ControllerManagerBase):
 
   tf_buffer = tf2_ros.Buffer(rospy.Duration(1))
 
-  def __init__(self, ns: str = '', ref: str = 'base', eef: str = 'tool0', move_group: str = 'manipulator', ctrl_dict: dict = None) -> None:
-    super().__init__(ns, ctrl_dict)
-    
+  def __init__(self, ns: str = '', ref: str = 'base', eef: str = 'tool0') -> None:
+    super().__init__(ns, self.ctrl_dict)
+
     self.ref_frame = ref
     self.ee_frame = eef 
 
@@ -28,6 +39,9 @@ class ArmCommander(ControllerManagerBase):
     self.goal = TrajectoryGenerationGoal()
     self.goal.header.frame_id = ref
     self.goal.controlled_frame = eef
+
+    cart_mot_pos_pub = PoseStampedPublisher(self.cart_mot_pos_ctrl+'/command')
+    cart_eik_pos_pub = CartesianTrajectoryPointPublisher(self.cart_eik_pos_ctrl+'/command')
 
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)   
 

@@ -11,7 +11,7 @@ cartesian_motion_position_controller:
   - wrist_2_joint
   - wrist_3_joint
 
-  pd_gains: &pd
+  pd_gains:
     p: &p 8.0
     d: &d 0.4  
     trans_x: {p: *p, d: *d}
@@ -21,18 +21,9 @@ cartesian_motion_position_controller:
     rot_y: {p: *p, d: *d}
     rot_z: {p: *p, d: *d}
   
-  solver: &solver
+  solver:
     error_scale: 4.0
     iterations: 10
-
-cartesian_motion_velocity_controller:
-  type: "velocity_controllers/CartesianMotionController"
-  end_effector_link: *ee
-  robot_base_link: *ref
-  target_frame_topic: "command"
-  joints: *robot_joints
-
-  pd_gains: *pd
 
 cartesian_eik_position_controller:
   type: "position_controllers/CartesianEikController"
@@ -41,13 +32,16 @@ cartesian_eik_position_controller:
   target_traj_topic: "command"
   joints: *robot_joints
 
-  pd_gains: *pd
-
-cartesian_eik_velocity_controller:
-  type: "velocity_controllers/CartesianEikController"
-  end_effector_link: *ee
-  robot_base_link: *ref
-  target_traj_topic: "command"
-  joints: *robot_joints
-
-  pd_gains: *pd
+  pd_gains:
+    p: &ep 1.0
+    d: &ed 0.0 
+    trans_x: {p: *ep, d: *ed}
+    trans_y: {p: *ep, d: *ed}
+    trans_z: {p: *ep, d: *ed}
+    rot_x: {p: *ep, d: *ed}
+    rot_y: {p: *ep, d: *ed}
+    rot_z: {p: *ep, d: *ed}
+  
+  solver:
+    error_scale: 30.0
+    eik_damp: 100.0

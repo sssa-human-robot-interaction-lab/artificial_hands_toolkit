@@ -63,11 +63,11 @@ class TargetTable(QTableWidget):
 
   def __init__(self):
     super().__init__()
-    self.setColumnCount(6)
+    self.setColumnCount(7)
     self.setMinimumWidth(400)
     self.setMinimumHeight(600)
-    for c in range(0,6):
-      self.setColumnWidth(c,int(400/6))
+    for c in range(0,7):
+      self.setColumnWidth(c,int(400/7))
 
   def add_pose_target(self, target : Pose, row : int = None):
     if row is None:
@@ -80,6 +80,7 @@ class TargetTable(QTableWidget):
     self.setItem(row, 3, QTableWidgetItem(str(rot[0])))
     self.setItem(row, 4, QTableWidgetItem(str(rot[1])))
     self.setItem(row, 5, QTableWidgetItem(str(rot[2])))
+    self.setItem(row, 6, QTableWidgetItem(str(0.0)))
 
 class CartesianTrajectoryGeneratorGUI(QWidget):
 
@@ -250,6 +251,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
           float(self.target_table.item(r,4).text()),
           float(self.target_table.item(r,5).text())))
       self.traj_cl.send_goal_and_wait(goal)
+      rospy.sleep(rospy.Duration().from_sec(float(self.target_table.item(r,6).text())))
   
   def update_teleop_target(self):
     goal = TrajectoryGenerationGoal()

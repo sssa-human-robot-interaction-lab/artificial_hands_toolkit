@@ -10,7 +10,7 @@ from trajectory_msgs.msg import JointTrajectory, MultiDOFJointTrajectory
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_generator_gui import CartesianTrajectoryGeneratorGUI
-from artificial_hands_py.cartesian_trajectory_generator.cartesian_publishers import CartesianMDOFPointPublisher, PoseStampedPublisher
+from artificial_hands_py.cartesian_trajectory_generator.cartesian_publishers import CartesianTrajectoryPointPublisher, PoseStampedPublisher
 from artificial_hands_py.robot_commander.arm_commander import ArmCommander
 
 class ArmCommanderGui(QWidget):
@@ -123,6 +123,7 @@ class ArmCommanderGui(QWidget):
           float(self.cart_traj_gen_widget.target_table.item(r,4).text()),
           float(self.cart_traj_gen_widget.target_table.item(r,5).text())))
       self.arm.set_pose_target(target)
+      rospy.sleep(rospy.Duration().from_sec(float(self.cart_traj_gen_widget.target_table.item(r,6).text())))
   
   def update_teleop_target(self):
     rate = rospy.Rate(30)
@@ -142,24 +143,7 @@ def main():
 
   app = QApplication(sys.argv)
 
-  j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
-  cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
-  cart_mot_vel_ctrl = 'cartesian_motion_velocity_controller'
-  cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
-  cart_eik_vel_ctrl = 'cartesian_eik_velocity_controller'
-
-  ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
-              cart_mot_pos_ctrl : PoseStamped,
-              cart_mot_vel_ctrl : PoseStamped,
-              cart_eik_pos_ctrl : MultiDOFJointTrajectory,
-              cart_eik_vel_ctrl : MultiDOFJointTrajectory}
-
-  cart_mot_pos_pub = PoseStampedPublisher(cart_mot_pos_ctrl+'/command')
-  cart_mot_vel_pub = PoseStampedPublisher(cart_mot_vel_ctrl+'/command')
-  cart_eik_pos_pub = CartesianMDOFPointPublisher(cart_eik_pos_ctrl+'/command')
-  cart_eik_vel_pub = CartesianMDOFPointPublisher(cart_eik_vel_ctrl+'/command')
-
-  arm = ArmCommander(ctrl_dict=ctrl_dict)
+  arm = ArmCommander()
 
   arm_cmd_gui = ArmCommanderGui(arm)
   

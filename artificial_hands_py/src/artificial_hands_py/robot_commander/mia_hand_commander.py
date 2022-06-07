@@ -45,8 +45,20 @@ class MiaHandCommander(ControllerManagerBase):
 
   joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']  
 
-  def __init__(self,ns='',ctrl_dict : dict = {}):
-    super().__init__(ns,ctrl_dict)
+  mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
+  mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
+  mia_j_index_pos_vel_ctrl = 'mia_hand_j_index_fle_pos_vel_controller'
+  mia_j_mrl_pos_vel_ctrl = 'mia_hand_j_mrl_fle_pos_vel_controller'
+  mia_j_thumb_pos_vel_ctrl = 'mia_hand_j_thumb_fle_pos_vel_controller'
+
+  mia_ctrl_dict = {mia_j_traj_ctrl : JointTrajectory,
+              mia_j_vel_ctrl : Float64MultiArray,
+              mia_j_index_pos_vel_ctrl : Float64,
+              mia_j_mrl_pos_vel_ctrl : Float64,
+              mia_j_thumb_pos_vel_ctrl : Float64}
+
+  def __init__(self,ns=''):
+    super().__init__(ns,self.ctrl_dict)
 
     self.rate = rospy.Rate(20)
 
@@ -79,27 +91,27 @@ class MiaHandCommander(ControllerManagerBase):
     self.lock.release()
   
   def switch_to_pos_vel_controllers(self):
-    self.start_controllers(['mia_hand_j_index_fle_pos_vel_controller',
-                            'mia_hand_j_mrl_fle_pos_vel_controller',
-                            'mia_hand_j_thumb_fle_pos_vel_controller'])
+    self.start_controllers([self.mia_j_index_pos_vel_ctrl,
+                            self.mia_j_mrl_pos_vel_ctrl,
+                            self.mia_j_thumb_pos_vel_ctrl])
 
   def j_index_pos_vel_update(self):
     while not rospy.is_shutdown():
-      self.controller_command(self.j_index_pos,ctrl='mia_hand_j_index_fle_pos_vel_controller')
+      self.controller_command(self.j_index_pos,ctrl=self.mia_j_index_pos_vel_ctrl)
       self.rate.sleep()
   
   def j_mrl_pos_vel_update(self):
     while not rospy.is_shutdown():
-      self.controller_command(self.j_mrl_pos,ctrl='mia_hand_j_mrl_fle_pos_vel_controller')
+      self.controller_command(self.j_mrl_pos,ctrl=self.mia_j_mrl_pos_vel_ctrl)
       self.rate.sleep()
 
   def j_thumb_pos_vel_update(self):
     while not rospy.is_shutdown():
-      self.controller_command(self.j_thumb_pos,ctrl='mia_hand_j_thumb_fle_pos_vel_controller')
+      self.controller_command(self.j_thumb_pos,ctrl=self.mia_j_thumb_pos_vel_ctrl)
       self.rate.sleep()                          
       
   def stop(self,autoswitch=True):
-    self.switch_to_controller('mia_hand_joint_group_vel_controller')
+    self.switch_to_controller(self.mia_j_vel_ctrl)
     j_vel = Float64MultiArray()
     j_vel.data = [.0,.0,.0]
     self.controller_command(j_vel)
@@ -122,19 +134,7 @@ def main():
 
   rospy.init_node('mia_hand_commander_node')
 
-  mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
-  mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
-  mia_j_index_pos_vel_ctrl = 'mia_hand_j_index_fle_pos_vel_controller'
-  mia_j_mrl_pos_vel_ctrl = 'mia_hand_j_mrl_fle_pos_vel_controller'
-  mia_j_thumb_pos_vel_ctrl = 'mia_hand_j_thumb_fle_pos_vel_controller'
-
-  mia_ctrl_dict = {mia_j_traj_ctrl : JointTrajectory,
-              mia_j_vel_ctrl : Float64MultiArray,
-              mia_j_index_pos_vel_ctrl : Float64,
-              mia_j_mrl_pos_vel_ctrl : Float64,
-              mia_j_thumb_pos_vel_ctrl : Float64}
-
-  hand = MiaHandCommander(ns='mia_hand',ctrl_dict=mia_ctrl_dict)
+  hand = MiaHandCommander(ns='mia_hand')
 
   rospy.loginfo('Mia hand commander ready!')
 
