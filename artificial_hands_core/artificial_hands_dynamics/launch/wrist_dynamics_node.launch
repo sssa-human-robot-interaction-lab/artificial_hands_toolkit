@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!-- Load filter param for wrist dynamics -->
+  <rosparam command="load" file="$(find artificial_hands_dynamics)/config/low_pass_filters.yaml"/>
+
+  <!-- Run the frame kinematics node -->
+  <node pkg="artificial_hands_dynamics" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="--sensor /wrench --autostart true"/>
+
+</launch>
