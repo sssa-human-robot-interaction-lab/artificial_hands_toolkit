@@ -2,6 +2,9 @@
 #include <artificial_hands_base/FrameKinematics.hpp>
 #include <artificial_hands_msgs/FrameKinematicsStamped.h>
 #include <artificial_hands_msgs/FrameKinematicsCommand.h>
+#include <artificial_hands_msgs/ProcessVarianceConfig.h>
+
+#include <dynamic_reconfigure/server.h>
 
 #include <control_msgs/JointControllerState.h>
 
@@ -21,12 +24,17 @@ namespace rosatk
         ServiceManagerBase(nh,&FrameKinematicsNode::command),
         FilterManagerBase(nh,"/frame_kinematics",filter_length)
       {
+        dyn_f_ = boost::bind(&FrameKinematicsNode::reconfigure, this, _1, _2);
+        dyn_ser_.reset(new dynamic_reconfigure::Server<artificial_hands_msgs::ProcessVarianceConfig>(ros::NodeHandle("frame_kinematics_reconfigure")));
+        dyn_ser_->setCallback(dyn_f_);
+
         FrameKinematics::SetFilter(filter);
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting kinematics relative to frame %s.",target_frame);
         if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::FrameKinematicsStamped>("frame_kinematics_data",1000);
         loop_tim_ = nh_.createWallTimer(ros::WallDuration(1.0/(double)rate),&FrameKinematicsNode::loopTimerCallback, this, false, false);
         loop_msg_.header.frame_id = target_frame;
+
         ROS_INFO("Starting node services.");
         addService("frame_kinematics_command/subscribe",cmd::Request::CMD_SUB,this);
         addService("frame_kinematics_command/start_loop",cmd::Request::CMD_STA,this);
@@ -35,6 +43,7 @@ namespace rosatk
         addService("frame_kinematics_mode/publish",cmd::Request::MOD_PUB,this);
         addService("frame_kinematics_macro/start_node",cmd::Request::MAC_STA,this);
         ROS_INFO("Node ready to take command.");
+
         if(autostart)
         {
          cmd c;
@@ -43,6 +52,13 @@ namespace rosatk
       }
 
     private:
+
+      void reconfigure(artificial_hands_msgs::ProcessVarianceConfig &config, uint32_t level) {
+        if(js_ != NULL)
+        {
+          FrameKinematics::Init(*js_,config.process_variance);
+        }
+      }
 
       bool command(cmd::Request& request, cmd::Response& response, int command)
       {
@@ -148,6 +164,8 @@ namespace rosatk
       ros::NodeHandle nh_;
       ros::Subscriber j_sub_;
       sensor_msgs::JointStateConstPtr js_;
+      boost::shared_ptr<dynamic_reconfigure::Server<artificial_hands_msgs::ProcessVarianceConfig>> dyn_ser_;
+      dynamic_reconfigure::Server<artificial_hands_msgs::ProcessVarianceConfig>::CallbackType dyn_f_;
   };
 }
 

@@ -82,6 +82,20 @@ namespace atk
       };
 
       /**
+       * @brief Initialize kinematics state.
+       * @param js message from joint_state controller
+       * @param q process noise variance
+       * @return True on success
+       */
+      bool Init(sensor_msgs::JointState js, double q) 
+      {
+        j_kal_filter_->pause();
+        j_kal_filter_->variance(q);
+        Init(js);
+        return true;
+      };
+
+      /**
        * @brief Update kinematics state.
        * @param js message from joint_state controller
        */
@@ -98,15 +112,18 @@ namespace atk
           kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_velocity[i]);
         }
 
-        // double j_vel_new;
-        // std::vector<double> j_acc_new;
-        // for(int i = 0; i <js.name.size(); i++)
-        // {
-        //   j_vel_new = kinematic_state_->getJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()))[0];
-        //   j_acc_new.push_back((j_vel_new - j_vel_[i])*controller_rate_);
-        //   j_vel_[i] = j_vel_new;
-        // }
-
+#define NOT_USE_KALMAN true
+#if NOT_USE_KALMAN
+        double j_vel_new;
+        std::vector<double> j_acc_new;
+        for(int i = 0; i <js.name.size(); i++)
+        {
+          j_vel_new = kinematic_state_->getJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()))[0];
+          j_acc_new.push_back((j_vel_new - j_vel_[i])*controller_rate_);
+          j_vel_[i] = j_vel_new;
+        }
+        kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
+#else
         if(!j_kal_init_)
         {
           for(int i = 0; i < chann_; i++)
@@ -199,8 +216,7 @@ namespace atk
           kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_);
         }
 
-        // kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
-
+#endif
         transform_ = kinematic_state_->getGlobalLinkTransform(target_frame_);
         rotation_ = transform_.rotation().inverse();
       }
@@ -289,7 +305,6 @@ namespace atk
       unsigned int j_kal_init_counter_;
       const unsigned int j_kal_init_obs_ = 10;
       const double controller_rate_;
-      double j_pos_[20] = {0};
       double j_vel_[20] = {0};
       robot_state::JointModelGroup *joint_model_group_;
       moveit::core::RobotState *kinematic_state_;

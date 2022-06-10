@@ -7,6 +7,7 @@ find_package(catkin REQUIRED COMPONENTS
   cartesian_control_msgs
   message_generation
   actionlib_msgs
+  dynamic_reconfigure
 )
 
 add_message_files(
@@ -42,6 +43,11 @@ generate_messages(
   cartesian_control_msgs
   actionlib_msgs
 )
+
+generate_dynamic_reconfigure_options(
+  cfg/ProcessVariance.cfg
+)
+
 
 catkin_package(
    CATKIN_DEPENDS 
