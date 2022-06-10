@@ -79,8 +79,8 @@ namespace rosatk
       }
       else
       {
-        filter.num = new double[filter.order];
-        filter.den = new double[filter.order];
+        filter.num = new double[filter.order + 1];
+        filter.den = new double[filter.order + 1];
         filter.den[0] = 1.0;
         for(int i = 1; i <= filter.order; i++)filter.den[i]=.0;
         for(int i = 0; i <= filter.order; i++)filter.num[i]=1.0/(filter.order+1);
