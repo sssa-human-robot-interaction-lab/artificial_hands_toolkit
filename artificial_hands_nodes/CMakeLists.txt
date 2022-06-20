@@ -13,6 +13,7 @@ include_directories(
 
 catkin_install_python(PROGRAMS
   scripts/arm_commander_gui_node.py
+  scripts/arm_commander_node.py
   scripts/cartesian_trajectory_generator_gui_node.py
   scripts/cartesian_trajectory_generator_node.py
   scripts/cartesian_trajectory_tf_monitor_node.py
@@ -22,5 +23,6 @@ catkin_install_python(PROGRAMS
   scripts/mia_hand_commander_gui_node.py
   scripts/mia_hand_commander_node.py
   scripts/robot_commander_gui_node.py
+  scripts/robot_commander_node.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )

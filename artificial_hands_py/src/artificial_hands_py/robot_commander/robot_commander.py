@@ -1,7 +1,7 @@
 from abc import ABC
 
+import rospy
 from std_msgs.msg import Float64MultiArray, Float64
-
 
 from artificial_hands_msgs.msg import *
 
@@ -15,6 +15,19 @@ class RobotCommander(ABC):
 
     self.arm = ArmCommander() 
 
-    self.hand = MiaHandCommander(ns='mia_hand')
+    self.hand = MiaHandCommander(ns='')
 
     self.wrist_dyn = WristDynamics()
+
+def main():
+
+  rospy.init_node('arm_commander_node')
+
+  arm = RobotCommander()
+
+  rospy.loginfo('Arm commander ready!')
+
+  rospy.spin()
+
+if __name__ == '__main__':
+  main()
