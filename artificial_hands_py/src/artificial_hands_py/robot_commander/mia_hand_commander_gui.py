@@ -77,16 +77,14 @@ class MiaHandCommanderGui(QWidget):
 
     self.joint_group_box = TeleopGroupBox(title='Joint command')
     self.joint_group_box.clicked.connect(self.refresh_joint_positions)
+    self.joint_group_box.i_spin_box.valueChanged.connect(self.update_joint_positions)
+    self.joint_group_box.m_spin_box.valueChanged.connect(self.update_joint_positions)
+    self.joint_group_box.t_spin_box.valueChanged.connect(self.update_joint_positions)
 
     main_layout = QVBoxLayout()
     main_layout.addWidget(self.joint_group_box)
 
     self.setLayout(main_layout)
-  
-  def connect(self):
-    self.joint_group_box.i_spin_box.valueChanged.connect(self.update_joint_positions)
-    self.joint_group_box.m_spin_box.valueChanged.connect(self.update_joint_positions)
-    self.joint_group_box.t_spin_box.valueChanged.connect(self.update_joint_positions)
 
   def refresh_joint_positions(self):
     self.joint_group_box.i_spin_box.setValue(self.hand.j_pos[0])
@@ -102,22 +100,9 @@ def main():
 
   app = QApplication(sys.argv)
 
-  mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
-  mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
-  mia_j_index_pos_vel_ctrl = 'mia_hand_j_index_fle_pos_vel_controller'
-  mia_j_mrl_pos_vel_ctrl = 'mia_hand_j_mrl_fle_pos_vel_controller'
-  mia_j_thumb_pos_vel_ctrl = 'mia_hand_j_thumb_fle_pos_vel_controller'
-
-  mia_ctrl_dict = {mia_j_traj_ctrl : JointTrajectory,
-              mia_j_vel_ctrl : Float64MultiArray,
-              mia_j_index_pos_vel_ctrl : Float64,
-              mia_j_mrl_pos_vel_ctrl : Float64,
-              mia_j_thumb_pos_vel_ctrl : Float64}
-
-  hand = MiaHandCommander(ns='mia_hand',ctrl_dict=mia_ctrl_dict)
+  hand = MiaHandCommander(ns='')
 
   hand_cmd_gui = MiaHandCommanderGui(hand)
-  hand_cmd_gui.connect()
   hand_cmd_gui.show()
 
   rospy.loginfo('Mia hand commander GUI ready!')

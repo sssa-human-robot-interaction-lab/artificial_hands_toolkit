@@ -9,43 +9,12 @@ from artificial_hands_py.robot_commander.controller_manager_base import *
 
 @singleton
 class MiaHandCommander(ControllerManagerBase):
-  """ Simple commander for Mia hand: grasps using ROS control
-
-  Inherits
-  --------
-  artificial_hands_py.controller_manager_base.ControllerManagerBase
-
-  Attributes
-  ----------
-  traj_ctrl : str
-    name of controller used for trajectory control
-  vel_ctrl : dict
-    name of controller used for velocity control
-  joint_namse : list
-    list of joint names
-  pos : list
-    list of current joint angles
-
-  Methods
-  -------
-  joint_states_callback(msg : JointState)
-    callback to update current joint angles
-  
-  close_cyl(autoswitch : bool, rest: bool, timeout : float)
-    close mia hand in cylindrical grasp
-
-  open(autoswitch : bool, vel : float)
-    open mia hand with desired velocity
-  
-  rest(autoswitch : bool)
-    stop mia hand motors to the current position
-  """
 
   lock = Lock()
 
   joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']  
 
-  mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
+  mia_j_traj_ctrl = 'mia_hand_vel_trajectory_controller'
   mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
   mia_j_index_pos_vel_ctrl = 'mia_hand_j_index_fle_pos_vel_controller'
   mia_j_mrl_pos_vel_ctrl = 'mia_hand_j_mrl_fle_pos_vel_controller'
@@ -58,7 +27,7 @@ class MiaHandCommander(ControllerManagerBase):
               mia_j_thumb_pos_vel_ctrl : Float64}
 
   def __init__(self,ns=''):
-    super().__init__(ns,self.ctrl_dict)
+    super().__init__(ns,self.mia_ctrl_dict)
 
     self.rate = rospy.Rate(20)
 
@@ -85,9 +54,9 @@ class MiaHandCommander(ControllerManagerBase):
   
   def set_joint_positions(self, j_pos : list):
     self.lock.acquire()
-    self.j_index_pos = j_pos[0]
-    self.j_mrl_pos = j_pos[1]
-    self.j_thumb_pos = j_pos[2]
+    self.j_index_pos.data = j_pos[0]
+    self.j_mrl_pos.data = j_pos[1]
+    self.j_thumb_pos.data = j_pos[2]
     self.lock.release()
   
   def switch_to_pos_vel_controllers(self):
@@ -125,16 +94,16 @@ class MiaHandCommander(ControllerManagerBase):
 
   def j_pos_vel_callback(self,msg : Float64MultiArray):
     self.lock.acquire()
-    self.j_index_pos = msg.data[0]
-    self.j_mrl_pos = msg.data[1]
-    self.j_thumb_pos = msg.data[2]
+    self.j_index_pos.data = msg.data[0]
+    self.j_mrl_pos.data = msg.data[1]
+    self.j_thumb_pos.data = msg.data[2]
     self.lock.release()
 
 def main():
 
   rospy.init_node('mia_hand_commander_node')
 
-  hand = MiaHandCommander(ns='mia_hand')
+  hand = MiaHandCommander(ns='')
 
   rospy.loginfo('Mia hand commander ready!')
 

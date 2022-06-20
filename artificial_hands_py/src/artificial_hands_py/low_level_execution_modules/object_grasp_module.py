@@ -1,3 +1,4 @@
+from time import sleep
 import rospy, actionlib
 
 from artificial_hands_msgs.msg import *
@@ -20,7 +21,7 @@ class ObjectGraspModule(RobotCommander):
     self.grasp_feedback.percentage = 100
 
     # get hand in open position
-    self.hand.open()
+    self.hand.set_joint_positions([0.4,0.0,0.0])
 
     # go to home pose
     self.arm.set_max_accel(goal.max_accel)
@@ -30,7 +31,7 @@ class ObjectGraspModule(RobotCommander):
     self.arm.set_pose_target(goal.home)
 
     # get hand in preshape
-    self.hand.close(goal.preshape.data)
+    self.hand.set_joint_positions(goal.preshape.data)
 
     # go to grasp pose with trapz
     self.arm.set_alpha(goal.alpha)
@@ -40,7 +41,8 @@ class ObjectGraspModule(RobotCommander):
     self.arm.set_pose_target(goal.target)
 
     # get hand in closed shape
-    self.hand.close(goal.shape.data)
+    self.hand.set_joint_positions(goal.shape.data)
+    sleep(3)
 
     # go to back position
     self.arm.set_pose_target(goal.back)
