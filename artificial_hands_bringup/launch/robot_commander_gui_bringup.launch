@@ -18,7 +18,7 @@
   <remap if="$(arg sim)" from="mia_hand/scaled_pos_joint_traj_controller" to="pos_joint_traj_controller"/>
 
   <!-- Run the arm/robot commander gui node -->
-  <node if="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="robot_commander_gui_node.py" name="robot_rommander_gui_node" output="screen"/>
-  <node unless="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="arm_commander_gui_node.py" name="robot_rommander_gui_node" output="screen"/>
+  <node if="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="robot_commander_gui_node.py" name="robot_commander_gui_node" output="screen"/>
+  <node unless="$(arg hand_cmd)" pkg="artificial_hands_nodes" type="arm_commander_gui_node.py" name="arm_commander_gui_node" output="screen"/>
 
 </launch>

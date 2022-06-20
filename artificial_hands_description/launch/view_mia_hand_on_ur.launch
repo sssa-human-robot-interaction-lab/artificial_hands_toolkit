@@ -1,12 +1,7 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="ur_robot" default="ur5" />
-
-  <include file="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_$(arg ur_robot).launch.xml" />
-
-  <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui" />
-  <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" />
-  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find artificial_hands_description)/etc/demo.rviz" required="true" />
-
+  <!-- rviz -->
+  <node pkg="rviz" type="rviz" name="rviz" output="screen" args="-d $(find artificial_hands_description)/etc/view_demo.rviz"/>
+  
 </launch>
