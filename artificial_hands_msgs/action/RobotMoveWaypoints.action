@@ -1,0 +1,11 @@
+#goal   
+cartesian_control_msgs/CartesianTrajectory arm_waypoints
+trajectory_msgs/JointTrajectory hand_waypoints
+float64 max_accel
+float64 max_angaccel
+---
+#result
+int64 success
+---
+#feedback
+int64 percentage
