@@ -34,15 +34,12 @@ class RobotMoveWaypointsModule(RobotCommander):
     self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller('cartesian_motion_position_controller')
 
-    for (arm_wp, hand_wp) in zip(goal.arm_waypoints, goal.hand_waypoints):
-
-      arm_wp = CartesianTrajectoryPoint()
-      hand_wp = JointTrajectoryPoint
+    for (arm_wp, hand_wp) in zip(goal.arm_waypoints.points, goal.hand_waypoints.points):
 
       # check for negative time from start (mantain current configuration)
-      if arm_wp.time_from_start.to_sec() >= 0:
+      if arm_wp.time_from_start.secs >= 0:
         self.arm.set_pose_target(arm_wp.pose,wait=False)
-      if hand_wp.time_from_start.to_sec() >= 0:
+      if hand_wp.time_from_start.secs >= 0:
         self.hand.set_joint_positions(hand_wp.positions)
 
       # wait for arm trajectory completion
