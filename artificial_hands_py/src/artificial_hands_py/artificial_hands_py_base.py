@@ -1,5 +1,7 @@
 import numpy as np
 
+import tf.transformations as ts
+import moveit_commander.conversions as cv
 from geometry_msgs.msg import Quaternion,Pose
 
 def singleton(cls, *args, **kw):
@@ -40,4 +42,19 @@ def pose_copy(pose : Pose) -> Pose:
   p.orientation.y = pose.orientation.y
   p.orientation.z = pose.orientation.z
   p.orientation.w = pose.orientation.w
+  return p
+
+def pose_to_matrix(pose: Pose) -> np.matrix:
+  T = ts.quaternion_matrix(quat_to_list(pose.orientation))
+  T[0,3] = pose.position.x
+  T[1,3] = pose.position.y
+  T[2,3] = pose.position.z
+  return T
+
+def matrix_to_pose(T: np.matrix) -> Pose:
+  p = Pose()
+  p.position.x = T[0,3]
+  p.position.y = T[1,3]
+  p.position.z = T[2,3]
+  p.orientation = list_to_quat(ts.quaternion_from_matrix(T))
   return p
