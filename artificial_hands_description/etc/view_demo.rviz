@@ -236,45 +236,9 @@ Visualization Manager:
           Value: false
         index_sensor:
           Value: false
-        insole_0:
-          Value: true
         insole_1:
           Value: true
-        insole_10:
-          Value: true
-        insole_11:
-          Value: true
-        insole_12:
-          Value: true
-        insole_13:
-          Value: true
-        insole_14:
-          Value: true
-        insole_15:
-          Value: true
-        insole_16:
-          Value: true
-        insole_17:
-          Value: true
-        insole_18:
-          Value: true
-        insole_19:
-          Value: true
         insole_2:
-          Value: true
-        insole_20:
-          Value: true
-        insole_21:
-          Value: true
-        insole_22:
-          Value: true
-        insole_23:
-          Value: true
-        insole_24:
-          Value: true
-        insole_25:
-          Value: true
-        insole_26:
           Value: true
         insole_3:
           Value: true
@@ -288,8 +252,6 @@ Visualization Manager:
           Value: true
         insole_8:
           Value: true
-        insole_9:
-          Value: true
         little_fle:
           Value: false
         middle_fle:
@@ -299,7 +261,7 @@ Visualization Manager:
         palm:
           Value: false
         probe:
-          Value: true
+          Value: false
         ring_fle:
           Value: false
         shoulder_link:
@@ -313,7 +275,7 @@ Visualization Manager:
         thumb_sensor:
           Value: false
         tool0:
-          Value: false
+          Value: true
         tool0_controller:
           Value: false
         upper_arm_link:
@@ -329,7 +291,7 @@ Visualization Manager:
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
-      Show Arrows: true
+      Show Arrows: false
       Show Axes: true
       Show Names: true
       Tree:
@@ -337,45 +299,9 @@ Visualization Manager:
           arm_base:
             base_link:
               base:
-                insole_0:
-                  {}
                 insole_1:
                   {}
-                insole_10:
-                  {}
-                insole_11:
-                  {}
-                insole_12:
-                  {}
-                insole_13:
-                  {}
-                insole_14:
-                  {}
-                insole_15:
-                  {}
-                insole_16:
-                  {}
-                insole_17:
-                  {}
-                insole_18:
-                  {}
-                insole_19:
-                  {}
                 insole_2:
-                  {}
-                insole_20:
-                  {}
-                insole_21:
-                  {}
-                insole_22:
-                  {}
-                insole_23:
-                  {}
-                insole_24:
-                  {}
-                insole_25:
-                  {}
-                insole_26:
                   {}
                 insole_3:
                   {}
@@ -388,8 +314,6 @@ Visualization Manager:
                 insole_7:
                   {}
                 insole_8:
-                  {}
-                insole_9:
                   {}
                 table_ref:
                   {}
@@ -433,7 +357,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: base
     Frame Rate: 30
   Name: root
   Tools:
@@ -457,7 +381,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 2.9331064224243164
+      Distance: 2.0820794105529785
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -465,17 +389,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.7630431652069092
-        Y: -0.9382534623146057
-        Z: 0.45108193159103394
+        X: 0.36289840936660767
+        Y: -0.7749049067497253
+        Z: 0.5090669989585876
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.42979660630226135
+      Pitch: 0.3897964060306549
       Target Frame: <Fixed Frame>
-      Yaw: 1.2154006958007812
+      Yaw: 4.290396213531494
     Saved: ~
 Window Geometry:
   Displays:
@@ -493,5 +417,5 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
-  X: 1920
-  Y: 0
+  X: 1520
+  Y: 35
