@@ -100,7 +100,7 @@ def main():
 
   app = QApplication(sys.argv)
 
-  hand = MiaHandCommander(ns='')
+  hand = MiaHandCommander(ns='mia_hand')
 
   hand_cmd_gui = MiaHandCommanderGui(hand)
   hand_cmd_gui.show()

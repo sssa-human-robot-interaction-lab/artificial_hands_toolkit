@@ -14,7 +14,7 @@ class MiaHandCommander(ControllerManagerBase):
 
   joint_names = ['j_index_fle','j_mrl_fle','j_thumb_fle']  
 
-  mia_j_traj_ctrl = 'mia_hand_vel_trajectory_controller'
+  mia_j_traj_ctrl = 'mia_hand_hw_vel_trajectory_controller'
   mia_j_vel_ctrl = 'mia_hand_joint_group_vel_controller'
   mia_j_index_pos_vel_ctrl = 'mia_hand_j_index_fle_pos_vel_controller'
   mia_j_mrl_pos_vel_ctrl = 'mia_hand_j_mrl_fle_pos_vel_controller'
