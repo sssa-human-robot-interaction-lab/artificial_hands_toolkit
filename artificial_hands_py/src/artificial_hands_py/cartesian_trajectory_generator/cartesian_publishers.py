@@ -25,8 +25,8 @@ class CartesianMDOFPointPublisher:
     self.transform.translation = msg.point.pose.position
     self.transform.rotation = msg.point.pose.orientation
     self.twist = msg.point.twist
-
-    self.pub.publish(self.mdof_pnt)
+    if not rospy.is_shutdown():
+      self.pub.publish(self.mdof_pnt)
 
 class PoseStampedPublisher:
 
@@ -42,7 +42,8 @@ class PoseStampedPublisher:
     self.target_pose.header = msg.header
     self.target_pose.header.frame_id = 'base'
     self.target_pose.pose = msg.point.pose
-    self.pub.publish(self.target_pose)
+    if not rospy.is_shutdown():
+      self.pub.publish(self.target_pose)
 
 class CartesianTrajectoryPointPublisher:
 
@@ -56,6 +57,7 @@ class CartesianTrajectoryPointPublisher:
   def target_traj_point_cb(self, msg : CartesianTrajectoryPointStamped):
 
     self.target_pose.pose = msg.point.pose
-    self.target_pose.twist = msg.point.twist
-    self.pub.publish(self.target_pose)
+    self.target_pose.twist = msg.point.twis
+    if not rospy.is_shutdown():
+      self.pub.publish(self.target_pose)
 
