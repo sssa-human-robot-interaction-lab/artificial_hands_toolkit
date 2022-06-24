@@ -16,11 +16,11 @@ class ArmCommander(ControllerManagerBase):
 
   j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
   cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
-  cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
+  #cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
 
   ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
-               cart_mot_pos_ctrl : PoseStamped,
-               cart_eik_pos_ctrl : CartesianTrajectoryPoint}
+               cart_mot_pos_ctrl : PoseStamped}
+               #cart_eik_pos_ctrl : CartesianTrajectoryPoint}
 
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
@@ -30,6 +30,8 @@ class ArmCommander(ControllerManagerBase):
 
   def __init__(self, ns: str = '', ref: str = 'base', eef: str = 'tool0') -> None:
     super().__init__(ns, self.ctrl_dict)
+
+    self.boot = True
 
     self.ref_frame = ref
     self.ee_frame = eef 
@@ -41,14 +43,19 @@ class ArmCommander(ControllerManagerBase):
     self.goal.controlled_frame = eef
 
     cart_mot_pos_pub = PoseStampedPublisher(self.cart_mot_pos_ctrl+'/command')
-    cart_eik_pos_pub = CartesianTrajectoryPointPublisher(self.cart_eik_pos_ctrl+'/command')
+    #cart_eik_pos_pub = CartesianTrajectoryPointPublisher(self.cart_eik_pos_ctrl+'/command')
 
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)   
 
   def switch_to_cartesian_controller(self, ctrl_name : str):
+    if self.boot:
+      rospy.loginfo('Booting cartesian trajectory generator...')
     self.pause_all_controllers()
     self.set_pose_target(self.get_current_frame().pose)
     self.switch_to_controller(ctrl_name)
+    if self.boot:
+      rospy.loginfo('Arm commander ready!')
+      self.boot = False
     
   def get_current_frame(self,ref : str = None, frame : str = None) -> PoseStamped:
     if frame is None:
@@ -125,7 +132,7 @@ class ArmCommander(ControllerManagerBase):
 
   def update_trajectory_monitor(self):
     self.percentage = 0
-    self.c_mon_cl.send_goal(self.goal,feedback_cb=self.trajectory_monitor_cb)
+    self.c_mon_cl.send_goal(self.goal,feedback_cb=self.trajectory_monitor_feedback_cb,done_cb=self.trajectory_monitor_result_cb)
   
   def wait_for_trajectory_monitor(self):
     self.update_trajectory_monitor()
@@ -133,5 +140,9 @@ class ArmCommander(ControllerManagerBase):
     while self.percentage < 100:
       rate.sleep()
 
-  def trajectory_monitor_cb(self, feedback : TrajectoryGenerationFeedback):
+  def trajectory_monitor_feedback_cb(self, feedback : TrajectoryGenerationFeedback):
     self.percentage = feedback.percentage
+  
+  def trajectory_monitor_result_cb(self, state : TrajectoryGenerationGoal, result : TrajectoryGenerationResult):
+    if result.success:
+      self.percentage = 100
