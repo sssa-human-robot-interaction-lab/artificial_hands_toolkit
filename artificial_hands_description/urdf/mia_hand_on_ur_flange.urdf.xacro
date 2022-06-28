@@ -1,8 +1,10 @@
 <?xml version="1.0"?>
 <robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_ur_flange">
 
+  <!-- Mia hand -->
   <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand.urdf.xacro" />
 
+  <!-- UR flange -->
   <link name="URflange">
     <inertial>
       <origin xyz="0 0 0" rpy="0 0 0"/>
@@ -25,19 +27,31 @@
     </collision>
   </link>
 
+  <!-- Make connection -->
   <joint name="j_URflange" type="fixed">
     <origin xyz="0 -0.022566028 -0.000111314" rpy="-1.570796251 -1.570796251 0"/>
     <parent link="palm"/>
     <child link="URflange"/>
   </joint>
 
+  <!-- Set colors -->
   <material name="DEFAULT_MTL.001">
     <color rgba="0.640000019 0.640000019 0.640000019 1.0"/>
   </material>
 
+  <!-- Set gazebo colors for URflange-->
   <gazebo reference="URflange">
     <material>Gazebo/Grey</material>
     <selfCollide>False</selfCollide>
   </gazebo>
+
+  <!-- Add probe frame -->
+  <link name = "probe"/>
+
+  <joint name="probe_joint" type="fixed">
+    <origin xyz="0.082 0 0.018" rpy="0 0 0" />
+    <parent link="URflange" />
+    <child link="probe" />
+  </joint>
 
 </robot>
