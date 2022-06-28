@@ -50,7 +50,6 @@ namespace atk
         j_vel_filter_ = new atk::BaseIRFilter();
 
         F_.resize(2*chann_,j_kal_init_obs_);
-        j_acc_.resize(chann_);
         j_meas_.resize(2*chann_);
         j_state_.resize(3*chann_);
       }
@@ -112,18 +111,21 @@ namespace atk
           kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_velocity[i]);
         }
 
-#define NOT_USE_KALMAN true
-#if NOT_USE_KALMAN
-        double j_vel_new;
+      #define NOT_USE_KALMAN true
+      #if NOT_USE_KALMAN
+
+        std::vector<double> j_vel_new;
+        kinematic_state_->copyJointGroupVelocities(joint_model_group_, j_vel_new);
+
         std::vector<double> j_acc_new;
         for(int i = 0; i <js.name.size(); i++)
         {
-          j_vel_new = kinematic_state_->getJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()))[0];
-          j_acc_new.push_back((j_vel_new - j_vel_[i])*controller_rate_);
-          j_vel_[i] = j_vel_new;
+          j_acc_new.push_back((j_vel_new[i] - j_vel_[i])*controller_rate_);
+          j_vel_[i] = j_vel_new[i];
         }
         kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
-#else
+
+      #else
         if(!j_kal_init_)
         {
           for(int i = 0; i < chann_; i++)
@@ -207,16 +209,22 @@ namespace atk
 
           j_state_ = j_kal_filter_->state();
 
+          std::vector<std::string> j_names = joint_model_group_->getJointModelNames();
+
+          std::vector<double> j_acc_new(chann_,0.0);
+
           for(int i = 0; i <js.name.size(); i++)
           {
             kinematic_state_->setJointPositions(kinematic_state_->getJointModel(js.name[i].c_str()), &j_state_(3*i));
             kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_state_(3*i+1));
-            j_acc_(i) = j_state_(3*i+2);
+            j_acc_new[std::find(j_names.begin(), j_names.end(), js.name[i].c_str()) - j_names.begin() - 1] = j_state_(3*i+2);
           }
-          kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_);
+          
+          kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
         }
 
-#endif
+      #endif
+
         transform_ = kinematic_state_->getGlobalLinkTransform(target_frame_);
         rotation_ = transform_.rotation().inverse();
       }
@@ -312,7 +320,7 @@ namespace atk
       KDL::ChainJntToJacDotSolver *dot_solver_;
       KDL::Chain robot_chain_; 
       Eigen::MatrixXd F_; 
-      Eigen::VectorXd j_meas_, j_state_, j_acc_;
+      Eigen::VectorXd j_meas_, j_state_;
 
       atk::BaseIRFilter* j_pos_filter_;
       atk::BaseIRFilter* j_vel_filter_;  
