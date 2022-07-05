@@ -211,7 +211,7 @@ Visualization Manager:
       Frames:
         All Enabled: false
         URflange:
-          Value: true
+          Value: false
         arm_base:
           Value: false
         base:
@@ -245,7 +245,7 @@ Visualization Manager:
         palm:
           Value: false
         probe:
-          Value: true
+          Value: false
         ring_fle:
           Value: false
         shoulder_link:
@@ -342,7 +342,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 1.1393835544586182
+      Distance: 3.1423544883728027
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -350,17 +350,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 1.1584562063217163
-        Y: -0.3260670602321625
-        Z: 0.4333153963088989
+        X: 0.13434076309204102
+        Y: -0.629102349281311
+        Z: 0.3689732551574707
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 1.2053974866867065
+      Pitch: 0.5803985595703125
       Target Frame: <Fixed Frame>
-      Yaw: 1.2335761785507202
+      Yaw: 0.6235570907592773
     Saved: ~
 Window Geometry:
   Displays:

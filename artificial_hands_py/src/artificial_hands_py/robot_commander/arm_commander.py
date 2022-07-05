@@ -16,11 +16,11 @@ class ArmCommander(ControllerManagerBase):
 
   j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
   cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
-  cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
+  cart_mot_eik_ctrl = 'cartesian_motion_eik_controller'
 
   ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
-               cart_mot_pos_ctrl : PoseStamped,
-               cart_eik_pos_ctrl : CartesianTrajectoryPoint}
+               cart_mot_pos_ctrl : CartesianTrajectoryPoint,
+               cart_mot_eik_ctrl : CartesianTrajectoryPoint}
 
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
@@ -40,8 +40,8 @@ class ArmCommander(ControllerManagerBase):
     self.goal.header.frame_id = ref
     self.goal.controlled_frame = eef
 
-    cart_mot_pos_pub = PoseStampedPublisher(self.cart_mot_pos_ctrl+'/command')
-    cart_eik_pos_pub = CartesianTrajectoryPointPublisher(self.cart_eik_pos_ctrl+'/command')
+    cart_mot_pos_pub = CartesianTrajectoryPointPublisher(self.cart_mot_pos_ctrl+'/command')
+    cart_mot_eik_pub = CartesianTrajectoryPointPublisher(self.cart_mot_eik_ctrl+'/command')
 
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)   
 
@@ -135,3 +135,16 @@ class ArmCommander(ControllerManagerBase):
 
   def trajectory_monitor_cb(self, feedback : TrajectoryGenerationFeedback):
     self.percentage = feedback.percentage
+
+def main():
+
+  rospy.init_node('arm_commander_node')
+
+  arm = ArmCommander()
+
+  rospy.loginfo('Arm commander ready!')
+
+  rospy.spin()
+
+if __name__ == '__main__':
+  main()

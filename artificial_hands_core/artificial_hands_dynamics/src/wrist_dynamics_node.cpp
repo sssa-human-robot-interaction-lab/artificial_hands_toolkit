@@ -5,6 +5,7 @@
 #include <artificial_hands_dynamics/WristFTCalibration.hpp>
 #include <artificial_hands_dynamics/WristFTProprioception.hpp>
 
+#include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/WrenchStamped.h>
 #include <control_msgs/JointControllerState.h>
 
@@ -33,6 +34,7 @@ namespace rosatk
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
         if(publish_)loop_pub_ = nh_.advertise<artificial_hands_msgs::WristDynamicsStamped>("wrist_dynamics_data",1000);
+        loop_arr_pub_ = nh_.advertise<std_msgs::Float64MultiArray>("wrist_dynamics_array_data",1000);
         loop_tim_ = nh_.createWallTimer(ros::WallDuration(1.0/(double)rate),&WristDynamicsNode::loopTimerCallback, this, false, false);
         loop_msg_.header.frame_id = target_frame;
         det_pub_ = nh_.advertise<artificial_hands_msgs::DetectionStamped>("wrist_contact_detection",1000);
@@ -133,6 +135,27 @@ namespace rosatk
           loop_msg_.wrist_dynamics.cal = cal_str.str();
           loop_msg_.wrist_dynamics.det = det_str.str();
           loop_pub_.publish(loop_msg_);
+
+          loop_arr_msg_.data.clear();
+          loop_arr_msg_.data.push_back(force_dyn.x);
+          loop_arr_msg_.data.push_back(force_dyn.y);
+          loop_arr_msg_.data.push_back(force_dyn.z);
+          loop_arr_msg_.data.push_back(torque_dyn.x);
+          loop_arr_msg_.data.push_back(torque_dyn.y);
+          loop_arr_msg_.data.push_back(torque_dyn.z);
+          loop_arr_msg_.data.push_back(twist_velocity.angular.x);
+          loop_arr_msg_.data.push_back(twist_velocity.angular.y);
+          loop_arr_msg_.data.push_back(twist_velocity.angular.z);
+          loop_arr_msg_.data.push_back(twist_acceleration.angular.x);
+          loop_arr_msg_.data.push_back(twist_acceleration.angular.y);
+          loop_arr_msg_.data.push_back(twist_acceleration.angular.z);
+          loop_arr_msg_.data.push_back(twist_acceleration.linear.x);
+          loop_arr_msg_.data.push_back(twist_acceleration.linear.y);
+          loop_arr_msg_.data.push_back(twist_acceleration.linear.z);
+          loop_arr_msg_.data.push_back(gravity.x);
+          loop_arr_msg_.data.push_back(gravity.y);
+          loop_arr_msg_.data.push_back(gravity.z);
+          loop_arr_pub_.publish(loop_arr_msg_);
         }
         
         det_msg_.header = loop_msg_.header;
@@ -267,8 +290,9 @@ namespace rosatk
       const char *sensor_, *controller_;
       artificial_hands_msgs::DetectionStamped det_msg_;
       artificial_hands_msgs::WristDynamicsStamped loop_msg_;
+      std_msgs::Float64MultiArray loop_arr_msg_;
       ros::WallTimer loop_tim_, det_tim_;
-      ros::Publisher loop_pub_, det_pub_;
+      ros::Publisher loop_pub_, loop_arr_pub_, det_pub_;
       ros::WallTime start_;
       ros::NodeHandle nh_;
       ros::Subscriber j_sub_, ft_sub_;
