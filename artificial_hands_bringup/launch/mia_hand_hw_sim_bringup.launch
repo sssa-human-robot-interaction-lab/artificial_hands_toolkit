@@ -58,6 +58,6 @@
   </node>
 
   <!-- rviz -->
-  <include file="$(find artificial_hands_description)/launch/rviz_bringup.launch"/>
+  <include file="$(find artificial_hands_description)/launch/view_mia_hand_on_ur.launch"/>
   
 </launch>

@@ -87,7 +87,7 @@ namespace rosatk
         ROS_INFO("Starting SMA filters with length %i samples on %s",filter.order + 1, ns.c_str());
       }
 
-      std::cout << filter.order << '\n';
+      std::cout << "ORDER: " << filter.order << '\n';
       std::stringstream num_st;
       std::stringstream den_st;
       for(int i = 0; i <= filter.order; i++)
@@ -95,8 +95,8 @@ namespace rosatk
         num_st << filter.num[i] << " ";
         den_st << filter.den[i] << " ";
       }
-      std::cout << num_st.str() << '\n';
-      std::cout << den_st.str() << '\n';
+      std::cout << "NUM: " << num_st.str() << '\n';
+      std::cout << "DEN: " << den_st.str() << '\n';
     }
 
     atk::filter_t filter;
