@@ -11,6 +11,8 @@
 
 #include <artificial_hands_base/BaseFilters.hpp>
 
+#define USE_KALMAN true
+
 namespace atk
 {
   class FrameKinematics: public atk::kinematics6D_t
@@ -52,6 +54,8 @@ namespace atk
         F_.resize(2*chann_,j_kal_init_obs_);
         j_meas_.resize(2*chann_);
         j_state_.resize(3*chann_);
+
+        std::cout << "USE_KALMAN: " << USE_KALMAN << std::endl;
       }
 
       /**
@@ -111,8 +115,7 @@ namespace atk
           kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(js.name[i].c_str()), &j_velocity[i]);
         }
 
-      #define NOT_USE_KALMAN true
-      #if NOT_USE_KALMAN
+      #if !USE_KALMAN
 
         std::vector<double> j_vel_new;
         kinematic_state_->copyJointGroupVelocities(joint_model_group_, j_vel_new);
@@ -191,6 +194,7 @@ namespace atk
             }         
             
             j_kal_filter_ = new kalmancpp::KalmanFilter(dt,A,C,Q,R,P);
+            // j_kal_filter_->variance(1E-6);
             j_kal_filter_->init();
             j_kal_init_ = true;
           }
@@ -311,7 +315,7 @@ namespace atk
       bool j_kal_init_;
       unsigned int chann_;
       unsigned int j_kal_init_counter_;
-      const unsigned int j_kal_init_obs_ = 10;
+      const unsigned int j_kal_init_obs_ = 500;
       const double controller_rate_;
       double j_vel_[20] = {0};
       robot_state::JointModelGroup *joint_model_group_;
