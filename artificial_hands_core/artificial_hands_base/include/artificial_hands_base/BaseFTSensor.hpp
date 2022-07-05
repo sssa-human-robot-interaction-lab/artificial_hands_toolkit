@@ -23,10 +23,10 @@ namespace atk
       bool Init(geometry_msgs::Wrench ft)
       {
         BaseFilter_t::Init(wrenchToVector(ft)); 
-        resetVector3(&bias_.force);
-        resetVector3(&bias_.torque);
-        resetVector3(&zero_.force);
-        resetVector3(&zero_.torque);
+        // resetVector3(&o_.force);
+        // resetVector3(&o_.torque);
+        resetVector3(&z_.force);
+        resetVector3(&z_.torque);
         return true;
       };
 
@@ -45,8 +45,8 @@ namespace atk
        */
       void UpdateRaw(geometry_msgs::Wrench ft)
       {
-        force_raw = subtractVector3(subtractVector3(ft.force,bias_.force),zero_.force);
-        torque_raw = subtractVector3(subtractVector3(ft.torque,bias_.torque),zero_.torque);
+        force_raw = subtractVector3(subtractVector3(ft.force,o_.force),z_.force);
+        torque_raw = subtractVector3(subtractVector3(ft.torque,o_.torque),z_.torque);
       };
 
       /**
@@ -56,8 +56,17 @@ namespace atk
       bool Get()
       {
         geometry_msgs::Wrench ft = wrenchFromVector(BaseFilter_t::Get());
-        force = subtractVector3(subtractVector3(ft.force,bias_.force),zero_.force);
-        torque = subtractVector3(subtractVector3(ft.torque,bias_.torque),zero_.torque);
+        
+        force = subtractVector3(subtractVector3(ft.force,o_.force),z_.force);
+        torque = subtractVector3(subtractVector3(ft.torque,o_.torque),z_.torque);
+        
+        force.x = force.x*m_[0] + q_[0];
+        force.y = force.y*m_[1] + q_[1];
+        force.z = force.z*m_[2] + q_[2];
+
+        torque.x = torque.x*m_[3] + q_[3];
+        torque.y = torque.y*m_[4] + q_[4];
+        torque.z = torque.z*m_[5] + q_[5];
         return true;
       };
 
@@ -80,6 +89,26 @@ namespace atk
       // };
 
       /**
+       * @brief Set coefficients for linear correction of force/torque sensor
+       * @param ft_calib struct of ft_calib_t parameters
+       */
+      void SetCorrection(atk::ft_calib_t ft_calib)
+      {
+        for(int i = 0; i < 6; i++)
+        {
+          m_[i] = ft_calib.gain[i];
+          q_[i] = ft_calib.bias[i];
+        }
+        o_.force.x = ft_calib.offset[0];
+        o_.force.y = ft_calib.offset[1];
+        o_.force.z = ft_calib.offset[2];
+
+        o_.torque.x = ft_calib.offset[3];
+        o_.torque.y = ft_calib.offset[4];
+        o_.torque.z = ft_calib.offset[5];
+      }
+
+      /**
        * @brief Set zero of force/torque sensor
        * @param do_zero true/false to do/undo zero
        */
@@ -87,13 +116,13 @@ namespace atk
       {
         if(do_zero)
         {
-          zero_.force = force;
-          zero_.torque = torque;
+          z_.force = force;
+          z_.torque = torque;
         }
         else
         {
-          resetVector3(&zero_.force);
-          resetVector3(&zero_.torque);        
+          resetVector3(&z_.force);
+          resetVector3(&z_.torque);        
         }
       }
 
@@ -103,8 +132,8 @@ namespace atk
        */
       void GetZero(geometry_msgs::Wrench *ft)
       {
-        ft->force = zero_.force;
-        ft->torque = zero_.torque;
+        ft->force = z_.force;
+        ft->torque = z_.torque;
       }
 
       /**
@@ -113,8 +142,8 @@ namespace atk
        */
       void SetOffset(geometry_msgs::Wrench ft)
       {
-        bias_.force = ft.force;
-        bias_.torque = ft.torque;
+        o_.force = ft.force;
+        o_.torque = ft.torque;
       }
 
       geometry_msgs::Vector3 force;
@@ -124,8 +153,10 @@ namespace atk
 
     private:
 
-      geometry_msgs::Wrench zero_;  
-      geometry_msgs::Wrench bias_;    
+      geometry_msgs::Wrench z_;  
+      geometry_msgs::Wrench o_; 
+      double m_[6] = {1.0,1.0,1.0,1.0,1.0,1.0};
+      double q_[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
   };
 }
 

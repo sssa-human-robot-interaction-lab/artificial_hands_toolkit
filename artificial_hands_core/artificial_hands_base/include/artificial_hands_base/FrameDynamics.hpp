@@ -48,6 +48,16 @@ namespace atk
       };
 
       /**
+       * @brief Set filter parameters for frame dynamics
+       * @param ft_filter struct of FT filter_t parameters
+       */
+      void SetFTFilter(atk::filter_t ft_filter, atk::ft_calib_t ft_calib)
+      {
+        BaseFTSensor::SetCorrection(ft_calib);
+        BaseFTSensor::SetFilter(ft_filter,6);
+      };
+
+      /**
        * @brief Initialize dynamics state.
        * @param js message from joint_state controller
        * @param ft message from sensor driver

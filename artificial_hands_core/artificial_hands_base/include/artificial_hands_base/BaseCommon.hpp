@@ -11,6 +11,18 @@
 
 namespace atk
 {  
+
+  /**
+   * @brief Stores gains and bias for linear correction of FT sensor
+   */
+  struct ft_calib_t
+  {
+    double raw_mass = 0;
+    double gain[6] = {1.0,1.0,1.0,1.0,1.0,1.0};
+    double bias[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
+    double offset[6] = {0.0,0.0,0.0,0.0,0.0,0.0};
+  };
+
   /**
    * @brief Stores coefficient based filter parameters
    */

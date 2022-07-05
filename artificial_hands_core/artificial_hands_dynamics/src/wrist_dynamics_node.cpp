@@ -28,8 +28,9 @@ namespace rosatk
       {
         rosatk::FilterManagerBase kin_fil(nh,"frame_kinematics",filter_length);
         rosatk::FilterManagerBase dyn_fil(nh,"ft_sensor",filter_length);
+        rosatk::FTCalibManagerBase ft_cal(nh,"ft_sensor");
         WristFTProprioception::SetKinematicsFilter(dyn_fil.filter);
-        WristFTProprioception::SetFTFilter(dyn_fil.filter);
+        WristFTProprioception::SetFTFilter(dyn_fil.filter,ft_cal.calib);
 
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
