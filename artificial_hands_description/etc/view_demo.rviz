@@ -236,6 +236,12 @@ Visualization Manager:
           Value: false
         index_sensor:
           Value: false
+<<<<<<< HEAD
+        insole_1:
+          Value: true
+        insole_2:
+          Value: true
+=======
         insole_0:
           Value: true
         insole_1:
@@ -276,6 +282,7 @@ Visualization Manager:
           Value: true
         insole_26:
           Value: true
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
         insole_3:
           Value: true
         insole_4:
@@ -288,8 +295,11 @@ Visualization Manager:
           Value: true
         insole_8:
           Value: true
+<<<<<<< HEAD
+=======
         insole_9:
           Value: true
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
         little_fle:
           Value: false
         middle_fle:
@@ -299,7 +309,11 @@ Visualization Manager:
         palm:
           Value: false
         probe:
+<<<<<<< HEAD
+          Value: false
+=======
           Value: true
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
         ring_fle:
           Value: false
         shoulder_link:
@@ -313,7 +327,11 @@ Visualization Manager:
         thumb_sensor:
           Value: false
         tool0:
+<<<<<<< HEAD
+          Value: true
+=======
           Value: false
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
         tool0_controller:
           Value: false
         upper_arm_link:
@@ -329,7 +347,11 @@ Visualization Manager:
       Marker Alpha: 1
       Marker Scale: 1
       Name: TF
+<<<<<<< HEAD
+      Show Arrows: false
+=======
       Show Arrows: true
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
       Show Axes: true
       Show Names: true
       Tree:
@@ -337,6 +359,12 @@ Visualization Manager:
           arm_base:
             base_link:
               base:
+<<<<<<< HEAD
+                insole_1:
+                  {}
+                insole_2:
+                  {}
+=======
                 insole_0:
                   {}
                 insole_1:
@@ -377,6 +405,7 @@ Visualization Manager:
                   {}
                 insole_26:
                   {}
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
                 insole_3:
                   {}
                 insole_4:
@@ -389,8 +418,11 @@ Visualization Manager:
                   {}
                 insole_8:
                   {}
+<<<<<<< HEAD
+=======
                 insole_9:
                   {}
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
                 table_ref:
                   {}
                 tool0_controller:
@@ -433,7 +465,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: world
+    Fixed Frame: base
     Frame Rate: 30
   Name: root
   Tools:
@@ -457,7 +489,11 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
+<<<<<<< HEAD
+      Distance: 2.0820794105529785
+=======
       Distance: 2.9331064224243164
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -465,17 +501,29 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
+<<<<<<< HEAD
+        X: 0.36289840936660767
+        Y: -0.7749049067497253
+        Z: 0.5090669989585876
+=======
         X: -0.7630431652069092
         Y: -0.9382534623146057
         Z: 0.45108193159103394
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
+<<<<<<< HEAD
+      Pitch: 0.3897964060306549
+      Target Frame: <Fixed Frame>
+      Yaw: 4.290396213531494
+=======
       Pitch: 0.42979660630226135
       Target Frame: <Fixed Frame>
       Yaw: 1.2154006958007812
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
     Saved: ~
 Window Geometry:
   Displays:
@@ -493,5 +541,10 @@ Window Geometry:
   Views:
     collapsed: false
   Width: 1920
+<<<<<<< HEAD
+  X: 1520
+  Y: 35
+=======
   X: 1920
   Y: 0
+>>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10

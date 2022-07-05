@@ -24,6 +24,8 @@ int64 success
 #feedback
 float64 goal_time
 float64 percentage
+float64 delta_position
+float64 delta_angle
 geometry_msgs/Point max_vel
 geometry_msgs/Point max_angvel
 geometry_msgs/Point max_accel

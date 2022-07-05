@@ -5,6 +5,7 @@ find_package(catkin REQUIRED COMPONENTS
   std_msgs
   geometry_msgs
   cartesian_control_msgs
+  trajectory_msgs
   message_generation
   actionlib_msgs
   dynamic_reconfigure
@@ -33,6 +34,7 @@ add_action_files(
   ObjectGrasp.action
   ObjectRecognition.action
   RobotHumanHandoverReaching.action
+  RobotMoveWaypoints.action
   TrajectoryGeneration.action
 )
 
@@ -41,6 +43,7 @@ generate_messages(
   std_msgs
   geometry_msgs
   cartesian_control_msgs
+  trajectory_msgs
   actionlib_msgs
 )
 

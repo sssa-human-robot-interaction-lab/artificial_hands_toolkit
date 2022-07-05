@@ -15,7 +15,7 @@ class RobotCommander(ABC):
 
     self.arm = ArmCommander() 
 
-    self.hand = MiaHandCommander(ns='')
+    self.hand = MiaHandCommander(ns='mia_hand')
 
     self.wrist_dyn = WristDynamics()
 
