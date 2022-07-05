@@ -16,7 +16,7 @@ class ArmCommander(ControllerManagerBase):
 
   j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
   cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
-  cart_mot_eik_ctrl = 'cartesian_motion_eik_controller'
+  cart_mot_eik_ctrl = 'cartesian_eik_position_controller'
 
   ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
                cart_mot_pos_ctrl : CartesianTrajectoryPoint,
@@ -142,6 +142,10 @@ class ArmCommander(ControllerManagerBase):
 
   def trajectory_monitor_feedback_cb(self, feedback : TrajectoryGenerationFeedback):
     self.percentage = feedback.percentage
+
+  def trajectory_monitor_result_cb(self, goal : TrajectoryGenerationGoal, result : TrajectoryGenerationResult):
+    if result.success:
+      self.percentage = 100
 
 def main():
 

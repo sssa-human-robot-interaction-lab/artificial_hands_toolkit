@@ -57,7 +57,7 @@ class CartesianTrajectoryPointPublisher:
   def target_traj_point_cb(self, msg : CartesianTrajectoryPointStamped):
 
     self.target_pose.pose = msg.point.pose
-    self.target_pose.twist = msg.point.twis
+    self.target_pose.twist = msg.point.twist
     if not rospy.is_shutdown():
       self.pub.publish(self.target_pose)
 
