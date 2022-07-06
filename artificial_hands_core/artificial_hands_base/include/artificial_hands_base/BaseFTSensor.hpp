@@ -146,6 +146,15 @@ namespace atk
         o_.torque = ft.torque;
       }
 
+      /**
+       * @brief Reset bias of force/torque sensor
+       */
+      void SetOffset()
+      {
+        resetVector3(&o_.force);
+        resetVector3(&o_.torque);
+      }
+
       geometry_msgs::Vector3 force;
       geometry_msgs::Vector3 torque;
       geometry_msgs::Vector3 force_raw;
