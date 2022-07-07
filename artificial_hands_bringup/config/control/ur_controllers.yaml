@@ -23,39 +23,39 @@ cartesian_motion_position_controller:
     rot_z: {p: *p, d: *d}
   
   solver:
-    error_scale: 2.5
-    iterations: 5
+    error_scale: 0.93
+    iterations: 1
     
     forward_dynamics:
       link_mass: 0.1
   
   cart_error:
-    vel_err_scale: 0.0
+    vel_err_scale: 1.0
 
-# cartesian_eik_position_controller:
-#   type: "position_controllers/CartesianMotionController"
-#   ik_solver: "eik"
-#   end_effector_link: *ee
-#   robot_base_link: *ref
-#   target_frame_topic: "command"
-#   joints: *robot_joints
+cartesian_eik_position_controller:
+  type: "position_controllers/CartesianMotionController"
+  ik_solver: "eik"
+  end_effector_link: *ee
+  robot_base_link: *ref
+  target_frame_topic: "command"
+  joints: *robot_joints
 
-#   pd_gains:
-#     p: &ep 1.3
-#     d: &ed 0.0 
-#     trans_x: {p: *ep, d: *ed}
-#     trans_y: {p: *ep, d: *ed}
-#     trans_z: {p: *ep, d: *ed}
-#     rot_x: {p: *ep, d: *ed}
-#     rot_y: {p: *ep, d: *ed}
-#     rot_z: {p: *ep, d: *ed}
+  pd_gains:
+    p: &ep 1.0
+    d: &ed 0.0 
+    trans_x: {p: *ep, d: *ed}
+    trans_y: {p: *ep, d: *ed}
+    trans_z: {p: *ep, d: *ed}
+    rot_x: {p: *ep, d: *ed}
+    rot_y: {p: *ep, d: *ed}
+    rot_z: {p: *ep, d: *ed}
   
-#   solver:
-#     error_scale: 1.0
-#     iterations: 5
+  solver:
+    error_scale: 3.33
+    iterations: 1
     
-#     eik:
-#       eik_damp: 100
+    eik:
+      eik_damp: 100
     
-#   cart_error:
-#     vel_err_scale: 0.5
+  cart_error:
+    vel_err_scale: 1.0
