@@ -20,7 +20,7 @@ namespace rosatk
         nh_(nh),
         publish_(true),
         controller_(controller),
-        FrameKinematics(controller_rate, target_frame, "manipulator", "robot_description"),
+        FrameKinematics((double)rate, target_frame, "manipulator", "robot_description"),
         ServiceManagerBase(nh,&FrameKinematicsNode::command),
         FilterManagerBase(nh,"/frame_kinematics",filter_length)
       {
