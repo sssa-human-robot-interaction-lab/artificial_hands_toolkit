@@ -6,10 +6,8 @@ Panels:
       Expanded:
         - /Global Options1
         - /Status1
-        - /TF1
-        - /TF1/Frames1
       Splitter Ratio: 0.5
-    Tree Height: 746
+    Tree Height: 549
   - Class: rviz/Selection
     Name: Selection
   - Class: rviz/Tool Properties
@@ -53,6 +51,118 @@ Visualization Manager:
       Plane: XY
       Plane Cell Count: 10
       Reference Frame: <Fixed Frame>
+      Value: true
+    - Class: rviz/TF
+      Enabled: true
+      Frame Timeout: 15
+      Frames:
+        All Enabled: false
+        URflange:
+          Value: false
+        arm_base:
+          Value: false
+        base:
+          Value: false
+        base_link:
+          Value: false
+        base_link_inertia:
+          Value: false
+        flange:
+          Value: false
+        forearm_link:
+          Value: false
+        hand_ee_link:
+          Value: false
+        hex_ee_mounting_plate:
+          Value: false
+        hex_mounting_plate:
+          Value: false
+        hex_sensor_frame:
+          Value: false
+        index_fle:
+          Value: false
+        index_sensor:
+          Value: false
+        little_fle:
+          Value: false
+        middle_fle:
+          Value: false
+        middle_sensor:
+          Value: false
+        palm:
+          Value: false
+        probe:
+          Value: false
+        ring_fle:
+          Value: false
+        shoulder_link:
+          Value: false
+        thumb_fle:
+          Value: false
+        thumb_opp:
+          Value: false
+        thumb_sensor:
+          Value: false
+        tool0:
+          Value: true
+        tool0_controller:
+          Value: false
+        upper_arm_link:
+          Value: false
+        world:
+          Value: false
+        wrist_1_link:
+          Value: false
+        wrist_2_link:
+          Value: false
+        wrist_3_link:
+          Value: false
+      Marker Alpha: 1
+      Marker Scale: 1
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: true
+      Tree:
+        world:
+          arm_base:
+            base_link:
+              base:
+                tool0_controller:
+                  {}
+              base_link_inertia:
+                shoulder_link:
+                  upper_arm_link:
+                    forearm_link:
+                      wrist_1_link:
+                        wrist_2_link:
+                          wrist_3_link:
+                            flange:
+                              tool0:
+                                hex_mounting_plate:
+                                  hex_sensor_frame:
+                                    hex_ee_mounting_plate:
+                                      palm:
+                                        URflange:
+                                          probe:
+                                            {}
+                                        hand_ee_link:
+                                          {}
+                                        index_fle:
+                                          index_sensor:
+                                            {}
+                                        little_fle:
+                                          {}
+                                        middle_fle:
+                                          middle_sensor:
+                                            {}
+                                        ring_fle:
+                                          {}
+                                        thumb_opp:
+                                          thumb_sensor:
+                                            thumb_fle:
+                                              {}
+      Update Interval: 0
       Value: true
     - Alpha: 1
       Class: rviz/RobotModel
@@ -205,267 +315,11 @@ Visualization Manager:
       Update Interval: 0
       Value: true
       Visual Enabled: true
-    - Class: rviz/TF
-      Enabled: true
-      Frame Timeout: 15
-      Frames:
-        All Enabled: false
-        URflange:
-          Value: false
-        arm_base:
-          Value: false
-        base:
-          Value: false
-        base_link:
-          Value: false
-        base_link_inertia:
-          Value: false
-        flange:
-          Value: false
-        forearm_link:
-          Value: false
-        hand_ee_link:
-          Value: false
-        hex_ee_mounting_plate:
-          Value: false
-        hex_mounting_plate:
-          Value: false
-        hex_sensor_frame:
-          Value: false
-        index_fle:
-          Value: false
-        index_sensor:
-          Value: false
-<<<<<<< HEAD
-        insole_1:
-          Value: true
-        insole_2:
-          Value: true
-=======
-        insole_0:
-          Value: true
-        insole_1:
-          Value: true
-        insole_10:
-          Value: true
-        insole_11:
-          Value: true
-        insole_12:
-          Value: true
-        insole_13:
-          Value: true
-        insole_14:
-          Value: true
-        insole_15:
-          Value: true
-        insole_16:
-          Value: true
-        insole_17:
-          Value: true
-        insole_18:
-          Value: true
-        insole_19:
-          Value: true
-        insole_2:
-          Value: true
-        insole_20:
-          Value: true
-        insole_21:
-          Value: true
-        insole_22:
-          Value: true
-        insole_23:
-          Value: true
-        insole_24:
-          Value: true
-        insole_25:
-          Value: true
-        insole_26:
-          Value: true
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-        insole_3:
-          Value: true
-        insole_4:
-          Value: true
-        insole_5:
-          Value: true
-        insole_6:
-          Value: true
-        insole_7:
-          Value: true
-        insole_8:
-          Value: true
-<<<<<<< HEAD
-=======
-        insole_9:
-          Value: true
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-        little_fle:
-          Value: false
-        middle_fle:
-          Value: false
-        middle_sensor:
-          Value: false
-        palm:
-          Value: false
-        probe:
-<<<<<<< HEAD
-          Value: false
-=======
-          Value: true
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-        ring_fle:
-          Value: false
-        shoulder_link:
-          Value: false
-        table_ref:
-          Value: true
-        thumb_fle:
-          Value: false
-        thumb_opp:
-          Value: false
-        thumb_sensor:
-          Value: false
-        tool0:
-<<<<<<< HEAD
-          Value: true
-=======
-          Value: false
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-        tool0_controller:
-          Value: false
-        upper_arm_link:
-          Value: false
-        world:
-          Value: false
-        wrist_1_link:
-          Value: false
-        wrist_2_link:
-          Value: false
-        wrist_3_link:
-          Value: false
-      Marker Alpha: 1
-      Marker Scale: 1
-      Name: TF
-<<<<<<< HEAD
-      Show Arrows: false
-=======
-      Show Arrows: true
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-      Show Axes: true
-      Show Names: true
-      Tree:
-        world:
-          arm_base:
-            base_link:
-              base:
-<<<<<<< HEAD
-                insole_1:
-                  {}
-                insole_2:
-                  {}
-=======
-                insole_0:
-                  {}
-                insole_1:
-                  {}
-                insole_10:
-                  {}
-                insole_11:
-                  {}
-                insole_12:
-                  {}
-                insole_13:
-                  {}
-                insole_14:
-                  {}
-                insole_15:
-                  {}
-                insole_16:
-                  {}
-                insole_17:
-                  {}
-                insole_18:
-                  {}
-                insole_19:
-                  {}
-                insole_2:
-                  {}
-                insole_20:
-                  {}
-                insole_21:
-                  {}
-                insole_22:
-                  {}
-                insole_23:
-                  {}
-                insole_24:
-                  {}
-                insole_25:
-                  {}
-                insole_26:
-                  {}
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-                insole_3:
-                  {}
-                insole_4:
-                  {}
-                insole_5:
-                  {}
-                insole_6:
-                  {}
-                insole_7:
-                  {}
-                insole_8:
-                  {}
-<<<<<<< HEAD
-=======
-                insole_9:
-                  {}
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
-                table_ref:
-                  {}
-                tool0_controller:
-                  {}
-              base_link_inertia:
-                shoulder_link:
-                  upper_arm_link:
-                    forearm_link:
-                      wrist_1_link:
-                        wrist_2_link:
-                          wrist_3_link:
-                            flange:
-                              tool0:
-                                hex_mounting_plate:
-                                  hex_sensor_frame:
-                                    hex_ee_mounting_plate:
-                                      palm:
-                                        URflange:
-                                          probe:
-                                            {}
-                                        hand_ee_link:
-                                          {}
-                                        index_fle:
-                                          index_sensor:
-                                            {}
-                                        little_fle:
-                                          {}
-                                        middle_fle:
-                                          middle_sensor:
-                                            {}
-                                        ring_fle:
-                                          {}
-                                        thumb_opp:
-                                          thumb_sensor:
-                                            thumb_fle:
-                                              {}
-      Update Interval: 0
-      Value: true
   Enabled: true
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -489,11 +343,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-<<<<<<< HEAD
-      Distance: 2.0820794105529785
-=======
-      Distance: 2.9331064224243164
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
+      Distance: 3.5963454246520996
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -501,37 +351,25 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-<<<<<<< HEAD
-        X: 0.36289840936660767
-        Y: -0.7749049067497253
-        Z: 0.5090669989585876
-=======
-        X: -0.7630431652069092
-        Y: -0.9382534623146057
-        Z: 0.45108193159103394
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
+        X: 0.22415702044963837
+        Y: 0.06381513178348541
+        Z: 0.15307748317718506
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-<<<<<<< HEAD
-      Pitch: 0.3897964060306549
+      Pitch: 0.9203976392745972
       Target Frame: <Fixed Frame>
-      Yaw: 4.290396213531494
-=======
-      Pitch: 0.42979660630226135
-      Target Frame: <Fixed Frame>
-      Yaw: 1.2154006958007812
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
+      Yaw: 3.8304026126861572
     Saved: ~
 Window Geometry:
   Displays:
     collapsed: false
-  Height: 1043
+  Height: 846
   Hide Left Dock: false
-  Hide Right Dock: false
-  QMainWindow State: 000000ff00000000fd00000004000000000000015600000375fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d00000375000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f00000375fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073010000003d00000375000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000007800000003efc0100000002fb0000000800540069006d0065010000000000000780000002eb00fffffffb0000000800540069006d006501000000000000045000000000000000000000050f0000037500000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  Hide Right Dock: true
+  QMainWindow State: 000000ff00000000fd000000040000000000000156000002b0fc0200000008fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000005c00fffffffb0000001e0054006f006f006c002000500072006f007000650072007400690065007302000001ed000001df00000185000000a3fb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb000000100044006900730070006c006100790073010000003d000002b0000000c900fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261000000010000010f000002b0fc0200000003fb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000000a00560069006500770073000000003d000002b0000000a400fffffffb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000490000000a9fc0100000001fb0000000a00560069006500770073030000004e00000080000002e10000019700000003000004f30000003efc0100000002fb0000000800540069006d00650100000000000004f3000002eb00fffffffb0000000800540069006d0065010000000000000450000000000000000000000397000002b000000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   Selection:
     collapsed: false
   Time:
@@ -539,12 +377,7 @@ Window Geometry:
   Tool Properties:
     collapsed: false
   Views:
-    collapsed: false
-  Width: 1920
-<<<<<<< HEAD
-  X: 1520
-  Y: 35
-=======
-  X: 1920
-  Y: 0
->>>>>>> 629751d3d37ff67e0734fbcb87cd675715a50d10
+    collapsed: true
+  Width: 1267
+  X: 2352
+  Y: 58
