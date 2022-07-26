@@ -10,6 +10,6 @@ include_directories(
 )
 
 catkin_install_python(PROGRAMS
-  scripts/tty_low_latency
+  scripts/tty_low_latency.py
   DESTINATION ${CATKIN_PACKAGE_BIN_DESTINATION}
 )
