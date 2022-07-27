@@ -45,7 +45,7 @@
     <group ns="mia_hand"> 
 
       <!-- Start the control node -->
-      <node name="Mia_hw_node" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" >
+	    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher" respawn="false">
         <param name="Mia_COM_" type="int" value="$(arg Mia_COM)"/> <!-- private param so as to match to the namespace used-->
         <param name="Mia_fs_" type="int" value="$(arg Mia_fs)"/> <!-- private param so as to match to the namespace used-->
       </node>

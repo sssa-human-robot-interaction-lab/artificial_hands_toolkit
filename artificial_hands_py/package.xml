@@ -50,7 +50,8 @@
   <!--   <doc_depend>doxygen</doc_depend> -->
   <buildtool_depend>catkin</buildtool_depend>
 
-  <depend>wrist_frame_dynamics</depend>
+  <depend>artificial_hands_base</depend>
+  <depend>artificial_hands_dynamics</depend>
   <depend>artificial_hands_msgs</depend>
   <depend>actionlib_msgs</depend>
   <depend>cartesian_control_msgs</depend>

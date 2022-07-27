@@ -45,8 +45,8 @@ namespace atk
         addElement(&t_mag_std_,stddev(t_mag_));
         addElement(&t_summ_sk_,skewness(t_summ_));
 
-        addElement(&d_fi_,magnitudeVector3(force)-f_mag_);
-        f_mag_ = magnitudeVector3(force);
+        addElement(&d_fi_,magnitudeVector3(force_raw)-f_mag_);
+        f_mag_ = magnitudeVector3(force_raw);
 
         geometry_msgs::Vector3 v = force_raw;
         assignVector3(&xy_,v.x,v.y,.0);

@@ -6,7 +6,8 @@ find_package(catkin REQUIRED COMPONENTS artificial_hands_base)
 find_package(Boost REQUIRED COMPONENTS system program_options)
 
 catkin_package(
- CATKIN_DEPENDS artificial_hands_base
+  INCLUDE_DIRS include
+  CATKIN_DEPENDS artificial_hands_base
 )
 
 include_directories(

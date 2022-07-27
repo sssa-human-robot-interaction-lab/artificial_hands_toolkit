@@ -6,8 +6,6 @@
 	<arg name="Mia_fs_" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
   <arg name="Mia_ns_" default='mia_hand' doc="Robot namespace" />
 
-  <node name="tty_low_latency_node" pkg="artificial_hands_bringup" type="tty_low_latency.py" args="ttyUSB$(arg Mia_COM_)"/>
-
   <group ns="$(arg Mia_ns_)">
 
 	<param name="/Mia_COM_" type="int" value="$(arg Mia_COM_)"/> <!-- private param so as to match to the namespace used-->
@@ -27,7 +25,7 @@
   <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>
 
 	<!-- Start the control node -->
-	<node name="Mia_hw_node" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" >
+	<node name="Mia_hw_node" pkg="mia_hand_ros_control" type="Mia_hw_node" output="screen" launch-prefix="bash -c 'setserial /dev/ttyUSB$(arg Mia_COM_) low_latency; sleep 1; $0 $@'">
 		<param name="Mia_COM_" type="int" value="$(arg Mia_COM_)"/> <!-- private param so as to match to the namespace used-->
 		<param name="Mia_fs_" type="int" value="$(arg Mia_fs_)"/> <!-- private param so as to match to the namespace used-->
 	</node>
