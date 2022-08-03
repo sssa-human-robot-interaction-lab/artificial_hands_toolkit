@@ -137,20 +137,13 @@ class MiaHandCommander(ControllerManagerBase):
     j_vel.data = [-vel,-vel,-vel]
     self.controller_command(j_vel)
 
-    dur_open = [abs(y - x)/vel for (x,y) in zip(self.j_pos,[0.3,0.7,0.0])]
-    class JointPauser:
-      def __init__(self, j_index : int, dur_open : list, j_vel : list) -> None:
-        pause_thread = Thread(target=self.pause,args=[j_index,dur_open,j_vel])
-        pause_thread.start()
-      
-      def pause(self, j_index : int, dur_open : list, j_vel : list):
-        rospy.sleep(rospy.Duration.from_sec(dur_open[j_index]))
-        j_vel[j_index] = 0
+    dur_open = [abs(y - x)/vel for (x,y) in zip(self.j_pos,[0.4,0.4,0.1])]
 
-    j_index_pauser = JointPauser(0,dur_open,j_vel.data)
-    j_mrl_pauser = JointPauser(1,dur_open,j_vel.data)
-    j_thumb_pauser = JointPauser(2,dur_open,j_vel.data)
+    start_open = rospy.Time.now()
     while not all(v == 0 for v in j_vel.data):
+      for j_id in range(3):
+        if (rospy.Time.now() - start_open).to_sec() > dur_open[j_id]:
+          j_vel.data[j_id] = 0
       self.controller_command(j_vel)
       self.rate.sleep()
 
