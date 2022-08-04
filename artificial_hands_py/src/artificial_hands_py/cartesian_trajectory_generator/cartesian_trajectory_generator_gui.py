@@ -115,6 +115,9 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     track_ratio_label, self.track_ratio_spin_box  = new_param_item('Track ratio [-]:',0.1,1,0.05)
     self.track_ratio_spin_box.setValue(1.0)
 
+    track_t_go_label, self.track_t_go_spin_box  = new_param_item('Track Tgo [-]:',0.1,1,0.05)
+    self.track_t_go_spin_box.setValue(0.5)
+
     stop_time_label, self.stop_time_spin_box  = new_param_item('Stop time [s]:',0,1,0.05)
     self.stop_time_spin_box.setValue(0.3)
 
@@ -122,6 +125,8 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.params_layout.addWidget(self.teleop_check_box)
     self.params_layout.addWidget(track_ratio_label)
     self.params_layout.addWidget(self.track_ratio_spin_box)
+    self.params_layout.addWidget(track_t_go_label)
+    self.params_layout.addWidget(self.track_t_go_spin_box)
     self.params_layout.addWidget(stop_time_label)
     self.params_layout.addWidget(self.stop_time_spin_box)
 
@@ -166,10 +171,16 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     goal = TrajectoryGenerationGoal()
     self.teleop_check_box.setChecked(False)
     self.teleop_check_box.setDisabled(True)
+    self.track_ratio_spin_box.setDisabled(True)
+    self.track_t_go_spin_box.setDisabled(True)
+    self.on_teleop_check_box()
     if self.cart_traj_generator_combo_box.currentText() == 'mj_tracker_trajectory_generator':
       goal.traj_type = goal.MJ
       goal.track_ratio = self.track_ratio_spin_box.value()
+      goal.track_t_go = self.track_t_go_spin_box.value()
       self.teleop_check_box.setEnabled(True)
+      self.track_ratio_spin_box.setEnabled(True)
+      self.track_t_go_spin_box.setEnabled(True)
     elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
       goal.traj_type = goal.HARMONIC
     elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
@@ -185,7 +196,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
       self.teleop_thread = Thread(target=self.update_teleop_target)
       self.teleop_running = True
       self.teleop_thread.start()
-    else:
+    elif self.teleop_running:
       self.teleop_running = False
       self.teleop_thread.join()
 
@@ -214,6 +225,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     goal = TrajectoryGenerationGoal()
     if self.cart_traj_generator_combo_box.currentText() == 'mj_tracker_trajectory_generator':
       goal.track_ratio = self.track_ratio_spin_box.value()
+      goal.track_t_go = self.track_t_go_spin_box.value()
       goal.traj_type = goal.MJ
     elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
       goal.traj_type = goal.HARMONIC
@@ -266,6 +278,8 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     goal.traj_type = goal.MJ
     rate = rospy.Rate(30)
     while self.teleop_running:
+      goal.track_ratio = self.track_ratio_spin_box.value()
+      goal.track_t_go = self.track_t_go_spin_box.value()
       goal.traj_target.pose = self.get_current_target()
       self.traj_cl.send_goal(goal)
       rate.sleep()

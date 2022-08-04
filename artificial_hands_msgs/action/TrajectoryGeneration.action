@@ -15,6 +15,7 @@ float64 trapz_max_vel
 float64 trapz_max_angvel
 float64 trapz_alpha
 float64 track_ratio
+float64 track_t_go
 string controlled_frame
 std_msgs/Header header
 cartesian_control_msgs/CartesianTrajectoryPoint traj_target

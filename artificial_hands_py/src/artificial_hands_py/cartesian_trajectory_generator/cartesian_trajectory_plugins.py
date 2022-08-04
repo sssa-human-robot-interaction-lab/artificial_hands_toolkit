@@ -15,6 +15,7 @@ class MJTrajectoryPlugin:
   lin_accel_tolerance = 1e-02
   ang_vel_tolerance = 1e-02
   ang_accel_tolerance = 1e-02
+  sleep_dur = rospy.Duration.from_sec(0.5)
 
   def __init__(self) -> None:
     
@@ -25,7 +26,7 @@ class MJTrajectoryPlugin:
 
     self.plugin_target = CartesianTrajectoryPoint()
     self.target = MJTarget()
-    self.target.t_go.data = 1
+    self.target.t_go.data = 0.5
     self.target_ratio = Float64()
   
   def target_cb(self, msg : TaskSpaceTrajectory):
@@ -36,7 +37,7 @@ class MJTrajectoryPlugin:
     self.plugin_target.acceleration.linear = msg.se3dd.linear
     self.plugin_target.acceleration.angular = msg.se3dd.angular
   
-  def set_plugin_target(self, target : CartesianTrajectoryPoint, ratio : float = 0.2):
+  def set_plugin_target(self, target : CartesianTrajectoryPoint, ratio : float = 0.2, track_t_go = 0.5):
 
     self.target_ratio.data = ratio
 
@@ -45,6 +46,7 @@ class MJTrajectoryPlugin:
     self.target.se3 = target.pose
     self.target.se3d = target.twist
     self.target.se3dd = target.acceleration
+    self.target.t_go.data = track_t_go
 
     self.target_pub.publish(self.target)
   
@@ -53,6 +55,8 @@ class MJTrajectoryPlugin:
     set_req = SetPoseMJTrackerRequest()
     set_req.pose = pose_copy(target.pose)
     res = self.set_ser(set_req)
+    rospy.sleep(self.sleep_dur)
+
   
   def is_active(self) -> bool:
     active = abs(self.plugin_target.twist.linear.x) + abs(self.plugin_target.twist.linear.y) + abs(self.plugin_target.twist.linear.z) > self.lin_vel_tolerance
@@ -99,7 +103,7 @@ class DMPTrajectoryPlugin:
 
     self.pos_pub.publish(self.target_pos)
     self.rot_pub.publish(self.target_rot)
-  
+
   def is_active(self) -> bool:
     active = abs(self.plugin_target.twist.linear.x) + abs(self.plugin_target.twist.linear.y) + abs(self.plugin_target.twist.linear.z) > self.lin_vel_tolerance
     active = active or abs(self.plugin_target.acceleration.linear.x) + abs(self.plugin_target.acceleration.linear.y) + abs(self.plugin_target.acceleration.linear.z) > self.lin_accel_tolerance

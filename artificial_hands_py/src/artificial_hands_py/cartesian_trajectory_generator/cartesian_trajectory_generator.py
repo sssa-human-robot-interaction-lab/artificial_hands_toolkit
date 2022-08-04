@@ -46,6 +46,8 @@ class CartesianTrajectoryGenerator:
 
     self.traj_result.success = True
 
+    self.lock.acquire()
+
     if self.plugin_thread.is_alive():
       self.plugin_running = False
       self.plugin_thread.join()
@@ -59,11 +61,13 @@ class CartesianTrajectoryGenerator:
     
     if goal.traj_type == goal.MJ:
       self.mj_plugin.set_plugin_state(self.target)
-      # while self.mj_plugin.is_active():
-      self.rate.sleep()
+      while self.mj_plugin.is_active():
+        self.rate.sleep()
       self.active_plugin = self.mj_plugin
       self.plugin_thread = Thread(target=self.copy_plugin_target)
       self.plugin_thread.start()
+
+    self.lock.release()
 
     self.gen_as.set_succeeded(self.traj_result)
 
@@ -78,6 +82,9 @@ class CartesianTrajectoryGenerator:
     
     if goal.track_ratio < 0.1 or goal.track_ratio > 1:
       goal.track_ratio = 0.1
+
+    if goal.track_t_go < 0.1 or goal.track_t_go > 1:
+      goal.track_t_go = 0.5
 
     if goal.traj_type == goal.STOP:
       if self.plugin_running:
@@ -95,7 +102,7 @@ class CartesianTrajectoryGenerator:
     #   self.traj_as.set_succeeded(self.traj_result) # no action needed here
     #   return
     elif goal.traj_type == goal.MJ:
-      self.mj_plugin.set_plugin_target(goal.traj_target, goal.track_ratio)
+      self.mj_plugin.set_plugin_target(goal.traj_target, goal.track_ratio, goal.track_t_go)
       self.traj_as.set_succeeded(self.traj_result)
       return
 
@@ -442,7 +449,7 @@ class CartesianTrajectoryGenerator:
 
   def copy_plugin_target(self):
     self.plugin_running = True
-    while self.plugin_running:
+    while self.plugin_running and not rospy.is_shutdown():
       self.lock.acquire()
       self.target = cart_traj_point_copy(self.active_plugin.plugin_target)
       self.lock.release()
