@@ -56,6 +56,7 @@ class ArmCommanderGui(QWidget):
     self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed) 
     self.cart_traj_gen_widget.teleop_check_box.clicked.connect(self.on_teleop_check_box) 
     self.cart_traj_gen_widget.track_ratio_spin_box.valueChanged.connect(self.on_track_ratio_changed) 
+    self.cart_traj_gen_widget.track_t_go_spin_box.valueChanged.connect(self.on_track_t_go_changed) 
     self.cart_traj_gen_widget.stop_time_spin_box.valueChanged.connect(self.on_stop_time_changed)
     self.cart_traj_gen_widget.send_push_button.clicked.connect(self.on_send_button)
     self.cart_traj_gen_widget.stop_push_button.clicked.connect(self.on_stop_button) 
@@ -89,6 +90,9 @@ class ArmCommanderGui(QWidget):
   
   def on_track_ratio_changed(self):
     self.arm.set_track_ratio(self.cart_traj_gen_widget.track_ratio_spin_box.value())
+  
+  def on_track_t_go_changed(self):
+    self.arm.set_track_t_go(self.cart_traj_gen_widget.track_t_go_spin_box.value())
 
   def on_stop_time_changed(self):
     self.arm.set_stop_time(self.cart_traj_gen_widget.stop_time_spin_box.value())

@@ -88,6 +88,10 @@ class ArmCommander(ControllerManagerBase):
     self.goal.track_ratio = track_ratio
     self.c_traj_cl.send_goal_and_wait(self.goal)
   
+  def set_track_t_go(self,track_ratio : float):
+    self.goal.track_ratio = track_ratio
+    self.c_traj_cl.send_goal_and_wait(self.goal)
+  
   def set_stop_time(self,stop_time : float):
     self.goal.stop_time = stop_time
 
