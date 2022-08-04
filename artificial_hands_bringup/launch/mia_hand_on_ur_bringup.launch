@@ -1,13 +1,19 @@
 <?xml version="1.0"?>
 <launch>
 
-  <arg name="sim" default="true" />
-  <arg name="robot_ip" default="192.168.1.7" doc="specify robot IP address"/>
-  <arg name="kinematics_config" default="$(arg robot_ip)" doc="specify robot calibration IP address"/>
+  <arg name="sim" default="false" />
+  <arg name="robot_ip" default="127.0.0.1" doc="specify robot IP address"/>
   <arg name="ur_robot" default="ur10e" doc="choose robot type: ur5, ur10e" />
   <arg name="Mia_COM" default='0' doc="Int number of the Mia hand COM port" />
   <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
   <arg name="Mia_hw_sim" default="false" doc="set to true to simulate mia hand hardware interface (requires to emulate a serial port)" />
+
+  <!-- Check robot type (simulated or real) and prepare the right kinematics_config -->
+  <arg name="ur_sim" value="$(eval robot_ip == '127.0.0.1')" />
+  <arg if="$(eval ur_sim and (ur_robot == 'ur10e'))" name="kinematics_config" value="192.168.1.100"/>
+  <arg if="$(eval ur_sim and (ur_robot == 'ur5'))" name="kinematics_config" value="192.168.1.50"/>
+  <arg if="$(eval not ur_sim)" name="kinematics_config" value="$(arg robot_ip)" doc="specify robot calibration IP address"/>
+  <param name="kinematics_config" value="$(arg kinematics_config)" />
 
   <group if="$(arg sim)">
 
