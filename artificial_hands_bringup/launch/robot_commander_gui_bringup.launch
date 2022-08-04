@@ -4,8 +4,11 @@
   <arg name="sim" default="true" />
   <arg name="hand_cmd" default="false" />
 
-  <!-- Load dmp_extended node -->
-  <include file="$(find dmp_extended)/launch/dmp_node.launch"/>
+  <!-- Load @fraiori dmp_extended node -->
+  <!-- <include file="$(find dmp_extended)/launch/dmp_node.launch"/> -->
+
+  <!-- Load @fraiori minimum_jerk_se3_tracker -->
+  <include file="$(find minimum_jerk_se3_tracker)/launch/dualmj_ros_tracker.launch.launch"/>
 
   <!-- Run the trajectory generator node -->
   <node pkg="artificial_hands_nodes" type="cartesian_trajectory_generator_node.py" name="cartesian_trajectory_generator_node" output="screen"/>

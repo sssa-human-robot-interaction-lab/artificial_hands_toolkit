@@ -1,8 +1,10 @@
+from re import T
 import numpy as np
+from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 import tf.transformations as ts
 import moveit_commander.conversions as cv
-from geometry_msgs.msg import Quaternion,Pose
+from geometry_msgs.msg import Quaternion,Pose, Twist
 
 def singleton(cls, *args, **kw):
      instances = {}
@@ -42,6 +44,23 @@ def pose_copy(pose : Pose) -> Pose:
   p.orientation.y = pose.orientation.y
   p.orientation.z = pose.orientation.z
   p.orientation.w = pose.orientation.w
+  return p
+
+def twist_copy(twist : Twist) -> Twist:
+  t = Twist()
+  t.linear.x = twist.linear.x
+  t.linear.y = twist.linear.y
+  t.linear.z = twist.linear.z
+  t.angular.x = twist.angular.x
+  t.angular.y = twist.angular.y
+  t.angular.z = twist.angular.z
+  return t
+
+def cart_traj_point_copy(pnt : CartesianTrajectoryPoint) -> Pose:
+  p = CartesianTrajectoryPoint()
+  p.pose = pose_copy(pnt.pose)
+  p.twist = twist_copy(pnt.twist)
+  p.acceleration = twist_copy(pnt.acceleration)
   return p
 
 def pose_to_matrix(pose: Pose) -> np.matrix:

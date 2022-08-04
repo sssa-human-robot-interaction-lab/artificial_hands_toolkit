@@ -58,6 +58,11 @@ class TargetGroupBox(QGroupBox):
     if title is not None:
       self.setTitle(title)
     self.setLayout(target_layout)
+  
+  def set_zeros(self):
+    self.x_spin_box.setValue(0)
+    self.y_spin_box.setValue(0)
+    self.z_spin_box.setValue(0)
     
 class TargetTable(QTableWidget):
 
@@ -96,7 +101,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.setWindowTitle(title)
 
     self.cart_traj_generator_combo_box = QComboBox()
-    self.cart_traj_generator_combo_box.addItem('dmp_extended_trajectory_generator')
+    self.cart_traj_generator_combo_box.addItem('mj_tracker_trajectory_generator')
     self.cart_traj_generator_combo_box.addItem('harmonic_trajectory_generator')
     self.cart_traj_generator_combo_box.addItem('polynomial_345_trajectory_generator')
     self.cart_traj_generator_combo_box.addItem('polynomial_567_trajectory_generator')
@@ -107,21 +112,23 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.teleop_check_box.setChecked(False)
     self.teleop_check_box.setDisabled(True)
 
-    dmp_ratio_label, self.dmp_ratio_spin_box  = new_param_item('Dmp ratio [-]:',0.1,1,0.05)
-    self.dmp_ratio_spin_box.setValue(0.2)
+    track_ratio_label, self.track_ratio_spin_box  = new_param_item('Track ratio [-]:',0.1,1,0.05)
+    self.track_ratio_spin_box.setValue(1.0)
 
     stop_time_label, self.stop_time_spin_box  = new_param_item('Stop time [s]:',0,1,0.05)
     self.stop_time_spin_box.setValue(0.3)
 
     self.params_layout = QHBoxLayout()
     self.params_layout.addWidget(self.teleop_check_box)
-    self.params_layout.addWidget(dmp_ratio_label)
-    self.params_layout.addWidget(self.dmp_ratio_spin_box)
+    self.params_layout.addWidget(track_ratio_label)
+    self.params_layout.addWidget(self.track_ratio_spin_box)
     self.params_layout.addWidget(stop_time_label)
     self.params_layout.addWidget(self.stop_time_spin_box)
 
     self.target_position_group_box = TargetGroupBox(self,'Position [m]',max=1,step=0.001)
     self.target_orientation_group_box = TargetGroupBox(self,'Orientation [rad]',max=pi,step=0.001)
+    self.target_position_group_box.set_zeros()
+    self.target_orientation_group_box.set_zeros()
     
     self.add_push_button = QPushButton('Add')
     self.clear_push_button = QPushButton('Clear')
@@ -159,9 +166,9 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     goal = TrajectoryGenerationGoal()
     self.teleop_check_box.setChecked(False)
     self.teleop_check_box.setDisabled(True)
-    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
-      goal.traj_type = goal.DMP
-      goal.dmp_ratio = self.dmp_ratio_spin_box.value()
+    if self.cart_traj_generator_combo_box.currentText() == 'mj_tracker_trajectory_generator':
+      goal.traj_type = goal.MJ
+      goal.track_ratio = self.track_ratio_spin_box.value()
       self.teleop_check_box.setEnabled(True)
     elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
       goal.traj_type = goal.HARMONIC
@@ -205,8 +212,9 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   
   def on_send_button(self):
     goal = TrajectoryGenerationGoal()
-    if self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
-      goal.traj_type = goal.DMP
+    if self.cart_traj_generator_combo_box.currentText() == 'mj_tracker_trajectory_generator':
+      goal.track_ratio = self.track_ratio_spin_box.value()
+      goal.traj_type = goal.MJ
     elif self.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
       goal.traj_type = goal.HARMONIC
     elif self.cart_traj_generator_combo_box.currentText() == 'polynomial_345_trajectory_generator':
@@ -255,7 +263,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   
   def update_teleop_target(self):
     goal = TrajectoryGenerationGoal()
-    goal.traj_type = goal.DMP
+    goal.traj_type = goal.MJ
     rate = rospy.Rate(30)
     while self.teleop_running:
       goal.traj_target.pose = self.get_current_target()

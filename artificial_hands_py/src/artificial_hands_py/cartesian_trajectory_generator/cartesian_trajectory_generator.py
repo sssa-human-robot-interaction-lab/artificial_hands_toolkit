@@ -7,7 +7,7 @@ from geometry_msgs.msg import Quaternion, Twist
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 from artificial_hands_msgs.msg import *
-from artificial_hands_py.artificial_hands_py_base import list_to_quat, quat_to_list
+from artificial_hands_py.artificial_hands_py_base import cart_traj_point_copy, list_to_quat, quat_to_list
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import *
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_plugins import *
 
@@ -16,7 +16,8 @@ class CartesianTrajectoryGenerator:
   traj_feedback = TrajectoryGenerationFeedback()
   traj_result = TrajectoryGenerationResult()
 
-  dmp_plugin = DMPTrajectoryPlugin()
+  # dmp_plugin = DMPTrajectoryPlugin()
+  mj_plugin = MJTrajectoryPlugin()
 
   lock = Lock()
 
@@ -32,7 +33,7 @@ class CartesianTrajectoryGenerator:
     self.target.time_from_start = rospy.Duration.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
 
-    target_timer = rospy.Timer(rospy.Duration.from_sec(1/self.traj_rate),self.update)
+    self.target_timer = rospy.Timer(rospy.Duration.from_sec(1/self.traj_rate),self.update)
 
     self.plugin_thread = Thread()
     self.plugin_running = False
@@ -49,10 +50,19 @@ class CartesianTrajectoryGenerator:
       self.plugin_running = False
       self.plugin_thread.join()
 
-    if goal.traj_type == goal.DMP:
-      while self.dmp_plugin.is_active():
-        self.rate.sleep()
-      self.plugin_thread = Thread(target=self.copy_plugin_target,args=(self.dmp_plugin.plugin_target,))
+    # if goal.traj_type == goal.DMP:
+    #   while self.dmp_plugin.is_active():
+    #     self.rate.sleep()
+    #   self.active_plugin = self.dmp_plugin
+    #   self.plugin_thread = Thread(target=self.copy_plugin_target)
+    #   self.plugin_thread.start()
+    
+    if goal.traj_type == goal.MJ:
+      self.mj_plugin.set_plugin_state(self.target)
+      # while self.mj_plugin.is_active():
+      self.rate.sleep()
+      self.active_plugin = self.mj_plugin
+      self.plugin_thread = Thread(target=self.copy_plugin_target)
       self.plugin_thread.start()
 
     self.gen_as.set_succeeded(self.traj_result)
@@ -66,8 +76,8 @@ class CartesianTrajectoryGenerator:
     if goal.stop_time < 0.1 or goal.stop_time > 0.5:
       goal.stop_time = 0.1
     
-    if goal.dmp_ratio < 0.1 or goal.dmp_ratio > 1:
-      goal.dmp_ratio = 0.1
+    if goal.track_ratio < 0.1 or goal.track_ratio > 1:
+      goal.track_ratio = 0.1
 
     if goal.traj_type == goal.STOP:
       if self.plugin_running:
@@ -75,13 +85,17 @@ class CartesianTrajectoryGenerator:
       self.traj_as.set_succeeded(self.traj_result)
       return
 
-    self.dmp_plugin.set_plugin_target(goal.traj_target,goal.dmp_ratio)
+    # self.dmp_plugin.set_plugin_target(goal.traj_target,goal.track_ratio) #keep dmp plugin updated
 
     if goal.traj_type == goal.FORWARD:
       self.target = goal.traj_target
       self.traj_as.set_succeeded(self.traj_result)
       return
-    elif goal.traj_type == goal.DMP:
+    # elif goal.traj_type == goal.DMP:
+    #   self.traj_as.set_succeeded(self.traj_result) # no action needed here
+    #   return
+    elif goal.traj_type == goal.MJ:
+      self.mj_plugin.set_plugin_target(goal.traj_target, goal.track_ratio)
       self.traj_as.set_succeeded(self.traj_result)
       return
 
@@ -397,6 +411,8 @@ class CartesianTrajectoryGenerator:
     msg.point = self.target
     self.traj_pnt_pub.publish(msg)
     self.lock.release()
+    if rospy.is_shutdown():
+      self.target_timer.shutdown()
 
   def target_from_twist(self, target_twist : Twist, dt : float):
     self.lock.acquire()
@@ -424,13 +440,11 @@ class CartesianTrajectoryGenerator:
     self.target.jerk.linear.z = 0
     self.lock.release()
 
-  def copy_plugin_target(self, plugin_target : CartesianTrajectoryPoint):
+  def copy_plugin_target(self):
     self.plugin_running = True
     while self.plugin_running:
       self.lock.acquire()
-      self.target.pose = plugin_target.pose
-      self.target.twist = plugin_target.twist
-      self.target.acceleration = plugin_target.acceleration
+      self.target = cart_traj_point_copy(self.active_plugin.plugin_target)
       self.lock.release()
       self.rate.sleep()
   
@@ -444,9 +458,9 @@ class CartesianTrajectoryGenerator:
     stop_twist = Twist()
     for k in range(0,c_max+1):
       self.lock.acquire()
-      stop_twist.linear.x = self.dmp_plugin.plugin_target.twist.linear.x*down_scaling_hann(k,c_max)
-      stop_twist.linear.y = self.dmp_plugin.plugin_target.twist.linear.y*down_scaling_hann(k,c_max)
-      stop_twist.linear.z = self.dmp_plugin.plugin_target.twist.linear.z*down_scaling_hann(k,c_max)
+      stop_twist.linear.x = self.active_plugin.plugin_target.twist.linear.x*down_scaling_hann(k,c_max)
+      stop_twist.linear.y = self.active_plugin.plugin_target.twist.linear.y*down_scaling_hann(k,c_max)
+      stop_twist.linear.z = self.active_plugin.plugin_target.twist.linear.z*down_scaling_hann(k,c_max)
       self.target_from_twist(stop_twist,dt)
       self.lock.release()
       self.rate.sleep()

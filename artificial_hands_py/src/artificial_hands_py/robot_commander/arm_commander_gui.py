@@ -55,7 +55,7 @@ class ArmCommanderGui(QWidget):
     self.cart_motion_ctrl_combo_box.currentIndexChanged.connect(self.on_ctrl_changed)
     self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed) 
     self.cart_traj_gen_widget.teleop_check_box.clicked.connect(self.on_teleop_check_box) 
-    self.cart_traj_gen_widget.dmp_ratio_spin_box.valueChanged.connect(self.on_dmp_ratio_changed) 
+    self.cart_traj_gen_widget.track_ratio_spin_box.valueChanged.connect(self.on_track_ratio_changed) 
     self.cart_traj_gen_widget.stop_time_spin_box.valueChanged.connect(self.on_stop_time_changed)
     self.cart_traj_gen_widget.send_push_button.clicked.connect(self.on_send_button)
     self.cart_traj_gen_widget.stop_push_button.clicked.connect(self.on_stop_button) 
@@ -66,8 +66,8 @@ class ArmCommanderGui(QWidget):
   def on_gen_changed(self):
     self.cart_traj_gen_widget.teleop_check_box.setChecked(False)
     self.cart_traj_gen_widget.teleop_check_box.setDisabled(True)
-    if self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
-      self.arm.set_dmp_traj_generator()
+    if self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'mj_tracker_trajectory_generator':
+      self.arm.set_mj_traj_generator()
       self.cart_traj_gen_widget.teleop_check_box.setEnabled(True)
     elif self.cart_traj_gen_widget.cart_traj_generator_combo_box.currentText() == 'harmonic_trajectory_generator':
       self.arm.set_harmonic_traj_generator()
@@ -87,8 +87,8 @@ class ArmCommanderGui(QWidget):
       self.cart_traj_gen_widget.teleop_running = False
       self.teleop_thread.join()
   
-  def on_dmp_ratio_changed(self):
-    self.arm.set_dmp_ratio(self.cart_traj_gen_widget.dmp_ratio_spin_box.value())
+  def on_track_ratio_changed(self):
+    self.arm.set_track_ratio(self.cart_traj_gen_widget.track_ratio_spin_box.value())
 
   def on_stop_time_changed(self):
     self.arm.set_stop_time(self.cart_traj_gen_widget.stop_time_spin_box.value())
