@@ -2,7 +2,7 @@ from math import floor
 from threading import Thread, Lock
 
 import rospy, actionlib
-import tf.transformations as ts
+import tf, tf.transformations as ts
 from geometry_msgs.msg import Quaternion, Twist
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
@@ -27,11 +27,17 @@ class CartesianTrajectoryGenerator:
     self.traj_as = actionlib.SimpleActionServer('cartesian_trajectory_generator', TrajectoryGenerationAction, execute_cb=self.trajectory_generation_cb, auto_start = False)
 
     self.traj_pnt_pub = rospy.Publisher('target_traj_pnt',CartesianTrajectoryPointStamped,queue_size=1000)
+    self.traj_pnt_msg = CartesianTrajectoryPointStamped()
+
+    self.target_br = tf.TransformBroadcaster()
 
     self.target = CartesianTrajectoryPoint()
     self.target.pose.orientation.w = 1
     self.target.time_from_start = rospy.Duration.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
+
+    self.ref : str = None
+    self.ee : str = None
 
     self.target_timer = rospy.Timer(rospy.Duration.from_sec(1/self.traj_rate),self.update)
 
@@ -47,6 +53,9 @@ class CartesianTrajectoryGenerator:
     self.traj_result.success = True
 
     self.lock.acquire()
+
+    self.ref = goal.header.frame_id
+    self.ee = goal.controlled_frame + '_target'
 
     if self.plugin_thread.is_alive():
       self.plugin_running = False
@@ -411,12 +420,21 @@ class CartesianTrajectoryGenerator:
       if self.traj_result.success:
         self.traj_as.set_succeeded(self.traj_result)
   
+  def update_tf(self):
+    if (self.ref is not None) and (self.ee is not None):
+      pos_tuple = tuple([self.target.pose.position.x,self.target.pose.position.y,self.target.pose.position.z])
+      rot_tuple = tuple(quat_to_list(self.target.pose.orientation))
+      self.target_br.sendTransform(pos_tuple,rot_tuple,rospy.Time.now(),self.ee,self.ref)
+  
   def update(self,event):
-    msg = CartesianTrajectoryPointStamped()
-    msg.header.stamp = rospy.Time.now()
+
     self.lock.acquire()
-    msg.point = self.target
-    self.traj_pnt_pub.publish(msg)
+    
+    self.traj_pnt_msg.header.stamp = rospy.Time.now()
+    self.traj_pnt_msg.point = self.target
+    self.traj_pnt_pub.publish(self.traj_pnt_msg)
+    self.update_tf()
+
     self.lock.release()
     if rospy.is_shutdown():
       self.target_timer.shutdown()
