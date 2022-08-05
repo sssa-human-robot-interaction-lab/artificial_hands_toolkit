@@ -24,10 +24,10 @@ def main():
 
   # set position for sensor_calibration
   ft_cal_goal = ForceTorqueSensorCalibrationGoal()
-  ft_cal_goal.home.position.x = 0.5
-  ft_cal_goal.home.position.y = 0.2
-  ft_cal_goal.home.position.z = 0.5
-  ft_cal_goal.home.orientation = list_to_quat([0,0,0,1])
+  ft_cal_goal.home.position.x = -0.486
+  ft_cal_goal.home.position.y = -0.108
+  ft_cal_goal.home.position.z = 0.223
+  ft_cal_goal.home.orientation = list_to_quat([0.5,0.5,0.5,0.5])
   ft_cal_goal.max_accel = 0.4
   ft_cal_goal.max_angaccel = 0.4
 
@@ -76,9 +76,11 @@ def main():
   r2h_handv_goal.stop_time = 0.2
   r2h_handv_goal.sleep = 1
 
-  # high level control loop: start with a calibration
-  ft_cal_cl.send_goal_and_wait(ft_cal_goal)
+  # high level control loop
   while True:
+
+    # start or check ft sensor calibration
+    ft_cal_cl.send_goal_and_wait(ft_cal_goal)
     
     # grasp
     obj_grasp_cl.send_goal_and_wait(obj_grasp_goal)

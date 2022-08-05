@@ -11,7 +11,7 @@
 
 #include <artificial_hands_base/BaseFilters.hpp>
 
-#define USE_KALMAN true
+#define USE_KALMAN false
 
 namespace atk
 {
@@ -54,6 +54,9 @@ namespace atk
         F_.resize(2*chann_,j_kal_init_obs_);
         j_meas_.resize(2*chann_);
         j_state_.resize(3*chann_);
+
+        transform_ = kinematic_state_->getGlobalLinkTransform(target_frame_);
+        rotation_ = transform_.rotation().inverse();
 
         std::cout << "USE_KALMAN: " << USE_KALMAN << std::endl;
       }

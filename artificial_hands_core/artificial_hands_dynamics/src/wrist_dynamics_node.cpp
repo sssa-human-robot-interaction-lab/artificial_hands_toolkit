@@ -107,7 +107,7 @@ namespace rosatk
             WristFTProprioception::TriggerDynamics(factor_);
             break;
           case cmd::Request::MOD_SCA:
-            WristFTCalibration::AddEquation(force_dyn,torque_dyn,gravity,twist_acceleration.linear); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
+            WristFTCalibration::AddEquation(force_dyn,torque_dyn,gravity); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
             break;
         }
 
@@ -223,7 +223,7 @@ namespace rosatk
             WristFTContactDetection::SetOffset(WristFTCalibration::Get());
             c_mass_ = 100*(atk::magnitudeVector3(force_dyn)/(WristFTCalibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
-            (abs(c_mass_) > 6 ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
+            (abs(c_mass_) > 6 | c_mass_ != c_mass_ ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
             break;            
           }   
           ROS_INFO("Executed command.");
@@ -324,7 +324,7 @@ int main(int argc, char** argv)
     ("autostart", po::value<bool>(&autostart)->default_value(1), "set true to autostart the node")
     ("publish", po::value<bool>(&publish)->default_value(1), "set true to advertise a WristStamped publisher")
     ("factor", po::value<double>(&factor)->default_value(2.0), "robustness of interaction trigger for dynamic handover (g.t. 1)")
-    ("filter", po::value<int>(&filter)->default_value(20), "length of moving average filters (in samples)")
+    ("filter", po::value<int>(&filter)->default_value(0), "length of moving average filters (in samples)")
     ("rate", po::value<int>(&rate)->default_value(100), "rosnode internal rate (in Hertz)")
     ("sensor", po::value<std::string>(&sensor)->default_value("/ft_sensor"), "name of the rostopic published by F/T sensor") 
     ("controller", po::value<std::string>(&controller)->default_value("/joint_states"), "name of the rostopic published by joint_state_controller") 
