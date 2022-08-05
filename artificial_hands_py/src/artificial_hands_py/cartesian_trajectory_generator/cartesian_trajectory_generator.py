@@ -16,7 +16,7 @@ class CartesianTrajectoryGenerator:
   traj_feedback = TrajectoryGenerationFeedback()
   traj_result = TrajectoryGenerationResult()
 
-  # dmp_plugin = DMPTrajectoryPlugin()
+  dmp_plugin = DMPTrajectoryPlugin()
   mj_plugin = MJTrajectoryPlugin()
 
   lock = Lock()
@@ -61,12 +61,12 @@ class CartesianTrajectoryGenerator:
       self.plugin_running = False
       self.plugin_thread.join()
 
-    # if goal.traj_type == goal.DMP:
-    #   while self.dmp_plugin.is_active():
-    #     self.rate.sleep()
-    #   self.active_plugin = self.dmp_plugin
-    #   self.plugin_thread = Thread(target=self.copy_plugin_target)
-    #   self.plugin_thread.start()
+    if goal.traj_type == goal.DMP:
+      while self.dmp_plugin.is_active():
+        self.rate.sleep()
+      self.active_plugin = self.dmp_plugin
+      self.plugin_thread = Thread(target=self.copy_plugin_target)
+      self.plugin_thread.start()
     
     if goal.traj_type == goal.MJ:
       self.mj_plugin.set_plugin_state(self.target)
@@ -101,15 +101,15 @@ class CartesianTrajectoryGenerator:
       self.traj_as.set_succeeded(self.traj_result)
       return
 
-    # self.dmp_plugin.set_plugin_target(goal.traj_target,goal.track_ratio) #keep dmp plugin updated
+    self.dmp_plugin.set_plugin_target(goal.traj_target,goal.track_ratio) #keep dmp plugin updated
 
     if goal.traj_type == goal.FORWARD:
       self.target = goal.traj_target
       self.traj_as.set_succeeded(self.traj_result)
       return
-    # elif goal.traj_type == goal.DMP:
-    #   self.traj_as.set_succeeded(self.traj_result) # no action needed here
-    #   return
+    elif goal.traj_type == goal.DMP:
+      self.traj_as.set_succeeded(self.traj_result) # no action needed here
+      return
     elif goal.traj_type == goal.MJ:
       self.mj_plugin.set_plugin_target(goal.traj_target, goal.track_ratio, goal.track_t_go)
       self.traj_as.set_succeeded(self.traj_result)

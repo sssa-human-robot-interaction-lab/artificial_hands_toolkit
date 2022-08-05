@@ -39,9 +39,10 @@ class RobotHumanHandoverReachingModule(RobotCommander):
     self.wrist_dyn.set_save_interaction()
     
     # move to start position
-    self.arm.set_dmp_ratio(1) #just to make the dmp following faster the current target
+    self.arm.set_track_ratio(1)
+    self.arm.set_track_t_go(0.1)
     self.arm.set_stop_time(goal.stop_time)
-    self.arm.set_max_accel(0.2) # use lower accelration to reach the home position
+    self.arm.set_max_accel(0.2) # use lower acceleration to reach the home position
     self.arm.set_max_angaccel(0.2)
     self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller('cartesian_motion_position_controller')
@@ -52,10 +53,9 @@ class RobotHumanHandoverReachingModule(RobotCommander):
     open_thread = Thread(target=self.hand.open,args=[False,3])
 
     # change to dmp
-    # self.arm.set_dmp_traj_generator()
-    # self.arm.set_dmp_ratio(.2) #just to set a reasonable ratio for reaching
-    self.arm.set_max_accel(goal.max_accel) # not rqeuired for dmp
-    self.arm.set_max_angaccel(goal.max_angaccel)
+    self.arm.set_mj_traj_generator()
+    # self.arm.set_max_accel(goal.max_accel) # not rqeuired for mj
+    # self.arm.set_max_angaccel(goal.max_angaccel)
     rospy.sleep(self.sleep_dur)
 
     # go to target pose and monitor execution
