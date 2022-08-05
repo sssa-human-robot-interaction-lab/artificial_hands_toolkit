@@ -9,7 +9,7 @@ from minimum_jerk_se3_tracker.srv import *
 
 from artificial_hands_py.artificial_hands_py_base import norm_quat, pose_copy
 
-"""@fraiori minimum_jerk_se3_tracker"""
+"""@fraiori0 minimum_jerk_se3_tracker"""
 class MJTrajectoryPlugin:
   lin_vel_tolerance = 1e-02
   lin_accel_tolerance = 1e-02
@@ -65,7 +65,7 @@ class MJTrajectoryPlugin:
     active = active or abs(self.plugin_target.acceleration.angular.x) + abs(self.plugin_target.acceleration.angular.y) + abs(self.plugin_target.acceleration.angular.z) > self.ang_accel_tolerance
     return active
 
-"""@fraiori dmp_extended"""
+"""@fraiori0 dmp_extended"""
 class DMPTrajectoryPlugin:
   lin_vel_tolerance = 1e-02
   lin_accel_tolerance = 1e-02
