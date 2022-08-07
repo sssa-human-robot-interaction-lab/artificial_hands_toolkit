@@ -7,7 +7,7 @@ from trajectory_msgs.msg import JointTrajectory
 from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 from artificial_hands_msgs.msg import *
-from artificial_hands_py.artificial_hands_py_base import singleton
+from artificial_hands_py.artificial_hands_py_base import cart_traj_point_copy, singleton
 from artificial_hands_py.robot_commander.controller_manager_base  import ControllerManagerBase
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_publishers import CartesianTrajectoryPointPublisher, PoseStampedPublisher
 
@@ -42,6 +42,8 @@ class ArmCommander(ControllerManagerBase):
     self.goal.header.frame_id = ref
     self.goal.controlled_frame = eef
 
+    self.pause_all_controllers()
+
     cart_mot_pos_pub = CartesianTrajectoryPointPublisher(self.cart_mot_pos_ctrl+'/command')
     cart_mot_eik_pub = CartesianTrajectoryPointPublisher(self.cart_mot_eik_ctrl+'/command')
 
@@ -64,6 +66,13 @@ class ArmCommander(ControllerManagerBase):
       ref = self.ref_frame
     ref_to_frame = self.tf_buffer.lookup_transform(ref,frame,rospy.Time(0),timeout=rospy.Duration(1))
     return cv.list_to_pose_stamped(cv.transform_to_list(ref_to_frame.transform),ref)
+
+  def forward_target(self, target : CartesianTrajectoryPoint, wait : bool = True):
+    self.goal.traj_type = self.goal.FORWARD
+    self.goal.traj_target = cart_traj_point_copy(target)
+    self.c_traj_cl.send_goal(self.goal)
+    if wait:
+      self.c_traj_cl.wait_for_result()
   
   def set_pose_target(self, pose_target : Pose, wait : bool = True):
     self.goal.traj_target.pose = pose_target
@@ -95,13 +104,13 @@ class ArmCommander(ControllerManagerBase):
   def set_stop_time(self,stop_time : float):
     self.goal.stop_time = stop_time
 
-  def set_forward_traj_point(self):
-    self.goal.traj_type = self.goal.FORWARD
-    self.c_gen_cl.send_goal_and_wait(self.goal)
-  
-  # def set_dmp_traj_generator(self):
-  #   self.goal.traj_type = self.goal.DMP
+  # def set_forward_traj_point(self):
+  #   self.goal.traj_type = self.goal.FORWARD
   #   self.c_gen_cl.send_goal_and_wait(self.goal)
+  
+  def set_dmp_traj_generator(self):
+    self.goal.traj_type = self.goal.DMP
+    self.c_gen_cl.send_goal_and_wait(self.goal)
   
   def set_mj_traj_generator(self):
     self.goal.traj_type = self.goal.MJ

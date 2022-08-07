@@ -67,6 +67,8 @@ Visualization Manager:
           Value: false
         base_link_inertia:
           Value: false
+        ee_pose:
+          Value: true
         flange:
           Value: false
         forearm_link:
@@ -85,6 +87,8 @@ Visualization Manager:
           Value: false
         little_fle:
           Value: false
+        map:
+          Value: true
         middle_fle:
           Value: false
         middle_sensor:
@@ -124,44 +128,47 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        world:
-          arm_base:
-            base_link:
-              base:
-                tool0_controller:
-                  {}
-              base_link_inertia:
-                shoulder_link:
-                  upper_arm_link:
-                    forearm_link:
-                      wrist_1_link:
-                        wrist_2_link:
-                          wrist_3_link:
-                            flange:
-                              tool0:
-                                hex_mounting_plate:
-                                  hex_sensor_frame:
-                                    hex_ee_mounting_plate:
-                                      palm:
-                                        URflange:
-                                          probe:
-                                            {}
-                                        hand_ee_link:
-                                          {}
-                                        index_fle:
-                                          index_sensor:
-                                            {}
-                                        little_fle:
-                                          {}
-                                        middle_fle:
-                                          middle_sensor:
-                                            {}
-                                        ring_fle:
-                                          {}
-                                        thumb_opp:
-                                          thumb_sensor:
-                                            thumb_fle:
+        map:
+          world:
+            arm_base:
+              base_link:
+                base:
+                  ee_pose:
+                    {}
+                  tool0_controller:
+                    {}
+                base_link_inertia:
+                  shoulder_link:
+                    upper_arm_link:
+                      forearm_link:
+                        wrist_1_link:
+                          wrist_2_link:
+                            wrist_3_link:
+                              flange:
+                                tool0:
+                                  hex_mounting_plate:
+                                    hex_sensor_frame:
+                                      hex_ee_mounting_plate:
+                                        palm:
+                                          URflange:
+                                            probe:
                                               {}
+                                          hand_ee_link:
+                                            {}
+                                          index_fle:
+                                            index_sensor:
+                                              {}
+                                          little_fle:
+                                            {}
+                                          middle_fle:
+                                            middle_sensor:
+                                              {}
+                                          ring_fle:
+                                            {}
+                                          thumb_opp:
+                                            thumb_sensor:
+                                              thumb_fle:
+                                                {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -343,7 +350,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 3.5963454246520996
+      Distance: 4.0420241355896
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -351,17 +358,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: 0.22415702044963837
-        Y: 0.06381513178348541
-        Z: 0.15307748317718506
+        X: -0.42670339345932007
+        Y: 0.5890971422195435
+        Z: -0.15416677296161652
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.9203976392745972
+      Pitch: 0.6203979849815369
       Target Frame: <Fixed Frame>
-      Yaw: 3.8304026126861572
+      Yaw: 5.420416355133057
     Saved: ~
 Window Geometry:
   Displays:
@@ -379,5 +386,5 @@ Window Geometry:
   Views:
     collapsed: true
   Width: 1267
-  X: 2352
-  Y: 58
+  X: 653
+  Y: 27

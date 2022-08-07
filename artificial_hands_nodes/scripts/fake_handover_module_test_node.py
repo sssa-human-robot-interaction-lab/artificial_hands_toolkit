@@ -25,9 +25,9 @@ def main():
   # set position for sensor_calibration
   ft_cal_goal = ForceTorqueSensorCalibrationGoal()
   ft_cal_goal.home.position.x = -0.486
-  ft_cal_goal.home.position.y = -0.108
+  ft_cal_goal.home.position.y = -0.109
   ft_cal_goal.home.position.z = 0.223
-  ft_cal_goal.home.orientation = list_to_quat([0.5,0.5,0.5,0.5])
+  ft_cal_goal.home.orientation = list_to_quat([0,0,-0.7,0.7])
   ft_cal_goal.max_accel = 0.4
   ft_cal_goal.max_angaccel = 0.4
 
@@ -52,7 +52,7 @@ def main():
 
   # start object_recognition while positioning for reaching
   obj_rec_goal = ObjectRecognitionGoal()
-  obj_rec_goal.home = pose_copy(obj_grasp_goal.back)
+  obj_rec_goal.home = pose_copy(ft_cal_goal.home)
   obj_rec_goal.target.position.x = 0.95
   obj_rec_goal.target.position.y = -0.07
   obj_rec_goal.target.position.z = 0.25
@@ -80,16 +80,16 @@ def main():
   while True:
 
     # start or check ft sensor calibration
-    ft_cal_cl.send_goal_and_wait(ft_cal_goal)
+    # ft_cal_cl.send_goal_and_wait(ft_cal_goal)
     
     # grasp
-    obj_grasp_cl.send_goal_and_wait(obj_grasp_goal)
+    # obj_grasp_cl.send_goal_and_wait(obj_grasp_goal)
     
     # do object recognition
     obj_rec_cl.send_goal_and_wait(obj_rec_goal)
 
     # continue with the handover
-    r2h_handv_cl.send_goal_and_wait(r2h_handv_goal)
+    # r2h_handv_cl.send_goal_and_wait(r2h_handv_goal)
 
     break
 

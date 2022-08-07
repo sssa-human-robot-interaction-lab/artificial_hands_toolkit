@@ -51,11 +51,11 @@ cartesian_eik_position_controller:
     rot_z: {p: *ep, d: *ed}
   
   solver:
-    error_scale: 3.33
+    error_scale: 10
     iterations: 1
     
     eik:
       eik_damp: 100
     
   cart_error:
-    vel_err_scale: 1.0
+    vel_err_scale: 0.5

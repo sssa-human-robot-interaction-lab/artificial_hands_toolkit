@@ -37,7 +37,7 @@ class ForceTorqueSensorCalibrationModule(RobotCommander):
     self.arm.set_max_angaccel(goal.max_angaccel)
     self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller('cartesian_eik_position_controller')
-    # self.arm.set_pose_target(goal.home)
+    self.arm.set_pose_target(goal.home)
 
     # check current (if any) calibration
     self.wrist_dyn.apply_calibration()
@@ -95,6 +95,7 @@ class ForceTorqueSensorCalibrationModule(RobotCommander):
     self.wrist_dyn.stop_loop()
 
     # stop controllers
+    self.arm.wait_for_trajectory_monitor()
     self.arm.pause_all_controllers()
     self.calib_as.set_succeeded(self.calib_result)
     
