@@ -275,7 +275,10 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   
   def update_teleop_target(self):
     goal = TrajectoryGenerationGoal()
-    goal.traj_type = goal.MJ
+    if self.cart_traj_generator_combo_box.currentText() == 'mj_tracker_trajectory_generator':
+      goal.traj_type = goal.MJ
+    elif self.cart_traj_generator_combo_box.currentText() == 'dmp_extended_trajectory_generator':
+      goal.traj_type = goal.DMP
     rate = rospy.Rate(30)
     while self.teleop_running:
       goal.track_ratio = self.track_ratio_spin_box.value()

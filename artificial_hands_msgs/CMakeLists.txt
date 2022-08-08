@@ -30,11 +30,6 @@ add_service_files(
 
 add_action_files(
   FILES
-  ForceTorqueSensorCalibration.action
-  ObjectGrasp.action
-  ObjectRecognition.action
-  RobotHumanHandoverReaching.action
-  RobotMoveWaypoints.action
   TrajectoryGeneration.action
 )
 
