@@ -29,8 +29,10 @@ namespace rosatk
         rosatk::FilterManagerBase kin_fil(nh,"frame_kinematics",filter_length);
         rosatk::FilterManagerBase dyn_fil(nh,"ft_sensor",filter_length);
         rosatk::FTCalibManagerBase ft_cal(nh,"ft_sensor");
-        WristFTProprioception::SetKinematicsFilter(dyn_fil.filter);
-        WristFTProprioception::SetFTFilter(dyn_fil.filter,ft_cal.calib);
+        WristFTProprioception::SetKinematicsFilter(kin_fil.filter);
+        WristFTProprioception::FrameDynamics::SetFTFilter(dyn_fil.filter);
+        // WristFTProprioception::WristFTContactDetection::SetCorrection(ft_cal.calib);
+        WristFTCalibration::SetCalib(ft_cal.calib.offset, ft_cal.calib.raw_mass);
 
         ROS_INFO("Starting node with loop rate %i Hertz.",rate);
         ROS_INFO("Starting dynamics relative to frame %s.",target_frame);
@@ -107,7 +109,7 @@ namespace rosatk
             WristFTProprioception::TriggerDynamics(factor_);
             break;
           case cmd::Request::MOD_SCA:
-            WristFTCalibration::AddEquation(force_dyn,torque_dyn,gravity); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
+            WristFTCalibration::AddEquation(force_lp,torque_lp,gravity); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
             break;
         }
 
@@ -213,17 +215,26 @@ namespace rosatk
             ROS_INFO("%s",cal_str.str().c_str());
             break;
           case cmd::Request::CMD_SET:
-            ROS_INFO("Setting offset on force/torque sensor.");
+            ROS_INFO("Setting offset on force/torque sensor, using correction.");
             FrameDynamics::SetOffset(WristFTCalibration::Get());
             WristFTContactDetection::SetOffset(WristFTCalibration::Get());
+            FrameDynamics::SetCorrection(true);
+            WristFTContactDetection::SetCorrection(true);
             break;
           case cmd::Request::CMD_CHK:
-            ROS_INFO("Checking force/torque sensor calibration (unzeroing sensor).");
+            ROS_INFO("Checking force/torque sensor calibration (unzeroing sensor, removing correction).");
             WristFTContactDetection::SetZero(false);
-            WristFTContactDetection::SetOffset(WristFTCalibration::Get());
-            c_mass_ = 100*(atk::magnitudeVector3(force_dyn)/(WristFTCalibration::GetMass()*9.81) - 1);
+            FrameDynamics::SetCorrection(false);
+            WristFTContactDetection::SetCorrection(false);
+            c_mass_ = 100*(atk::magnitudeVector3(force_lp)/(WristFTCalibration::GetMass()*9.81) - 1);
             ROS_INFO("Change on mass estimate: %.1f %%",c_mass_);
-            (abs(c_mass_) > 6 | c_mass_ != c_mass_ ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
+            (abs(c_mass_) > 10 | c_mass_ != c_mass_ ? response.success = 0 : response.success = 1); //TO DO: very simple check, more robust approach shuild be considered
+            if(!response.success)
+            {
+              ROS_WARN("Calibration check negative. Removed offset on force/torque sensor. Please proceed with new calibration.");
+              FrameDynamics::SetOffset();
+              WristFTContactDetection::SetOffset();
+            }
             break;            
           }   
           ROS_INFO("Executed command.");

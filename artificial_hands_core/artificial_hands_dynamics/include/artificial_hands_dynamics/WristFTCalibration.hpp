@@ -89,6 +89,18 @@ namespace atk
         return phi_[6];
       }
 
+      /**
+       * @brief Set mass from calibration parameters
+       */
+      void SetCalib(double* offset, double m)
+      {
+        for(int i = 0; i < 6; i++)
+        {
+          phi_[i] = offset[i];
+        }
+        phi_[6] = m;
+      }
+
       std::stringstream cal_str;
 
     private:

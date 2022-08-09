@@ -2,7 +2,7 @@
 <launch>
 
   <!-- Load calib params for FT sensor -->
-  <!-- <rosparam command="load" file="$(find artificial_hands_dynamics)/config/calib_params.yaml"/> -->
+  <rosparam command="load" file="$(find artificial_hands_dynamics)/config/calib_params.yaml"/>
 
   <!-- Load filter param for wrist dynamics -->
   <!-- <rosparam command="load" file="$(find artificial_hands_dynamics)/config/low_pass_filters.yaml"/> -->

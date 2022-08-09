@@ -115,7 +115,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     track_ratio_label, self.track_ratio_spin_box  = new_param_item('Track ratio [-]:',0.1,1,0.05)
     self.track_ratio_spin_box.setValue(1.0)
 
-    track_t_go_label, self.track_t_go_spin_box  = new_param_item('Track Tgo [-]:',0.1,1,0.05)
+    track_t_go_label, self.track_t_go_spin_box  = new_param_item('Track Tgo [-]:',0.5,5,0.5)
     self.track_t_go_spin_box.setValue(0.5)
 
     stop_time_label, self.stop_time_spin_box  = new_param_item('Stop time [s]:',0,1,0.05)

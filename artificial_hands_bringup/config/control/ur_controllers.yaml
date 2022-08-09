@@ -58,4 +58,4 @@ cartesian_eik_position_controller:
       eik_damp: 100
     
   cart_error:
-    vel_err_scale: 0.5
+    vel_err_scale: 0.4

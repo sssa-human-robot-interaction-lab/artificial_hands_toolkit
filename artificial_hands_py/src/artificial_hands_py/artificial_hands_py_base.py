@@ -4,7 +4,7 @@ from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 import tf.transformations as ts
 import moveit_commander.conversions as cv
-from geometry_msgs.msg import Quaternion,Pose, Twist
+from geometry_msgs.msg import Quaternion, Pose, Twist, Transform
 
 def singleton(cls, *args, **kw):
      instances = {}
@@ -35,6 +35,12 @@ def norm_quat(quat : Quaternion):
   q_norm = np.linalg.norm(q)
   return list_to_quat([q_/q_norm for q_ in q])
 
+def pose_to_list(pose : Pose):
+  return cv .pose_to_list(pose)
+
+def list_to_pose(pose : list):
+  return cv .list_to_pose(pose)
+
 def pose_copy(pose : Pose) -> Pose:
   p = Pose()
   p.position.x = pose.position.x
@@ -54,6 +60,18 @@ def twist_copy(twist : Twist) -> Twist:
   t.angular.x = twist.angular.x
   t.angular.y = twist.angular.y
   t.angular.z = twist.angular.z
+  return t
+
+def twist_rotate(twist : Twist, M : np.ndarray) -> Twist:
+  t = Twist()
+  t_linear = np.dot(M,np.array([twist.linear.x,twist.linear.y,twist.linear.z]).transpose())
+  t_angular = np.dot(M,np.array([twist.angular.x,twist.angular.y,twist.angular.z]).transpose())
+  t.linear.x = t_linear[0]
+  t.linear.y = t_linear[1]
+  t.linear.z = t_linear[2]
+  t.angular.x = t_angular[0]
+  t.angular.y = t_angular[1]
+  t.angular.z = t_angular[2]
   return t
 
 def cart_traj_point_copy(pnt : CartesianTrajectoryPoint) -> Pose:
@@ -77,3 +95,6 @@ def matrix_to_pose(T: np.matrix) -> Pose:
   p.position.z = T[2,3]
   p.orientation = list_to_quat(ts.quaternion_from_matrix(T))
   return p
+
+def transform_to_matrix(tf : Transform) -> np.matrix:
+  return pose_to_matrix(list_to_pose(cv.transform_to_list(tf)))

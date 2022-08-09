@@ -86,9 +86,11 @@ class ArmCommander(ControllerManagerBase):
     if wait:
       self.c_traj_cl.wait_for_result()
   
-  def stop(self):
+  def stop(self, wait : bool = True):
     self.goal.traj_type = self.goal.STOP
-    self.c_traj_cl.send_goal_and_wait(self.goal)
+    self.c_traj_cl.send_goal(self.goal)
+    if wait:
+      self.c_traj_cl.wait_for_result()
   
   def cancel_pose_target(self):
     self.c_traj_cl.cancel_all_goals()

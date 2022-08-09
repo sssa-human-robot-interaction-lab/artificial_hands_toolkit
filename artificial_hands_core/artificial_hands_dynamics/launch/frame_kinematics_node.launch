@@ -2,7 +2,7 @@
 <launch>
 
   <!-- Load filter param for wrist dynamics -->
-  <rosparam command="load" file="$(find artificial_hands_dynamics)/config/low_pass_filters.yaml"/>
+  <!-- <rosparam command="load" file="$(find artificial_hands_dynamics)/config/low_pass_filters.yaml"/> -->
 
   <!-- Run the frame kinematics node -->
   <node pkg="artificial_hands_dynamics" type="frame_kinematics_node" name="frame_kinematics_node" output="screen" args="--autostart true"/>

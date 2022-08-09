@@ -17,14 +17,13 @@ class CartesianTrajectoryTFMonitor:
   mon_feedback = TrajectoryGenerationFeedback()
   mon_result = TrajectoryGenerationResult()
 
-  tf_buffer = tf2_ros.Buffer(rospy.Duration(1))
-
   def __init__(self) -> None:
     
     self.mon_as = actionlib.SimpleActionServer('cartesian_trajectory_tf_monitor', TrajectoryGenerationAction, execute_cb=self.trajectory_monitor_cb, auto_start = False)
     
     self.rate = rospy.Rate(self.mon_rate)
 
+    self.tf_buffer = tf2_ros.Buffer(rospy.Duration(1))
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)    
 
     self.mon_as.start()

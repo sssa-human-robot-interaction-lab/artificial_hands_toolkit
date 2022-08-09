@@ -60,13 +60,16 @@ namespace atk
         force = subtractVector3(subtractVector3(ft.force,o_.force),z_.force);
         torque = subtractVector3(subtractVector3(ft.torque,o_.torque),z_.torque);
         
-        force.x = force.x*m_[0] + q_[0];
-        force.y = force.y*m_[1] + q_[1];
-        force.z = force.z*m_[2] + q_[2];
+        if(use_correction_)
+        {
+          force.x = force.x*m_[0] + q_[0];
+          force.y = force.y*m_[1] + q_[1];
+          force.z = force.z*m_[2] + q_[2];
 
-        torque.x = torque.x*m_[3] + q_[3];
-        torque.y = torque.y*m_[4] + q_[4];
-        torque.z = torque.z*m_[5] + q_[5];
+          torque.x = torque.x*m_[3] + q_[3];
+          torque.y = torque.y*m_[4] + q_[4];
+          torque.z = torque.z*m_[5] + q_[5];
+        }
         return true;
       };
 
@@ -106,6 +109,15 @@ namespace atk
         o_.torque.x = ft_calib.offset[3];
         o_.torque.y = ft_calib.offset[4];
         o_.torque.z = ft_calib.offset[5];
+      }
+
+      /**
+       * @brief Manage sensor correction
+       * @param use_correction true/false to apply/remove correction
+       */
+      void SetCorrection(bool use_correction)
+      {
+        use_correction_ = use_correction;
       }
 
       /**
@@ -162,6 +174,7 @@ namespace atk
 
     private:
 
+      bool use_correction_ = true;
       geometry_msgs::Wrench z_;  
       geometry_msgs::Wrench o_; 
       double m_[6] = {1.0,1.0,1.0,1.0,1.0,1.0};

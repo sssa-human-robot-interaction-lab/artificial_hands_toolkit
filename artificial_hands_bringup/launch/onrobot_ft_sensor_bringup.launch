@@ -5,14 +5,15 @@
 
   <arg name="frame_id"   default="hex_sensor_frame"   doc="Frame ID for Wrench data"/>
   <arg name="address"    default="192.168.1.1"   doc="The IP address of the EtherDAQ device" />
-  <arg name="rate"       default="500"           doc="The publish speed (l.t. 500 Hz) of the F/T informations. It also sets the EtherDAQ speed to the given value"/>
+  <arg name="speed"       default="2"           doc="The publish speed (1000 / SPEED = Speed in Hz) of the F/T informations. It also sets the EtherDAQ speed to the given value"/>
   <arg name="filter"     default="0"             doc="Valid parameters: 0 = No filter; 1 = 500 Hz; 2 = 150 Hz; 3 = 50 Hz; 4 = 15 Hz; 5 = 5 Hz; 6 = 1.5 Hz"/>
   
 	<node
-		pkg="onrobot_hex_ft_sensor"
-		type="etherdaq_node"
-		name="etherdaq_node"
-		args="--address $(arg address) --rate $(arg rate) --filter $(arg filter) --frame_id $(arg frame_id)"
+		pkg="onrobot_etherdaq_driver"
+		type="onrobot_etherdaq_driver_node"
+		name="onrobot_etherdaq_driver_node"
+		args="$(arg address) $(arg speed) $(arg filter) $(arg frame_id)"
+    output="screen"
 	/>
   
 </launch>

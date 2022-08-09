@@ -150,7 +150,7 @@ namespace atk
        */
       bool Solve()
       {
-        double l[10] = {0, -inf, -inf, -inf, 0, 0, 0, 0, 0, 0};
+        double l[10] = {0, -inf, -inf, -inf, 0, -inf, -inf, 0, -inf, 0};
         double u[10];
         for(int i = 0; i < 10; i++)u[i] = inf;
         double* c = leastSquareFit(y_.size(),10,x_.data(),y_.data(),l,u);
