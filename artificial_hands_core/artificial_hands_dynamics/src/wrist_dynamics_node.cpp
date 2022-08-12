@@ -4,6 +4,9 @@
 #include <artificial_hands_msgs/WristDynamicsCommand.h>
 #include <artificial_hands_dynamics/WristFTCalibration.hpp>
 #include <artificial_hands_dynamics/WristFTProprioception.hpp>
+#include <artificial_hands_msgs/WristFTProprioceptionConfig.h>
+
+#include <dynamic_reconfigure/server.h>
 
 #include <std_msgs/Float64MultiArray.h>
 #include <geometry_msgs/WrenchStamped.h>
@@ -23,9 +26,13 @@ namespace rosatk
         factor_(factor),
         sensor_(sensor),
         controller_(controller),
-        WristFTProprioception(controller_rate, target_frame, "manipulator", "robot_description"),
+        WristFTProprioception((double) rate, target_frame, "manipulator", "robot_description"),
         ServiceManagerBase(nh,&WristDynamicsNode::command)
       {
+        dyn_f_ = boost::bind(&WristDynamicsNode::reconfigure, this, _1, _2);
+        dyn_ser_.reset(new dynamic_reconfigure::Server<artificial_hands_msgs::WristFTProprioceptionConfig>(ros::NodeHandle("wrist_ft_proprioception_reconfigure")));
+        dyn_ser_->setCallback(dyn_f_);
+
         rosatk::FilterManagerBase kin_fil(nh,"frame_kinematics",filter_length);
         rosatk::FilterManagerBase dyn_fil(nh,"ft_sensor",filter_length);
         rosatk::FTCalibManagerBase ft_cal(nh,"ft_sensor");
@@ -43,6 +50,7 @@ namespace rosatk
         det_pub_ = nh_.advertise<artificial_hands_msgs::DetectionStamped>("wrist_contact_detection",1000);
         det_tim_ = nh_.createWallTimer(ros::WallDuration(0.1),&WristDynamicsNode::externalTimerCallback, this, false, false);
         det_msg_.header.frame_id = target_frame;
+
         ROS_INFO("Starting node services.");
         addService("wrist_dynamics_command/subscribe", cmd::Request::CMD_SUB, this);
         addService("wrist_dynamics_command/start_loop", cmd::Request::CMD_STA, this);
@@ -70,6 +78,10 @@ namespace rosatk
       }
 
     private:
+
+      void reconfigure(artificial_hands_msgs::WristFTProprioceptionConfig &config, uint32_t level) {
+        factor_ = config.factor;
+      }
 
       void externalTimerCallback(const ros::WallTimerEvent& event)
       {	
@@ -103,10 +115,10 @@ namespace rosatk
             FrameDynamics::AddEquation();
             break;
           case cmd::Request::MOD_SIN:
-            WristFTProprioception::SaveInteraction();
+            WristFTProprioception::SaveInteraction(factor_);
             break;
           case cmd::Request::MOD_TDY:
-            WristFTProprioception::TriggerDynamics(factor_);
+            WristFTProprioception::TriggerDynamics();
             break;
           case cmd::Request::MOD_SCA:
             WristFTCalibration::AddEquation(force_lp,torque_lp,gravity); //TO DO: if FrameDynamics object can be inherited as virtual, no need to pass arguments here
@@ -310,6 +322,8 @@ namespace rosatk
       ros::Subscriber j_sub_, ft_sub_;
       sensor_msgs::JointStateConstPtr js_;
       geometry_msgs::WrenchStampedConstPtr ft_;
+      boost::shared_ptr<dynamic_reconfigure::Server<artificial_hands_msgs::WristFTProprioceptionConfig>> dyn_ser_;
+      dynamic_reconfigure::Server<artificial_hands_msgs::WristFTProprioceptionConfig>::CallbackType dyn_f_;
   };
 }
 

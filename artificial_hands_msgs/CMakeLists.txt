@@ -44,6 +44,7 @@ generate_messages(
 
 generate_dynamic_reconfigure_options(
   cfg/ProcessVariance.cfg
+  cfg/WristFTProprioception.cfg
 )
 
 

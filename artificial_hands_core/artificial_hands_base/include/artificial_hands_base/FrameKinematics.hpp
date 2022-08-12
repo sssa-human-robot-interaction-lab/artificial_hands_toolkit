@@ -11,7 +11,7 @@
 
 #include <artificial_hands_base/BaseFilters.hpp>
 
-#define USE_KALMAN true
+#define USE_KALMAN false
 
 namespace atk
 {

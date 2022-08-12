@@ -129,7 +129,7 @@ class MiaHandCommander(ControllerManagerBase):
     self.switch_to_pos_vel_controllers()
     self.lock.release()
   
-  def open(self, vel : float = 0.5):
+  def open(self, vel : float = 0.5, pos : list = [0.1,0.6,0.6]):
 
     self.lock.acquire()
     self.switch_to_controller(self.mia_j_vel_ctrl)
@@ -137,7 +137,7 @@ class MiaHandCommander(ControllerManagerBase):
     j_vel.data = [-vel,-vel,-vel]
     self.controller_command(j_vel)
 
-    dur_open = [abs(y - x)/vel for (x,y) in zip(self.j_pos,[0.4,0.4,0.1])]
+    dur_open = [abs(y - x)/vel for (x,y) in zip(self.j_pos,pos)]
 
     start_open = rospy.Time.now()
     while not all(v == 0 for v in j_vel.data):

@@ -148,13 +148,13 @@ class CartesianTrajectoryGenerator:
 
     if goal.traj_max_accel <= 0:
       goal.traj_max_accel = 0.5
-    elif goal.traj_max_accel > 1.5:
-      goal.traj_max_accel = 1.5
+    elif goal.traj_max_accel > 2.0:
+      goal.traj_max_accel = 2.0
 
     if goal.traj_max_angaccel <= 0:
       goal.traj_max_angaccel = 0.5
-    elif goal.traj_max_angaccel > 1:
-      goal.traj_max_angaccel = 1    
+    elif goal.traj_max_angaccel > 2.0:
+      goal.traj_max_angaccel = 2.0 
 
     if goal.traj_type == goal.HARMONIC:
 
@@ -422,7 +422,7 @@ class CartesianTrajectoryGenerator:
         angle = trapz_mod_pos(delta_angle,goal_time,goal.trapz_alpha,c*dt)
         self.target.pose.orientation = list_to_quat(
           ts.quaternion_multiply(ts.quaternion_from_matrix(ts.rotation_matrix(angle,delta_axis,delta_point)),quat_to_list(c_target.pose.orientation)))
-        angle_vel = trapz_mod_vel(angle_vel,goal_time,goal.trapz_alpha,c*dt)
+        angle_vel = trapz_mod_vel(delta_angle,goal_time,goal.trapz_alpha,c*dt)
         self.target.twist.angular.x = angle_vel * delta_axis[0]
         self.target.twist.angular.y = angle_vel * delta_axis[1]
         self.target.twist.angular.z = angle_vel * delta_axis[2]

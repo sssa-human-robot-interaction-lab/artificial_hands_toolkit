@@ -1,6 +1,8 @@
 <?xml version="1.0"?>
 <launch>
 
+  <arg name="rate" default="100"/>
+
   <!-- Load calib params for FT sensor -->
   <rosparam command="load" file="$(find artificial_hands_dynamics)/config/calib_params.yaml"/>
 
@@ -8,6 +10,6 @@
   <!-- <rosparam command="load" file="$(find artificial_hands_dynamics)/config/low_pass_filters.yaml"/> -->
 
   <!-- Run the frame kinematics node -->
-  <node pkg="artificial_hands_dynamics" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="--sensor /ft_sensor --autostart true"/>
+  <node pkg="artificial_hands_dynamics" type="wrist_dynamics_node" name="wrist_dynamics_node" output="screen" args="--sensor /ft_sensor --autostart true --rate $(arg rate)"/>
 
 </launch>

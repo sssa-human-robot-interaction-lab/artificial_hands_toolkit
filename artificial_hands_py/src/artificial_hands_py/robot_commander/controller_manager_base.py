@@ -74,6 +74,8 @@ class ControllerManagerBase:
     return self.sw_ser([],list(self.ctrl_dict.keys()),1,False,5).ok
   
   def controller_command(self,cmd,ctrl : str = None) -> None:
+    if rospy.is_shutdown():
+      return
     if ctrl is None and self.ctrl is None:
       rospy.logerr('No controller selected to forward command.')
       return

@@ -96,9 +96,9 @@ class MiaHandCommanderGui(QWidget):
     self.joint_group_box.t_spin_box.valueChanged.connect(self.update_joint_positions)
 
     self.grasp_group_box = GraspGroupBox(title="Grasp")
-    self.grasp_group_box.ind_spin_box.setValue(0.56)
+    self.grasp_group_box.ind_spin_box.setValue(0.60)
     self.grasp_group_box.mrl_spin_box.setValue(1.00)
-    self.grasp_group_box.thu_spin_box.setValue(0.60)
+    self.grasp_group_box.thu_spin_box.setValue(1.00)
     self.grasp_group_box.time_spin_box.setValue(1.0)
 
     self.close_push_button = QPushButton("Close")

@@ -22,8 +22,13 @@ namespace atk
       WristFTProprioception(const double controller_rate, const char* target_frame, const char* srdf_group="manipulator", const char* robot_description="robot_description"):
         FrameDynamics(controller_rate,target_frame,srdf_group,robot_description)
       {
-        sensor_pr_ = new atk::BaseFTSensor<atk::BaseFilter>();
-        sensor_pr_->SetFilter(3);
+        sensor_pr_filt_.num = pr_num_;
+        sensor_pr_filt_.den = pr_den_;
+        sensor_pr_filt_.order = 3;
+
+        sensor_pr_ = new atk::BaseFTSensor<atk::BaseIRFilter>();
+        sensor_pr_->SetFilter(sensor_pr_filt_,6);
+
         resetVector3(&th_dyn_.force);
         resetVector3(&th_dyn_.torque);
       };
@@ -83,11 +88,11 @@ namespace atk
       /**
        * @brief Save maximum of proprioceptive forces for further thresholding.
        */
-      void SaveInteraction()
+      void SaveInteraction(double factor = 1.0)
       {
         Estimate();
-        compareVector3(&th_dyn_.force,sensor_pr_->force);
-        compareVector3(&th_dyn_.torque,sensor_pr_->torque);
+        compareVector3(&th_dyn_.force,sensor_pr_->force,factor);
+        compareVector3(&th_dyn_.torque,sensor_pr_->torque,factor);
       };
 
       /**
@@ -97,7 +102,9 @@ namespace atk
       void TriggerDynamics(double factor = 1.0)
       {
         Estimate();
-        trigger = triggerOrVector3(th_dyn_.force,sensor_pr_->force,factor); // not using torque
+        sensor_pr_->force.z = 0; //too noise for trigger
+        // trigger = triggerOrVector3(th_dyn_.force,sensor_pr_->force,factor);
+        trigger = triggerOrVector3(th_dyn_.torque,sensor_pr_->torque,factor);
       };
 
       geometry_msgs::Vector3 force_dyn;
@@ -113,10 +120,13 @@ namespace atk
     private:
       
       double factor_ = 2.0;
+      double pr_num_[4] = {0.010183,0.030548,0.030548,0.010183};
+      double pr_den_[4] = {1.0,-2.0038,1.4471,-0.3618};
       geometry_msgs::Wrench th_det_;
       //geometry_msgs::Wrench th_dyn_;
       geometry_msgs::Wrench wrench_pr_;
-      atk::BaseFTSensor<atk::BaseFilter>* sensor_pr_;
+      atk::BaseFTSensor<atk::BaseIRFilter>* sensor_pr_;
+      atk::filter_t sensor_pr_filt_;
   };
 }
 

@@ -160,11 +160,11 @@ namespace atk
   /**
    * @brief Compare components of two vectors copying vec_(i) to vec when vec_(i) g.t. vec(i)
    */
-  static void compareVector3(geometry_msgs::Vector3* vec, geometry_msgs::Vector3 vec_)
+  static void compareVector3(geometry_msgs::Vector3* vec, geometry_msgs::Vector3 vec_, double factor = 1.0)
   {
-    if(vec_.x > vec->x)vec->x = vec_.x;
-    if(vec_.y > vec->y)vec->y = vec_.y;
-    if(vec_.z > vec->z)vec->z = vec_.z;
+    if(factor*vec_.x > vec->x)vec->x = factor*vec_.x;
+    if(factor*vec_.y > vec->y)vec->y = factor*vec_.y;
+    if(factor*vec_.z > vec->z)vec->z = factor*vec_.z;
   };
 
   /**
@@ -176,7 +176,12 @@ namespace atk
    */
   static bool triggerOrVector3(geometry_msgs::Vector3 th, geometry_msgs::Vector3 vec, double fth = 1.0)
   {
-    return fth*th.x < vec.x| fth*th.y < vec.y | fth*th.z < vec.z;
+    return fth*th.x < vec.x | fth*th.y < vec.y | fth*th.z < vec.z;
+  }
+
+  static bool triggerAndVector3(geometry_msgs::Vector3 th, geometry_msgs::Vector3 vec, double fth = 1.0)
+  {
+    return fth*th.x < vec.x & fth*th.y < vec.y & fth*th.z < vec.z;
   }
 
   /**

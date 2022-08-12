@@ -101,7 +101,7 @@ namespace atk
        */
       void AddEquation(){
         GetCoefficients();
-        double y[6] = {force.x, force.y, force.z, torque.x, torque.y, torque.z};
+        double y[6] = {-force.x, -force.y, -force.z, -torque.x, -torque.y, -torque.z};
         addArray(&x_,V_.data(),60);
         addArray(&y_,y,6);
       }
@@ -116,21 +116,21 @@ namespace atk
         double wy = twist_velocity.angular.y;
         double wz = twist_velocity.angular.z;
 
-        double wx2 = -pow(wx,2);
-        double wy2 = -pow(wy,2);
-        double wz2 = -pow(wz,2);
+        double wx2 = pow(wx,2);
+        double wy2 = pow(wy,2);
+        double wz2 = pow(wz,2);
 
-        double ax = -twist_acceleration.linear.x;
-        double ay = -twist_acceleration.linear.y;
-        double az = -twist_acceleration.linear.z;
+        double ax = twist_acceleration.linear.x;
+        double ay = twist_acceleration.linear.y;
+        double az = twist_acceleration.linear.z;
 
-        double ex = -twist_acceleration.angular.x;
-        double ey = -twist_acceleration.angular.y;
-        double ez = -twist_acceleration.angular.z;
+        double ex = twist_acceleration.angular.x;
+        double ey = twist_acceleration.angular.y;
+        double ez = twist_acceleration.angular.z;
 
-        double gx = -gravity.x;
-        double gy = -gravity.y;
-        double gz = -gravity.z;
+        double gx = gravity.x;
+        double gy = gravity.y;
+        double gz = gravity.z;
 
         double x[60] = {ax-gx,    -wy2-wz2,     wx*wy-ez,     wx*wz+ey,   .0, .0, .0, .0, .0, .0,
                         ay-gy,    wx*wy+ez,     -wx2-wz2,     wy*wz-ex,   .0, .0, .0, .0, .0, .0,
@@ -157,6 +157,8 @@ namespace atk
         copyArray(&phi_,c,10);
         phi_str.str("");
         for(int i = 0; i < 10; i++)phi_str << phi_[i] << " ";
+        x_.clear();
+        y_.clear();
         return true;
       }
 
@@ -172,12 +174,12 @@ namespace atk
         
         for(int i = 0; i < 10; i++)
         {
-          force_hat.x += V_[i]*phi_[i];
-          force_hat.y += V_[i+10]*phi_[i];
-          force_hat.z += V_[i+20]*phi_[i];
-          torque_hat.x += V_[i+30]*phi_[i];
-          torque_hat.y += V_[i+40]*phi_[i];
-          torque_hat.z += V_[i+50]*phi_[i];
+          force_hat.x -= V_[i]*phi_[i];
+          force_hat.y -= V_[i+10]*phi_[i];
+          force_hat.z -= V_[i+20]*phi_[i];
+          torque_hat.x -= V_[i+30]*phi_[i];
+          torque_hat.y -= V_[i+40]*phi_[i];
+          torque_hat.z -= V_[i+50]*phi_[i];
         }
       }
 

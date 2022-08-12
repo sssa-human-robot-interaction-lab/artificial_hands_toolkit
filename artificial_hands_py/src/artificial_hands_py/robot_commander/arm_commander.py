@@ -16,11 +16,13 @@ class ArmCommander(ControllerManagerBase):
 
   j_traj_pos_ctrl = 'scaled_pos_joint_traj_controller'
   cart_mot_pos_ctrl = 'cartesian_motion_position_controller'
-  cart_mot_eik_ctrl = 'cartesian_eik_position_controller'
+  cart_eik_pos_ctrl = 'cartesian_eik_position_controller'
+  cart_eik_vel_ctrl = 'cartesian_eik_velocity_controller'
 
   ctrl_dict = {j_traj_pos_ctrl : JointTrajectory,
                cart_mot_pos_ctrl : CartesianTrajectoryPoint,
-               cart_mot_eik_ctrl : CartesianTrajectoryPoint}
+               cart_eik_pos_ctrl : CartesianTrajectoryPoint,
+               cart_eik_vel_ctrl : CartesianTrajectoryPoint}
 
   c_gen_cl = actionlib.SimpleActionClient('/cartesian_trajectory_plugin_manager',TrajectoryGenerationAction)
   c_traj_cl = actionlib.SimpleActionClient('/cartesian_trajectory_generator',TrajectoryGenerationAction)
@@ -45,7 +47,8 @@ class ArmCommander(ControllerManagerBase):
     self.pause_all_controllers()
 
     cart_mot_pos_pub = CartesianTrajectoryPointPublisher(self.cart_mot_pos_ctrl+'/command')
-    cart_mot_eik_pub = CartesianTrajectoryPointPublisher(self.cart_mot_eik_ctrl+'/command')
+    cart_eik_pos_pub = CartesianTrajectoryPointPublisher(self.cart_eik_pos_ctrl+'/command')
+    cart_eik_vel_pub = CartesianTrajectoryPointPublisher(self.cart_eik_vel_ctrl+'/command')
 
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)   
 

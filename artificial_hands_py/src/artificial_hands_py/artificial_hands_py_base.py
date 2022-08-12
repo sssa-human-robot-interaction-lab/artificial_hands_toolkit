@@ -36,10 +36,20 @@ def norm_quat(quat : Quaternion):
   return list_to_quat([q_/q_norm for q_ in q])
 
 def pose_to_list(pose : Pose):
-  return cv .pose_to_list(pose)
+  return cv.pose_to_list(pose)
 
 def list_to_pose(pose : list):
-  return cv .list_to_pose(pose)
+  return cv.list_to_pose(pose)
+
+def list_to_twist(twist : list):
+  t = Twist
+  t.linear.x = twist[0]
+  t.linear.y = twist[1]
+  t.linear.z = twist[2]
+  t.angular.x = twist[3]
+  t.angular.y = twist[4]
+  t.angular.z = twist[5]
+  return t
 
 def pose_copy(pose : Pose) -> Pose:
   p = Pose()
