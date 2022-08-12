@@ -69,8 +69,8 @@ cartesian_eik_velocity_controller:
   joints: *robot_joints
 
   pd_gains:
-    p: &ep 1.0
-    d: &ed 0.0 
+    p: *ep
+    d: *ed
     trans_x: {p: *ep, d: *ed}
     trans_y: {p: *ep, d: *ed}
     trans_z: {p: *ep, d: *ed}
