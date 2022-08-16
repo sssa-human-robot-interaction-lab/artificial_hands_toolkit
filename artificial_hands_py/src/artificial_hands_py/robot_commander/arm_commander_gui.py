@@ -150,6 +150,8 @@ def main():
   arm = ArmCommander()
 
   arm_cmd_gui = ArmCommanderGui(arm)
+
+  rospy.loginfo('Arm commander GUI ready!')
   
   arm_cmd_gui.show()
   

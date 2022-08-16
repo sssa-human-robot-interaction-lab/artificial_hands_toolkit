@@ -30,6 +30,8 @@ def main():
 
   robot_cmd_gui = RobotCommanderGui(robot)
 
+  rospy.loginfo('Robot commander GUI ready!')
+
   robot_cmd_gui.show()
   
   sys.exit(app.exec_())

@@ -39,7 +39,7 @@ class CartesianTrajectoryGenerator:
     self.ref : str = None
     self.ee : str = None
 
-    self.target_timer = rospy.Timer(rospy.Duration.from_sec(1/self.traj_rate),self.update)
+    self.target_timer = rospy.Timer(rospy.Duration.from_sec(1.0/self.traj_rate),self.update)
 
     self.plugin_thread = Thread()
     self.plugin_running = False
@@ -453,6 +453,7 @@ class CartesianTrajectoryGenerator:
     self.update_tf()
 
     self.lock.release()
+    
     if rospy.is_shutdown():
       self.target_timer.shutdown()
 

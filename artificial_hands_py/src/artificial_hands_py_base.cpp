@@ -1,16 +1,8 @@
 
-#include <artificial_hands_py/pyBaseFilter.hpp>
 #include <artificial_hands_py/pyWristFTCalibration.hpp>
 #include <artificial_hands_py/pyWristFTContactDetection.hpp>
 
 PYBIND11_MODULE(pyatk, m) {
-
-  py::class_<atk::BaseFilter>(m, "atkBaseFilter");
-  py::class_<pyBaseFilter,atk::BaseFilter>(m, "pyBaseFilter")
-  .def(py::init<int>())
-  .def("c_init",&pyBaseFilter::Init)
-  .def("c_update",&pyBaseFilter::Update)
-  .def("c_get",&pyBaseFilter::Get);
 
   py::class_<atk::WristFTCalibration>(m, "atkWristFTCalibration");
   py::class_<pyWristFTCalibration,atk::WristFTCalibration>(m, "pyWristFTCalibration")

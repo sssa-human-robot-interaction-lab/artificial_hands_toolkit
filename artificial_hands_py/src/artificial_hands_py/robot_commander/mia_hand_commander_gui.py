@@ -2,12 +2,8 @@ import sys
 from functools import partial
 from PyQt5.QtWidgets import *
 from PyQt5.QtCore import Qt
-from sympy import rad
 
 import rospy
-
-from std_msgs.msg import Float64MultiArray
-from trajectory_msgs.msg import JointTrajectory
 
 from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_generator_gui import new_param_item
 from artificial_hands_py.robot_commander.mia_hand_commander import *

@@ -107,6 +107,15 @@ namespace atk
         trigger = triggerOrVector3(th_dyn_.torque,sensor_pr_->torque,factor);
       };
 
+      /**
+       * @brief Set zero of propriocetive force/torque sensor
+       * @param do_zero true/false to do/undo zero
+       */
+      void SetZero(bool do_zero)
+      {
+        sensor_pr_->SetZero(do_zero);
+      }
+
       geometry_msgs::Vector3 force_dyn;
       geometry_msgs::Vector3 torque_dyn;
       geometry_msgs::Vector3 force_lp;

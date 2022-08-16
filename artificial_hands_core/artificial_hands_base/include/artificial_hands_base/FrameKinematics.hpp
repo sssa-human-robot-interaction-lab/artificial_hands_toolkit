@@ -12,6 +12,7 @@
 #include <artificial_hands_base/BaseFilters.hpp>
 
 #define USE_KALMAN false
+#define USE_SG false
 
 namespace atk
 {
@@ -50,6 +51,7 @@ namespace atk
 
         j_pos_filter_ = new atk::BaseIRFilter();
         j_vel_filter_ = new atk::BaseIRFilter();
+        j_acc_filter_ = new atk::BaseSGFilter(update_rate);
 
         F_.resize(2*chann_,j_kal_init_obs_);
         j_meas_.resize(2*chann_);
@@ -59,6 +61,7 @@ namespace atk
         rotation_ = transform_.rotation().inverse();
 
         std::cout << "USE_KALMAN: " << USE_KALMAN << std::endl;
+        std::cout << "USE_SG: " << USE_SG << std::endl;
       }
 
       /**
@@ -82,6 +85,7 @@ namespace atk
         j_kal_init_counter_ = 0;
         j_pos_filter_->Init(js.position); 
         j_vel_filter_->Init(js.velocity);
+        j_acc_filter_->Init(js.velocity);
         j_name_ = js.name;
         Update(js);
         Update(js); //Double update ensure acceleration starting from zero
@@ -110,14 +114,8 @@ namespace atk
       {
         j_pos_filter_->Update(js.position);
         j_vel_filter_->Update(js.velocity);
-      };
-
-      /**
-       * @brief Get updated target frame kinematics.
-       * @return True on success
-       */
-      bool Get()
-      {        
+        j_acc_filter_->Update(js.velocity);
+             
         std::vector<double> j_position = j_pos_filter_->Get();
         std::vector<double> j_velocity = j_vel_filter_->Get();
         for(int i = 0; i <j_name_.size(); i++)
@@ -126,20 +124,8 @@ namespace atk
           kinematic_state_->setJointVelocities(kinematic_state_->getJointModel(j_name_[i].c_str()), &j_velocity[i]);
         }
 
-      #if !USE_KALMAN
+      #if USE_KALMAN
 
-        std::vector<double> j_vel_new;
-        kinematic_state_->copyJointGroupVelocities(joint_model_group_, j_vel_new);
-
-        std::vector<double> j_acc_new;
-        for(int i = 0; i <j_name_.size(); i++)
-        {
-          j_acc_new.push_back((j_vel_new[i] - j_vel_[i])*update_rate_);
-          j_vel_[i] = j_vel_new[i];
-        }
-        kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
-
-      #else
         if(!j_kal_init_)
         {
           observeKalman(j_position, j_velocity);
@@ -158,7 +144,6 @@ namespace atk
           j_state_ = j_kal_filter_->state();
 
           std::vector<std::string> j_group_names = joint_model_group_->getJointModelNames();
-
           std::vector<double> j_acc_new(chann_,0.0);
 
           for(int i = 0; i <j_name_.size(); i++)
@@ -168,11 +153,44 @@ namespace atk
             j_acc_new[std::find(j_group_names.begin(), j_group_names.end(), j_name_[i].c_str()) - j_group_names.begin() - 1] = j_state_(3*i+2);
           }
           
-          kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
         }
 
+      #elif USE_SG
+
+        std::vector<double> j_acceleration = j_acc_filter_->Get();
+        
+        std::vector<std::string> j_group_names = joint_model_group_->getJointModelNames();
+        std::vector<double> j_acc_new(chann_,0.0);
+
+        for(int i = 0; i <j_name_.size(); i++)
+        {
+          j_acc_new[std::find(j_group_names.begin(), j_group_names.end(), j_name_[i].c_str()) - j_group_names.begin() - 1] = j_acceleration[i];
+        }
+          
+      #else
+
+        std::vector<double> j_vel_new;
+        kinematic_state_->copyJointGroupVelocities(joint_model_group_, j_vel_new);
+
+        std::vector<double> j_acc_new;
+        for(int i = 0; i <j_name_.size(); i++)
+        {
+          j_acc_new.push_back((j_vel_new[i] - j_vel_[i])*update_rate_);
+          j_vel_[i] = j_vel_new[i];
+        }
+        
       #endif
 
+        kinematic_state_->setJointGroupAccelerations(joint_model_group_, j_acc_new);
+      
+      };
+
+      /**
+       * @brief Get updated target frame kinematics.
+       * @return True on success
+       */
+      bool Get()
+      { 
         transform_ = kinematic_state_->getGlobalLinkTransform(target_frame_);
         rotation_ = transform_.rotation().inverse();
       
@@ -346,7 +364,8 @@ namespace atk
       std::vector<std::string> j_name_;
 
       atk::BaseIRFilter* j_pos_filter_;
-      atk::BaseIRFilter* j_vel_filter_;  
+      atk::BaseIRFilter* j_vel_filter_;
+      atk::BaseSGFilter* j_acc_filter_;  
       kalmancpp::KalmanFilter* j_kal_filter_;
   };
 }

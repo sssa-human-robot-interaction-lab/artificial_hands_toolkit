@@ -1,6 +1,5 @@
 from math import floor
 from threading import Thread, Lock
-from time import sleep
 
 from sensor_msgs.msg import JointState
 from trajectory_msgs.msg import JointTrajectory
@@ -69,6 +68,10 @@ class MiaHandCommander(ControllerManagerBase):
   
   def set_joint_target_positions(self, target : list, goal_time : float):
 
+    if goal_time < 0.1:
+      self.set_joint_positions(target)
+      return
+
     c_target = self.j_pos.copy()
 
     delta_target = [y - x for (x,y) in zip(c_target,target)]
@@ -120,14 +123,15 @@ class MiaHandCommander(ControllerManagerBase):
       self.rate.sleep()   
                              
   def stop(self):
-    self.lock.acquire()
-    self.switch_to_controller(self.mia_j_vel_ctrl)
-    j_vel = Float64MultiArray()
-    j_vel.data = [.0,.0,.0]
-    self.controller_command(j_vel)
-    rospy.sleep(rospy.Duration.from_sec(0.5))
-    self.switch_to_pos_vel_controllers()
-    self.lock.release()
+    if not rospy.is_shutdown():
+      self.lock.acquire()
+      self.switch_to_controller(self.mia_j_vel_ctrl)
+      j_vel = Float64MultiArray()
+      j_vel.data = [.0,.0,.0]
+      self.controller_command(j_vel)
+      rospy.sleep(rospy.Duration.from_sec(0.5))
+      self.switch_to_pos_vel_controllers()
+      self.lock.release()
   
   def open(self, vel : float = 0.5, pos : list = [0.1,0.6,0.6]):
 

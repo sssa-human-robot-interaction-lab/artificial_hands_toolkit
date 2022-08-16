@@ -1,46 +1,31 @@
 #ifndef ATK_BASE_FILTERS
 #define ATK_BASE_FILTERS
 
+#include <boost/circular_buffer.hpp>
+
 #include <artificial_hands_base/BaseCommon.hpp>
 
 namespace atk{
 
-  class BaseFilter
+  class BaseSGFilter
   {
     public:
       /**
-       * @brief Construct a new BaseFilter object (simple moving average)
+       * @brief Construct a new BaseSGFilter object (8 points Savitzky-Golay)
+       * @param rate update rate in Hz of the filter
       */
-      BaseFilter(){};
-
-      /**
-       * @brief Construct a new BaseFilter object (simple moving average)
-       * @param filter filter length (in samples)
-       */
-      BaseFilter(int filter):
-        filter_(filter)
+      BaseSGFilter(double rate):
+        rate_(rate)
       {
-        set();
       };
 
       /**
-       * @brief BaseFilter destructor
+       * @brief BaseSGFilter destructor
       */
-      ~BaseFilter()
+      ~BaseSGFilter()
       {
         f_.clear();
-        f_new_.clear();
-        f_old_.clear();
-      };
-
-      /**
-       * @brief Construct a new BaseFilter object (simple moving average)
-       * @param filter filter length (in samples)
-       */
-      void SetFilter(int filter)
-      {
-        filter_ = filter;
-        set();
+        f_state_.clear();
       };
 
       /**
@@ -48,10 +33,9 @@ namespace atk{
        */
       void Init(std::vector<double> f)
       {
-        f_.clear();
-        f_old_.clear();
         f_ = f;
-        f_old_.push_back(f);
+        f_state_.clear();
+        f_state_.push_back(f);
       };
 
       /**
@@ -59,14 +43,7 @@ namespace atk{
        */
       void Update(std::vector<double> f)
       {
-        f_new_ = f;
-        for(int i = 0; i < f_.size(); i++)
-        {
-          f_[i] += f_new_[i]/filter_;
-          f_[i] -= f_old_.front()[i]/filter_;
-        }
-        if(f_old_.size() == f_old_.capacity())f_old_.erase(f_old_.begin());
-        f_old_.push_back(f_new_);
+        f_state_.push_back(f);
       };
 
       /**
@@ -74,19 +51,24 @@ namespace atk{
        */
       std::vector<double> Get() 
       {
+        for(int i = 0; i < f_.size(); i++)
+        {
+          f_[i] = 0.0;
+          for(int j = 0; j < f_state_.size(); j++)
+          {
+            f_[i] += f_state_[j][i] * sg_[j];
+          }
+          f_[i] *= rate_;
+        }
         return f_;
       };
 
     private:
-      
-      void set()
-      {
-        f_old_.reserve(filter_);
-      };
 
-      double filter_;
-      std::vector<double> f_, f_new_;
-      std::vector<std::vector<double>> f_old_;
+      double rate_;
+      double sg_[8] = {-0.08333,-0.05952,-0.03571,-0.0119,0.0019,0.03571,0.05952,0.08333};
+      std::vector<double> f_;
+      boost::circular_buffer<std::vector<double>> f_state_{8};
 
   };
 

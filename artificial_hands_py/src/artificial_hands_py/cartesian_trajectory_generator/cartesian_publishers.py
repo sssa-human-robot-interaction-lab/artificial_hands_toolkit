@@ -1,3 +1,5 @@
+from threading import Lock
+
 import rospy
 
 from geometry_msgs.msg import Transform, Twist, PoseStamped
@@ -7,6 +9,7 @@ from trajectory_msgs.msg import MultiDOFJointTrajectoryPoint
 from artificial_hands_msgs.msg import CartesianTrajectoryPointStamped
 
 class CartesianMDOFPointPublisher:
+  lock = Lock()
 
   def __init__(self, target : str = '/target_traj_mdof_pnt') -> None:
 
@@ -22,13 +25,17 @@ class CartesianMDOFPointPublisher:
 
   def target_traj_point_cb(self, msg : CartesianTrajectoryPointStamped):
 
+    self.lock.acquire()
+
     self.transform.translation = msg.point.pose.position
     self.transform.rotation = msg.point.pose.orientation
     self.twist = msg.point.twist
     if not rospy.is_shutdown():
       self.pub.publish(self.mdof_pnt)
 
+    self.lock.release()
 class PoseStampedPublisher:
+  lock = Lock()
 
   def __init__(self, target : str = '/target_pose_stamped') -> None:
 
@@ -39,13 +46,20 @@ class PoseStampedPublisher:
 
   def target_traj_point_cb(self, msg : CartesianTrajectoryPointStamped):
 
+    self.lock.acquire()
+
     self.target_pose.header = msg.header
     self.target_pose.header.frame_id = 'base'
     self.target_pose.pose = msg.point.pose
     if not rospy.is_shutdown():
       self.pub.publish(self.target_pose)
+    
+    self.lock.release()
+    
+
 
 class CartesianTrajectoryPointPublisher:
+  lock = Lock()
 
   def __init__(self, target : str = '/target_pose_stamped') -> None:
 
@@ -56,8 +70,12 @@ class CartesianTrajectoryPointPublisher:
 
   def target_traj_point_cb(self, msg : CartesianTrajectoryPointStamped):
 
+    self.lock.acquire()
+
     self.target_pose.pose = msg.point.pose
     self.target_pose.twist = msg.point.twist
     if not rospy.is_shutdown():
       self.pub.publish(self.target_pose)
+
+    self.lock.release()
 

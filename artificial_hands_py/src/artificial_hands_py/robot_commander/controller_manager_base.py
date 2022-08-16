@@ -54,31 +54,26 @@ class ControllerManagerBase:
       if not c:
         ld_ser(y)
   
-  def start_controllers(self,start_ctrl : list) -> None:
+  def start_controllers(self,start_ctrl : list) -> bool:
     self.ctrl = None
     stop_ctrl = self.ctrl_dict.keys() - start_ctrl
     return self.sw_ser(start_ctrl,stop_ctrl,1,False,5).ok
 
-  def switch_to_controller(self,start_ctrl : str) -> None:
+  def switch_to_controller(self,start_ctrl : str) -> bool:
     self.ctrl = start_ctrl
     stop_ctrl = self.ctrl_dict.keys() - start_ctrl
     return self.sw_ser([start_ctrl],stop_ctrl,1,False,5).ok
   
-  def pause_controller(self) -> None:
+  def pause_controller(self) -> bool:
     return self.sw_ser([],[self.ctrl],1,False,5).ok
   
-  def unpause_controller(self) -> None:
+  def unpause_controller(self) -> bool:
     return self.sw_ser([self.ctrl],[],1,False,5).ok
 
   def pause_all_controllers(self) -> None:
     return self.sw_ser([],list(self.ctrl_dict.keys()),1,False,5).ok
   
   def controller_command(self,cmd,ctrl : str = None) -> None:
-    if rospy.is_shutdown():
-      return
-    if ctrl is None and self.ctrl is None:
-      rospy.logerr('No controller selected to forward command.')
-      return
     if self.ctrl is None:
       self.ctrl_dict[ctrl].publish(cmd)
       return

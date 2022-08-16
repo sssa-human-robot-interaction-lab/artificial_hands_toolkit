@@ -39,6 +39,7 @@ class ArmCommander(ControllerManagerBase):
     self.ee_frame = eef 
 
     self.percentage = 0
+    self.traj_percentage = 0
 
     self.goal = TrajectoryGenerationGoal()
     self.goal.header.frame_id = ref
@@ -79,7 +80,7 @@ class ArmCommander(ControllerManagerBase):
   
   def set_pose_target(self, pose_target : Pose, wait : bool = True):
     self.goal.traj_target.pose = pose_target
-    self.c_traj_cl.send_goal(self.goal)
+    self.c_traj_cl.send_goal(self.goal,feedback_cb=self.trajectory_feedback_cb)
     if wait:
       self.c_traj_cl.wait_for_result()
   
@@ -161,6 +162,9 @@ class ArmCommander(ControllerManagerBase):
     rate = rospy.Rate(30)
     while self.percentage < 100:
       rate.sleep()
+  
+  def trajectory_feedback_cb(self, feedback : TrajectoryGenerationFeedback):
+    self.traj_percentage = feedback.percentage
 
   def trajectory_monitor_feedback_cb(self, feedback : TrajectoryGenerationFeedback):
     self.percentage = feedback.percentage

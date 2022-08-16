@@ -42,7 +42,7 @@ def list_to_pose(pose : list):
   return cv.list_to_pose(pose)
 
 def list_to_twist(twist : list):
-  t = Twist
+  t = Twist()
   t.linear.x = twist[0]
   t.linear.y = twist[1]
   t.linear.z = twist[2]

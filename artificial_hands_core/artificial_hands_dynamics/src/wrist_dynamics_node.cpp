@@ -218,8 +218,9 @@ namespace rosatk
             ROS_INFO("Mean loop time %.6f sec.", cycle_time_/cycle_count_);
             break;
           case cmd::Request::CMD_ZRO:
-            ROS_INFO("Setting zero on force/torque sensor IIR filter.");
+            ROS_INFO("Setting zero on force/torque sensor (low pass and proprioceptive).");
             WristFTContactDetection::SetZero(true);
+            WristFTProprioception::SetZero(true);
             break;
           case cmd::Request::CMD_CAL:
             ROS_INFO("Starting estimate of calibration parameters.");
