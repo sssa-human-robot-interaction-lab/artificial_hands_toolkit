@@ -92,8 +92,8 @@ class CartesianTrajectoryGenerator:
     if goal.track_ratio < 0.1 or goal.track_ratio > 1:
       goal.track_ratio = 0.1
 
-    if goal.track_t_go < 0.1 or goal.track_t_go > 1:
-      goal.track_t_go = 0.5
+    if goal.track_t_go < 0:
+      goal.track_t_go = 2
 
     if goal.traj_type == goal.STOP:
       if self.plugin_running:

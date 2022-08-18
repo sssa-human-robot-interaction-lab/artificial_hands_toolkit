@@ -21,10 +21,10 @@ def new_param_item(lab : str, min : float, max : float, step : float, slider : b
   spin_box.setValue(min)
   if slider:
     sld = QSlider(Qt.Horizontal)
-    sld.setRange(0, 100)
-    sld.setSingleStep(5)
-    sld.valueChanged.connect(lambda: spin_box.setValue(min + sld.value()/100*(max-min)))
-    spin_box.valueChanged.connect(lambda: sld.setValue(100 - (max - spin_box.value())/(max-min)*100))
+    sld.setRange(0, 1/step)
+    sld.setSingleStep(1)
+    sld.valueChanged.connect(lambda: spin_box.setValue(min + sld.value()*step*(max-min)))
+    spin_box.valueChanged.connect(lambda: sld.setValue(1/step - (max - spin_box.value())/(max-min)/step))
     return label,spin_box,sld
   else:
     return label,spin_box
@@ -116,7 +116,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.track_ratio_spin_box.setValue(1.0)
 
     track_t_go_label, self.track_t_go_spin_box  = new_param_item('Track Tgo [-]:',0.5,5,0.5)
-    self.track_t_go_spin_box.setValue(0.5)
+    self.track_t_go_spin_box.setValue(3.0)
 
     stop_time_label, self.stop_time_spin_box  = new_param_item('Stop time [s]:',0,1,0.05)
     self.stop_time_spin_box.setValue(0.3)
@@ -169,6 +169,8 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     
   def on_gen_changed(self):
     goal = TrajectoryGenerationGoal()
+    goal.header.frame_id = 'world'
+    goal.controlled_frame = 'target'
     self.teleop_check_box.setChecked(False)
     self.teleop_check_box.setDisabled(True)
     self.track_ratio_spin_box.setDisabled(True)

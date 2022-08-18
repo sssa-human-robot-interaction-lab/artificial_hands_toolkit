@@ -49,6 +49,8 @@ class ArmCommanderGui(QWidget):
     self.cart_traj_gen_widget.target_orientation_group_box.y_spin_box.setValue(c_rot[1])
     self.cart_traj_gen_widget.target_orientation_group_box.z_spin_box.setValue(c_rot[2])
 
+    self.arm.set_track_ratio(self.cart_traj_gen_widget.track_ratio_spin_box.value())
+    self.arm.set_track_t_go(self.cart_traj_gen_widget.track_t_go_spin_box.value())
     self.arm.set_harmonic_traj_generator()
     self.arm.switch_to_cartesian_controller(list(arm.ctrl_dict.keys())[1])
 
