@@ -157,10 +157,10 @@ class ArmCommander(ControllerManagerBase):
     self.percentage = 0
     self.c_mon_cl.send_goal(self.goal,feedback_cb=self.trajectory_monitor_feedback_cb,done_cb=self.trajectory_monitor_result_cb)
   
-  def wait_for_trajectory_monitor(self):
+  def wait_for_trajectory_monitor(self,percentage = 100):
     self.update_trajectory_monitor()
     rate = rospy.Rate(30)
-    while self.percentage < 100:
+    while self.percentage < percentage:
       rate.sleep()
   
   def trajectory_feedback_cb(self, feedback : TrajectoryGenerationFeedback):
