@@ -92,9 +92,6 @@ class CartesianTrajectoryGenerator:
     if goal.track_ratio < 0.1 or goal.track_ratio > 1:
       goal.track_ratio = 0.1
 
-    if goal.track_t_go < 0:
-      goal.track_t_go = 2
-
     if goal.traj_type == goal.STOP:
       if self.plugin_running:
         self.stop_plugin_target(goal.stop_time,dt)
@@ -109,10 +106,6 @@ class CartesianTrajectoryGenerator:
       return
     elif goal.traj_type == goal.DMP:
       self.traj_as.set_succeeded(self.traj_result) # no action needed here
-      return
-    elif goal.traj_type == goal.MJ:
-      self.mj_plugin.set_plugin_target(goal.traj_target, goal.track_ratio, goal.track_t_go)
-      self.traj_as.set_succeeded(self.traj_result)
       return
 
     c_target = CartesianTrajectoryPoint()
@@ -155,6 +148,15 @@ class CartesianTrajectoryGenerator:
       goal.traj_max_angaccel = 0.5
     elif goal.traj_max_angaccel > 2.0:
       goal.traj_max_angaccel = 2.0 
+
+    if goal.traj_type == goal.MJ:
+      if goal.track_t_go < 0:
+        goal_time = max(pow(5.8*h/goal.traj_max_accel,.5),pow(5.8*h_rot/goal.traj_max_angaccel,.5))
+      else:
+        goal_time = goal.track_t_go
+      self.mj_plugin.set_plugin_target(goal.traj_target, goal.track_ratio, goal_time)
+      self.traj_as.set_succeeded(self.traj_result)
+      return
 
     if goal.traj_type == goal.HARMONIC:
 

@@ -44,6 +44,8 @@ class ArmCommander(ControllerManagerBase):
     self.goal = TrajectoryGenerationGoal()
     self.goal.header.frame_id = ref
     self.goal.controlled_frame = eef
+    self.goal.track_t_go = -1.0 # goal time is computed to respect acceleration limits 
+    self.goal.track_ratio = 1.0
 
     self.pause_all_controllers()
 
@@ -53,16 +55,6 @@ class ArmCommander(ControllerManagerBase):
 
     tf_listener = tf2_ros.TransformListener(self.tf_buffer)   
 
-  def switch_to_cartesian_controller(self, ctrl_name : str):
-    if self.boot:
-      rospy.loginfo('Booting cartesian trajectory generator...')
-    self.pause_all_controllers()
-    self.set_pose_target(self.get_current_frame().pose)
-    self.switch_to_controller(ctrl_name)
-    if self.boot:
-      rospy.loginfo('Arm commander ready!')
-      self.boot = False
-    
   def get_current_frame(self,ref : str = None, frame : str = None) -> PoseStamped:
     if frame is None:
       frame = self.ee_frame
@@ -71,6 +63,17 @@ class ArmCommander(ControllerManagerBase):
     ref_to_frame = self.tf_buffer.lookup_transform(ref,frame,rospy.Time(0),timeout=rospy.Duration(1))
     return cv.list_to_pose_stamped(cv.transform_to_list(ref_to_frame.transform),ref)
 
+  def switch_to_cartesian_controller(self, ctrl_name : str):
+    if self.boot:
+      rospy.loginfo('Booting cartesian trajectory generator...')
+    self.pause_all_controllers()
+    self.set_harmonic_traj_generator()
+    self.set_pose_target(self.get_current_frame().pose)
+    self.switch_to_controller(ctrl_name)
+    if self.boot:
+      rospy.loginfo('Arm commander ready!')
+      self.boot = False
+    
   def forward_target(self, target : CartesianTrajectoryPoint, wait : bool = True):
     self.goal.traj_type = self.goal.FORWARD
     self.goal.traj_target = cart_traj_point_copy(target)
@@ -78,12 +81,14 @@ class ArmCommander(ControllerManagerBase):
     if wait:
       self.c_traj_cl.wait_for_result()
   
-  def set_pose_target(self, pose_target : Pose, wait : bool = True):
+  def set_pose_target(self, pose_target : Pose, wait : bool = True, wait_tf : bool = False):
     self.goal.traj_target.pose = pose_target
     self.c_traj_cl.send_goal(self.goal,feedback_cb=self.trajectory_feedback_cb)
-    if wait:
+    if wait_tf:
+      self.wait_for_trajectory_monitor(99)
+    elif wait:
       self.c_traj_cl.wait_for_result()
-  
+      
   def set_position_target(self, position_target : Point, wait : bool = True):
     self.goal.traj_target.pose.position = position_target
     self.c_traj_cl.send_goal(self.goal)
@@ -101,24 +106,19 @@ class ArmCommander(ControllerManagerBase):
   
   def set_track_ratio(self,track_ratio : float):
     self.goal.track_ratio = track_ratio
-    # self.c_traj_cl.send_goal_and_wait(self.goal)
   
   def set_track_t_go(self,track_t_go : float):
     self.goal.track_t_go = track_t_go
-    # self.c_traj_cl.send_goal_and_wait(self.goal)
   
   def set_stop_time(self,stop_time : float):
     self.goal.stop_time = stop_time
-
-  # def set_forward_traj_point(self):
-  #   self.goal.traj_type = self.goal.FORWARD
-  #   self.c_gen_cl.send_goal_and_wait(self.goal)
   
   def set_dmp_traj_generator(self):
     self.goal.traj_type = self.goal.DMP
     self.c_gen_cl.send_goal_and_wait(self.goal)
   
   def set_mj_traj_generator(self):
+    self.goal.track_t_go = -1.0
     self.goal.traj_type = self.goal.MJ
     self.c_gen_cl.send_goal_and_wait(self.goal)
 
