@@ -7,7 +7,7 @@ from std_msgs.msg import Float64MultiArray, Float64, Empty
 
 from artificial_hands_py.artificial_hands_py_base import singleton
 from artificial_hands_py.robot_commander.controller_manager_base import *
-from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import harmonic_pos
+from artificial_hands_py.cartesian_trajectory_generator.cartesian_trajectory_base import harmonic_pos, harmonic_vel, trapz_mod_vel
 
 @singleton
 class MiaHandCommander(ControllerManagerBase):
@@ -31,7 +31,7 @@ class MiaHandCommander(ControllerManagerBase):
   def __init__(self,ns=''):
     super().__init__(ns,self.mia_ctrl_dict)
 
-    self.rate = rospy.Rate(20)
+    self.rate = rospy.Rate(50)
 
     self.j_pos = [.0,.0,.0]
     self.j_vel = [.0,.0,.0]
@@ -66,11 +66,15 @@ class MiaHandCommander(ControllerManagerBase):
     self.j_thumb_pos.data = j_pos[2]
     self.lock.release()
   
-  def set_joint_target_positions(self, target : list, goal_time : float):
+  def set_joint_target_positions(self, target : list, goal_time : float, vel_interface : bool = False):
 
     if goal_time < 0.1:
       self.set_joint_positions(target)
       return
+    
+    if vel_interface:
+      if not self.ctrl == self.mia_j_vel_ctrl:
+        self.switch_to_controller(self.mia_j_vel_ctrl)
 
     c_target = self.j_pos.copy()
 
@@ -81,9 +85,17 @@ class MiaHandCommander(ControllerManagerBase):
     c_max = floor(goal_time/dt) + 1
     goal_time = c_max*dt
 
+    j_vel = Float64MultiArray()
+    j_vel.data = [.0,.0,.0]
+
     for c in range(1,c_max+1):
 
       self.lock.acquire()
+
+      if vel_interface:    
+        for j_id in range(3):  
+          j_vel.data[j_id] = trapz_mod_vel(delta_target[j_id],goal_time,0.2,c*dt)
+        self.controller_command(j_vel)
 
       self.j_index_pos.data = c_target[0] + harmonic_pos(delta_target[0],c*dt,goal_time)
       self.j_mrl_pos.data = c_target[1] + harmonic_pos(delta_target[1],c*dt,goal_time)
@@ -92,6 +104,9 @@ class MiaHandCommander(ControllerManagerBase):
       self.lock.release()
 
       self.rate.sleep()
+    
+    if vel_interface:
+      self.switch_to_pos_vel_controllers()
   
   def switch_to_pos_vel_controllers(self):
     self.j_index_pos.data = self.j_pos[0]
@@ -132,28 +147,6 @@ class MiaHandCommander(ControllerManagerBase):
       rospy.sleep(rospy.Duration.from_sec(0.5))
       self.switch_to_pos_vel_controllers()
       self.lock.release()
-  
-  def open(self, vel : float = 0.5, pos : list = [0.1,0.6,0.6]):
-
-    self.lock.acquire()
-    self.switch_to_controller(self.mia_j_vel_ctrl)
-    j_vel = Float64MultiArray()
-    j_vel.data = [-vel,-vel,-vel]
-    self.controller_command(j_vel)
-
-    dur_open = [abs(y - x)/vel for (x,y) in zip(self.j_pos,pos)]
-
-    start_open = rospy.Time.now()
-    while not all(v == 0 for v in j_vel.data):
-      for j_id in range(3):
-        if (rospy.Time.now() - start_open).to_sec() > dur_open[j_id]:
-          j_vel.data[j_id] = 0
-      self.controller_command(j_vel)
-      self.rate.sleep()
-
-    rospy.sleep(rospy.Duration.from_sec(0.5))
-    self.switch_to_pos_vel_controllers()
-    self.lock.release()
   
   def joint_states_callback(self,msg : JointState):
     robot_joints = msg.name

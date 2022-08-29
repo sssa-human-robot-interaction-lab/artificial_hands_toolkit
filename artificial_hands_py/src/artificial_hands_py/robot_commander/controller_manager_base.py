@@ -38,7 +38,7 @@ class ControllerManagerBase:
     ld_ser = rospy.ServiceProxy(ns+'/controller_manager/load_controller',LoadController)
     self.sw_ser = rospy.ServiceProxy(ns+'/controller_manager/switch_controller',SwitchController) 
     self.ctrl_dict = {}
-    self.ctrl = ''
+    self.ctrl = None
 
     # for y in ctrl_dict.keys():
     #   self.ctrl_dict[rospy.remap_name(y).replace('/','',1)] = ctrl_dict[y]
@@ -74,7 +74,8 @@ class ControllerManagerBase:
     return self.sw_ser([],list(self.ctrl_dict.keys()),1,False,5).ok
   
   def controller_command(self,cmd,ctrl : str = None) -> None:
-    if self.ctrl is None:
+    if ctrl is not None:
       self.ctrl_dict[ctrl].publish(cmd)
       return
-    self.ctrl_dict[self.ctrl].publish(cmd)
+    if self.ctrl is not None:
+      self.ctrl_dict[self.ctrl].publish(cmd)

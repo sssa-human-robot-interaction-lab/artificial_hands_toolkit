@@ -30,6 +30,12 @@ class CartesianTrajectoryTFMonitor:
 
   def trajectory_monitor_cb(self, goal : TrajectoryGenerationGoal):
 
+    if goal.traj_type == TrajectoryGenerationGoal.STOP:
+      self.mon_feedback.percentage = 100
+      self.mon_as.publish_feedback(self.mon_feedback)
+      self.mon_as.set_succeeded(self.mon_result)
+      return
+
     self.mon_feedback.percentage = 0
 
     self.mon_result.success = True

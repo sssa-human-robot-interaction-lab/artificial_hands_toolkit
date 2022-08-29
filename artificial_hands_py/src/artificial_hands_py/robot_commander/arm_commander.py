@@ -100,9 +100,7 @@ class ArmCommander(ControllerManagerBase):
     self.c_traj_cl.send_goal(self.goal)
     if wait:
       self.c_traj_cl.wait_for_result()
-  
-  def cancel_pose_target(self):
-    self.c_traj_cl.cancel_all_goals()
+    self.c_mon_cl.send_goal(self.goal)
   
   def set_track_ratio(self,track_ratio : float):
     self.goal.track_ratio = track_ratio

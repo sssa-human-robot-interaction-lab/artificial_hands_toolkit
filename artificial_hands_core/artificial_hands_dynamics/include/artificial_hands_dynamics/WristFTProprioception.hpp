@@ -48,6 +48,7 @@ namespace atk
         wrench_pr_.force = force_pr;
         wrench_pr_.torque = torque_pr;
         sensor_pr_->Init(wrench_pr_);
+        SetZero(false);
         WristFTContactDetection::SetZero(false);
         return WristFTContactDetection::Init(ft) & FrameDynamics::Init(js,ft);
       };
@@ -79,10 +80,12 @@ namespace atk
         FrameDynamics::Estimate();
         wrench_pr_.force = subtractVector3(force_dyn,force_hat);
         wrench_pr_.torque = subtractVector3(torque_dyn,torque_hat);
+        absoluteVector3(&wrench_pr_.force);
+        absoluteVector3(&wrench_pr_.torque);
         sensor_pr_->Update(wrench_pr_);
         sensor_pr_->Get();
-        absoluteVector3(&sensor_pr_->force); //TO DO remove absolute value from here
-        absoluteVector3(&sensor_pr_->torque); 
+        &sensor_pr_->force; //TO DO remove absolute value from here
+        &sensor_pr_->torque; 
       };
 
       /**
