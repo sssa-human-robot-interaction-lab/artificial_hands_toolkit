@@ -63,16 +63,6 @@ Visualization Manager:
           Value: false
         arm_base:
           Value: false
-        base:
-          Value: false
-        base_link:
-          Value: false
-        base_link_inertia:
-          Value: false
-        flange:
-          Value: false
-        forearm_link:
-          Value: false
         hand_ee_link:
           Value: false
         hex_ee_mounting_plate:
@@ -93,11 +83,43 @@ Visualization Manager:
           Value: false
         palm:
           Value: false
+        panda_link0:
+          Value: true
+        panda_link0_sc:
+          Value: true
+        panda_link1:
+          Value: true
+        panda_link1_sc:
+          Value: true
+        panda_link2:
+          Value: true
+        panda_link2_sc:
+          Value: true
+        panda_link3:
+          Value: true
+        panda_link3_sc:
+          Value: true
+        panda_link4:
+          Value: true
+        panda_link4_sc:
+          Value: true
+        panda_link5:
+          Value: true
+        panda_link5_sc:
+          Value: true
+        panda_link6:
+          Value: true
+        panda_link6_sc:
+          Value: true
+        panda_link7:
+          Value: true
+        panda_link7_sc:
+          Value: true
+        panda_link8:
+          Value: true
         probe:
           Value: false
         ring_fle:
-          Value: false
-        shoulder_link:
           Value: false
         thumb_fle:
           Value: false
@@ -105,17 +127,7 @@ Visualization Manager:
           Value: false
         thumb_sensor:
           Value: false
-        tool0:
-          Value: false
-        upper_arm_link:
-          Value: false
         world:
-          Value: false
-        wrist_1_link:
-          Value: false
-        wrist_2_link:
-          Value: false
-        wrist_3_link:
           Value: false
       Marker Alpha: 1
       Marker Scale: 1
@@ -126,41 +138,54 @@ Visualization Manager:
       Tree:
         world:
           arm_base:
-            base_link:
-              base:
+            panda_link0:
+              panda_link0_sc:
                 {}
-              base_link_inertia:
-                shoulder_link:
-                  upper_arm_link:
-                    forearm_link:
-                      wrist_1_link:
-                        wrist_2_link:
-                          wrist_3_link:
-                            flange:
-                              tool0:
-                                hex_mounting_plate:
-                                  hex_sensor_frame:
-                                    hex_ee_mounting_plate:
-                                      palm:
-                                        URflange:
-                                          probe:
-                                            {}
-                                        hand_ee_link:
+              panda_link1:
+                panda_link1_sc:
+                  {}
+                panda_link2:
+                  panda_link2_sc:
+                    {}
+                  panda_link3:
+                    panda_link3_sc:
+                      {}
+                    panda_link4:
+                      panda_link4_sc:
+                        {}
+                      panda_link5:
+                        panda_link5_sc:
+                          {}
+                        panda_link6:
+                          panda_link6_sc:
+                            {}
+                          panda_link7:
+                            panda_link7_sc:
+                              {}
+                            panda_link8:
+                              hex_mounting_plate:
+                                hex_sensor_frame:
+                                  hex_ee_mounting_plate:
+                                    palm:
+                                      URflange:
+                                        probe:
                                           {}
-                                        index_fle:
-                                          index_sensor:
-                                            {}
-                                        little_fle:
+                                      hand_ee_link:
+                                        {}
+                                      index_fle:
+                                        index_sensor:
                                           {}
-                                        middle_fle:
-                                          middle_sensor:
-                                            {}
-                                        ring_fle:
+                                      little_fle:
+                                        {}
+                                      middle_fle:
+                                        middle_sensor:
                                           {}
-                                        thumb_opp:
-                                          thumb_sensor:
-                                            thumb_fle:
-                                              {}
+                                      ring_fle:
+                                        {}
+                                      thumb_opp:
+                                        thumb_sensor:
+                                          thumb_fle:
+                                            {}
       Update Interval: 0
       Value: true
     - Alpha: 1
@@ -183,28 +208,6 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
-        base:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        base_link_inertia:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        flange:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        forearm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         hand_ee_link:
           Alpha: 1
           Show Axes: false
@@ -252,16 +255,95 @@ Visualization Manager:
           Show Axes: false
           Show Trail: false
           Value: true
+        panda_link0:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link0_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link1:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link1_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link2:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link2_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link3:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link3_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link4:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link4_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link5:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link5_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link6:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link6_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link7:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link7_sc:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
+          Value: true
+        panda_link8:
+          Alpha: 1
+          Show Axes: false
+          Show Trail: false
         probe:
           Alpha: 1
           Show Axes: false
           Show Trail: false
         ring_fle:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        shoulder_link:
           Alpha: 1
           Show Axes: false
           Show Trail: false
@@ -280,34 +362,10 @@ Visualization Manager:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        tool0:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-        upper_arm_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
         world:
           Alpha: 1
           Show Axes: false
           Show Trail: false
-        wrist_1_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_2_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
-        wrist_3_link:
-          Alpha: 1
-          Show Axes: false
-          Show Trail: false
-          Value: true
       Name: RobotModel
       Robot Description: robot_description
       TF Prefix: ""
@@ -318,7 +376,7 @@ Visualization Manager:
   Global Options:
     Background Color: 48; 48; 48
     Default Light: true
-    Fixed Frame: base
+    Fixed Frame: world
     Frame Rate: 30
   Name: root
   Tools:
@@ -342,7 +400,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 4.086756229400635
+      Distance: 2.4508087635040283
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -350,17 +408,17 @@ Visualization Manager:
         Value: false
       Field of View: 0.7853981852531433
       Focal Point:
-        X: -0.37341374158859253
-        Y: 0.23858988285064697
-        Z: -0.025543149560689926
+        X: -0.4284183382987976
+        Y: 0.7076839804649353
+        Z: 0.4146101474761963
       Focal Shape Fixed Size: true
       Focal Shape Size: 0.05000000074505806
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Pitch: 0.5253981351852417
+      Pitch: 0.4953981637954712
       Target Frame: <Fixed Frame>
-      Yaw: 4.110401630401611
+      Yaw: 5.540406227111816
     Saved: ~
 Window Geometry:
   Displays:

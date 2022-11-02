@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<launch>
+
+  <arg name="sim" default="true" />
+  <arg name="Mia_COM" default='0' doc="Int number of the Mia hand COM port" />
+  <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
+  <arg name="Mia_hw_sim" default="false" doc="set to true to simulate mia hand hardware interface (requires to emulate a serial port)" />  
+
+  <!-- Load the path of the config file of the Mia trasnsmission -->
+	<param name="mia_transmissions_config_" type="string" value="$(find mia_hand_description)/calibration/transmission_config.yaml" />
+
+  <group if="$(arg sim)">
+
+    <!-- Make use of panda robot bringup from franka_gazebo-->
+    <include file="$(find artificial_hands_bringup)/launch/inc/load_mia_hand_on_panda.launch.xml" />
+    <include file="$(find franka_gazebo)/launch/panda.launch" />
+
+    <!-- Load Mia hand controllers to parameter server -->
+    <rosparam file="$(find mia_hand_gazebo)/config/mia_hand_trajectory_controllers.yaml" command="load"/>
+    <rosparam file="$(find mia_hand_gazebo)/config/gazebo_pid_thumb_opp.yaml" command="load"/>
+    <rosparam file="$(find artificial_hands_bringup)/config/control/mia_hand_controllers.yaml" command="load"/>
+
+    <!-- Spawn Mia hand controllers -->
+    <node name="mia_hand_trajectory_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="mia_hand_vel_trajectory_controller" />
+
+    <!-- Spawn Mia hand stopped controllers -->
+    <node name="mia_hand_stopped_ctrl_spawner" pkg="controller_manager" type="spawner" output="screen" args="--stopped mia_hand_joint_group_vel_controller" />
+
+  </group>
+
+  <!-- Load gui -->
+  <node name="rqt_joint_trajectory_controller" pkg="rqt_joint_trajectory_controller" type="rqt_joint_trajectory_controller" />
+
+</launch>

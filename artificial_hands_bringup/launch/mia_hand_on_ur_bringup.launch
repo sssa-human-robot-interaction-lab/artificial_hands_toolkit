@@ -8,6 +8,9 @@
   <arg name="Mia_fs" default='20' doc="Hz, frequency of the control loop of the Mia Hw interface" />
   <arg name="Mia_hw_sim" default="false" doc="set to true to simulate mia hand hardware interface (requires to emulate a serial port)" />
 
+  <!-- Load the path of the config file of the Mia trasnsmission -->
+	<param name="mia_transmissions_config_" type="string" value="$(find mia_hand_description)/calibration/transmission_config.yaml" />
+
   <!-- Check robot type (simulated or real) and prepare the right kinematics_config -->
   <arg name="ur_sim" value="$(eval robot_ip == '127.0.0.1')" />
   <arg if="$(eval ur_sim and (ur_robot == 'ur10e'))" name="kinematics_config" value="192.168.1.100"/>

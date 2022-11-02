@@ -1,0 +1,7 @@
+<?xml version="1.0"?>
+<launch>
+
+  <param name="robot_description" command="$(find xacro)/xacro '$(find artificial_hands_description)/urdf/inc/mia_hand_on_panda.xacro'"
+    />
+    
+</launch>

@@ -1,0 +1,46 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://wiki.ros.org/xacro" name="mia_hand_on_panda">
+
+  <!-- Make use of franka arm macro -->
+  <xacro:include filename="$(find franka_description)/robots/common/franka_arm.xacro"/>
+
+  <xacro:gazebo-joint joint="panda_joint1" transmission="hardware_interface/PositionJointInterface" />
+  <xacro:gazebo-joint joint="panda_joint2" transmission="hardware_interface/PositionJointInterface" />
+  <xacro:gazebo-joint joint="panda_joint3" transmission="hardware_interface/PositionJointInterface" />
+  <xacro:gazebo-joint joint="panda_joint4" transmission="hardware_interface/PositionJointInterface" />
+  <xacro:gazebo-joint joint="panda_joint5" transmission="hardware_interface/PositionJointInterface" />
+  <xacro:gazebo-joint joint="panda_joint6" transmission="hardware_interface/PositionJointInterface" />
+  <xacro:gazebo-joint joint="panda_joint7" transmission="hardware_interface/PositionJointInterface" />
+
+  <!-- Instantiate the UR robot and pass it all the required arguments. -->
+  <xacro:franka_arm joint_limits="${xacro.load_yaml('$(find franka_description)/robots/fr3/joint_limits.yaml')}" gazebo="true"
+  />
+
+  <!-- Arm base -->
+  <xacro:include filename="$(find artificial_hands_description)/urdf/arm_base.urdf.xacro" />
+  
+  <!-- Attach arm to the arm base -->
+  <joint name="robot_fix" type="fixed">
+    <parent link="arm_base"/>
+    <child link="panda_link0"/>
+    <origin xyz="0 0 0.6" rpy="0 0 0"/>
+  </joint>
+
+  <!-- Mia hand on UR flange -->
+  <xacro:include filename="$(find artificial_hands_description)/urdf/mia_hand_on_ur_flange.urdf.xacro" />
+
+  <!-- Attach Mia hand  -->
+  <joint name="mia_fix" type="fixed">
+    <origin xyz="0 0 0.0225" rpy="${pi/2} 0 ${pi/2}"/>
+    <parent link="panda_link8"/>
+    <child link="palm"/>
+  </joint>  
+  
+  <!-- Instantiate the Mia hand Gazebo robot and pass it all the required arguments. -->
+  <xacro:include filename="$(find mia_hand_description)/urdf/mia_hand_gazebo.urdf.xacro" />
+
+  <xacro:mia_gazebo 
+    robotNamespace=""
+  />
+
+</robot>
