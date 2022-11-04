@@ -4,6 +4,7 @@
   <!-- Make use of franka arm macro -->
   <xacro:include filename="$(find franka_description)/robots/common/franka_arm.xacro"/>
 
+  <!-- Gazebo -->
   <xacro:gazebo-joint joint="panda_joint1" transmission="hardware_interface/PositionJointInterface" />
   <xacro:gazebo-joint joint="panda_joint2" transmission="hardware_interface/PositionJointInterface" />
   <xacro:gazebo-joint joint="panda_joint3" transmission="hardware_interface/PositionJointInterface" />
@@ -26,13 +27,36 @@
     <origin xyz="0 0 0.6" rpy="0 0 0"/>
   </joint>
 
+  <!-- Mia adapter -->
+  <link name="mia_adapter">
+    <visual>
+      <origin xyz="0 0 0.025" rpy="0 0 0"/>
+      <geometry>
+        <box size="0.07 0.05 0.05"/>
+      </geometry>
+      <material name="grigino"> <!-- rviz will read this color -->
+        <color rgba="${227/255} ${227/255} ${227/255} 1.0"/>
+      </material>
+    </visual>
+  </link>
+  <gazebo reference="mia_adapter">
+    <material>Gazebo/Grey</material> <!-- gazebo will read this color -->
+  </gazebo>
+
+  <!-- Attach Mia adapter  -->
+  <joint name="adapter_fix" type="fixed">
+    <origin xyz="0 0 0" rpy="0 0 0"/>
+    <parent link="panda_link8"/>
+    <child link="mia_adapter"/>
+  </joint>  
+
   <!-- Mia hand on UR flange -->
   <xacro:include filename="$(find artificial_hands_description)/urdf/mia_hand_on_ur_flange.urdf.xacro" />
 
   <!-- Attach Mia hand  -->
   <joint name="mia_fix" type="fixed">
-    <origin xyz="0 0 0.0225" rpy="${pi/2} 0 ${pi/2}"/>
-    <parent link="panda_link8"/>
+    <origin xyz="0.0575 0 0.025" rpy="0 ${pi/2} ${-pi/2}"/>
+    <parent link="mia_adapter"/>
     <child link="palm"/>
   </joint>  
   

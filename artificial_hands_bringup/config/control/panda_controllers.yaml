@@ -1,0 +1,56 @@
+joint_state_controller:
+  type: joint_state_controller/JointStateController
+  publish_rate: 125
+
+position_joint_trajectory_controller:
+  type: position_controllers/JointTrajectoryController
+  joints: &robot_joints
+    - panda_joint1
+    - panda_joint2
+    - panda_joint3
+    - panda_joint4
+    - panda_joint5
+    - panda_joint6
+    - panda_joint7
+  constraints:
+    goal_time: 0.5
+    panda_joint1: { goal: 0.05}
+    panda_joint2: { goal: 0.05}
+    panda_joint3: { goal: 0.05}
+    panda_joint4: { goal: 0.05}
+    panda_joint5: { goal: 0.05}
+    panda_joint6: { goal: 0.05}
+    panda_joint7: { goal: 0.05}
+
+cartesian_motion_controller:
+  type: "position_controllers/CartesianMotionController"
+  ik_solver: "forward_dynamics"
+  end_effector_link: &ee "panda_link8"
+  robot_base_link: &ref "panda_link0"
+  target_frame_topic: "command"
+  joints: *robot_joints
+
+  pd_gains:
+    p: &p 10.0
+    d: &d 0.0  
+    trans_x: {p: *p, d: *d}
+    trans_y: {p: *p, d: *d}
+    trans_z: {p: *p, d: *d}
+    rot_x: {p: *p, d: *d}
+    rot_y: {p: *p, d: *d}
+    rot_z: {p: *p, d: *d}
+  
+  solver:
+    error_scale: 1.0
+    iterations: 1
+    
+    forward_dynamics:
+      link_mass: 0.01
+
+cartesian_pose_example_controller:
+    type: franka_example_controllers/CartesianPoseExampleController
+    arm_id: panda
+
+cartesian_velocity_example_controller:
+    type: franka_example_controllers/CartesianVelocityExampleController
+    arm_id: panda
