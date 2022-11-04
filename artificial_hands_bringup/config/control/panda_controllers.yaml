@@ -42,7 +42,7 @@ cartesian_motion_controller:
   
   solver:
     error_scale: 1.0
-    iterations: 1
+    iterations: 5
     
     forward_dynamics:
       link_mass: 0.01

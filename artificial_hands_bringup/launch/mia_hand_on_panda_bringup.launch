@@ -24,24 +24,14 @@
     <!-- Gazebo robot config -->
     <arg name="arm_id"  default="panda" doc="Name of the panda robot to spawn" />
     <arg name="unpause" default="true" />
-    <!-- <arg name="initial_joint_positions"  default="
-                -J panda_joint1 0.89
-                -J panda_joint2 0.52
-                -J panda_joint3 1.60
-                -J panda_joint4 -2.13
-                -J panda_joint5 1.04
-                -J panda_joint6 1.97
-                -J panda_joint7 -1.48"/> -->
-    <arg name="initial_joint_positions"
-       doc="Initial joint configuration of the panda. Specify as a list of name/value pairs in form of '-J [name-of-joint] [value-in-rad]'. Default is a 90 degree bend in the elbow"
-       default="-J $(arg arm_id)_joint1 0.5
-                -J $(arg arm_id)_joint2 -0.5
-                -J $(arg arm_id)_joint3 -1.79
-                -J $(arg arm_id)_joint4 -2.26
-                -J $(arg arm_id)_joint5 -0.66
-                -J $(arg arm_id)_joint6 2.26
-                -J $(arg arm_id)_joint7 0.05"
-       />
+    <arg name="initial_joint_positions"  default="
+                -J panda_joint1 -2.28
+                -J panda_joint2 0.50
+                -J panda_joint3 0.62
+                -J panda_joint4 -2.63
+                -J panda_joint5 -1.35
+                -J panda_joint6 2.82
+                -J panda_joint7 -0.07"/>
 
   <!-- Spawn gazebo robot -->
   <node name="$(arg arm_id)_model_spawner"
