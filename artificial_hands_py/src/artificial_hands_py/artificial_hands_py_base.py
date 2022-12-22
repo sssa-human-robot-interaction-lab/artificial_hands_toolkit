@@ -1,9 +1,11 @@
-from re import T
+from multipledispatch import dispatch
+
 import numpy as np
-from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 
 import tf.transformations as ts
 import moveit_commander.conversions as cv
+
+from cartesian_control_msgs.msg import CartesianTrajectoryPoint
 from geometry_msgs.msg import Quaternion, Pose, Twist, Transform
 
 def singleton(cls, *args, **kw):
@@ -84,6 +86,13 @@ def twist_rotate(twist : Twist, M : np.ndarray) -> Twist:
   t.angular.z = t_angular[2]
   return t
 
+@dispatch(CartesianTrajectoryPoint, CartesianTrajectoryPoint)
+def cart_traj_point_copy(trg : CartesianTrajectoryPoint, pnt : CartesianTrajectoryPoint) -> Pose:
+  trg.pose = pose_copy(pnt.pose)
+  trg.twist = twist_copy(pnt.twist)
+  trg.acceleration = twist_copy(pnt.acceleration)
+
+@dispatch(CartesianTrajectoryPoint)
 def cart_traj_point_copy(pnt : CartesianTrajectoryPoint) -> Pose:
   p = CartesianTrajectoryPoint()
   p.pose = pose_copy(pnt.pose)

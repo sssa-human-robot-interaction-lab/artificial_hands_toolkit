@@ -4,7 +4,7 @@ from threading import Thread, Lock
 import rospy, actionlib
 import tf, tf.transformations as ts
 from geometry_msgs.msg import Quaternion, Twist
-from cartesian_control_msgs.msg import CartesianTrajectoryPoint
+from cartesian_control_msgs.msg import CartesianTrajectoryPoint, CartesianTrajectory
 
 from artificial_hands_msgs.msg import *
 from artificial_hands_py.artificial_hands_py_base import cart_traj_point_copy, list_to_quat, quat_to_list
@@ -16,7 +16,7 @@ class CartesianTrajectoryGenerator:
   traj_feedback = TrajectoryGenerationFeedback()
   traj_result = TrajectoryGenerationResult()
 
-  dmp_plugin = DMPTrajectoryPlugin()
+  # dmp_plugin = DMPTrajectoryPlugin()
   mj_plugin = MJTrajectoryPlugin()
 
   lock = Lock()
@@ -26,18 +26,19 @@ class CartesianTrajectoryGenerator:
     self.gen_as = actionlib.SimpleActionServer('cartesian_trajectory_plugin_manager', TrajectoryGenerationAction, execute_cb=self.trajectory_plugin_cb, auto_start = False)
     self.traj_as = actionlib.SimpleActionServer('cartesian_trajectory_generator', TrajectoryGenerationAction, execute_cb=self.trajectory_generation_cb, auto_start = False)
 
-    self.traj_pnt_pub = rospy.Publisher('target_traj_pnt',CartesianTrajectoryPointStamped,queue_size=1000)
-    self.traj_pnt_msg = CartesianTrajectoryPointStamped()
+    self.traj_pnt_pub = rospy.Publisher('target_traj_pnt',CartesianTrajectory,queue_size=1000)
+    self.traj_pnt_msg = CartesianTrajectory()
 
     self.target_br = tf.TransformBroadcaster()
 
     self.target = CartesianTrajectoryPoint()
+    self.traj_pnt_msg.points.append(self.target)
     self.target.pose.orientation.w = 1
     self.target.time_from_start = rospy.Duration.from_sec(1/self.traj_rate)
     self.rate = rospy.Rate(self.traj_rate)
 
-    self.ref : str = None
-    self.ee : str = None
+    self.ref : str = 'base_link'
+    self.ee : str = 'ee_target'
 
     self.target_timer = rospy.Timer(rospy.Duration.from_sec(1.0/self.traj_rate),self.update)
 
@@ -61,12 +62,12 @@ class CartesianTrajectoryGenerator:
       self.plugin_running = False
       self.plugin_thread.join()
 
-    if goal.traj_type == goal.DMP:
-      while self.dmp_plugin.is_active():
-        self.rate.sleep()
-      self.active_plugin = self.dmp_plugin
-      self.plugin_thread = Thread(target=self.copy_plugin_target)
-      self.plugin_thread.start()
+    # if goal.traj_type == goal.DMP:
+    #   while self.dmp_plugin.is_active():
+    #     self.rate.sleep()
+    #   self.active_plugin = self.dmp_plugin
+    #   self.plugin_thread = Thread(target=self.copy_plugin_target)
+    #   self.plugin_thread.start()
     
     if goal.traj_type == goal.MJ:
       self.mj_plugin.set_plugin_state(self.target)
@@ -98,7 +99,7 @@ class CartesianTrajectoryGenerator:
       self.traj_as.set_succeeded(self.traj_result)
       return
 
-    self.dmp_plugin.set_plugin_target(goal.traj_target,goal.track_ratio) #keep dmp plugin updated
+    # self.dmp_plugin.set_plugin_target(goal.traj_target,goal.track_ratio) #keep dmp plugin updated
 
     if goal.traj_type == goal.FORWARD:
       self.target = goal.traj_target
@@ -450,7 +451,6 @@ class CartesianTrajectoryGenerator:
     self.lock.acquire()
     
     self.traj_pnt_msg.header.stamp = rospy.Time.now()
-    self.traj_pnt_msg.point = self.target
     self.traj_pnt_pub.publish(self.traj_pnt_msg)
     self.update_tf()
 
@@ -489,7 +489,7 @@ class CartesianTrajectoryGenerator:
     self.plugin_running = True
     while self.plugin_running and not rospy.is_shutdown():
       self.lock.acquire()
-      self.target = cart_traj_point_copy(self.active_plugin.plugin_target)
+      cart_traj_point_copy(self.target, self.active_plugin.plugin_target)
       self.lock.release()
       self.rate.sleep()
   

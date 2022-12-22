@@ -159,7 +159,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
     self.add_push_button.clicked.connect(self.on_add_button)
     self.clear_push_button.clicked.connect(self.on_clear_button)
 
-    self.setLayout(main_layout)  
+    self.setLayout(main_layout)
 
   def connect(self):
     self.cart_traj_generator_combo_box.currentIndexChanged.connect(self.on_gen_changed)
@@ -170,7 +170,7 @@ class CartesianTrajectoryGeneratorGUI(QWidget):
   def on_gen_changed(self):
     goal = TrajectoryGenerationGoal()
     goal.header.frame_id = 'world'
-    goal.controlled_frame = 'target'
+    goal.controlled_frame = 'ee'
     self.teleop_check_box.setChecked(False)
     self.teleop_check_box.setDisabled(True)
     self.track_ratio_spin_box.setDisabled(True)
