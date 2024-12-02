@@ -7,12 +7,15 @@
 #include <kdl/chainjnttojacdotsolver.hpp>
 #include <kdl/chainjnttojacsolver.hpp>
 #include <eigen_conversions/eigen_msg.h>
-#include <kalmancpp/kalman.hpp>
 
 #include <artificial_hands_base/BaseFilters.hpp>
 
 #define USE_KALMAN false
 #define USE_SG false
+
+#if USE_KALMAN
+#include <kalmancpp/kalman.hpp>
+#endif
 
 namespace atk
 {
@@ -53,7 +56,9 @@ namespace atk
         j_vel_filter_ = new atk::BaseIRFilter();
         j_acc_filter_ = new atk::BaseSGFilter(update_rate);
 
+#if USE_KALMAN
         F_.resize(2*chann_,j_kal_init_obs_);
+#endif
         j_meas_.resize(2*chann_);
         j_state_.resize(3*chann_);
 
@@ -81,8 +86,10 @@ namespace atk
        */
       bool Init(sensor_msgs::JointState js) 
       {
+#if USE_KALMAN
         j_kal_init_ = false;
         j_kal_init_counter_ = 0;
+#endif
         j_pos_filter_->Init(js.position); 
         j_vel_filter_->Init(js.velocity);
         j_acc_filter_->Init(js.velocity);
@@ -100,8 +107,10 @@ namespace atk
        */
       bool Init(sensor_msgs::JointState js, double q) 
       {
+#if USE_KALMAN
         j_kal_filter_->pause();
         j_kal_filter_->variance(q);
+#endif
         Init(js);
         return true;
       };
@@ -262,7 +271,7 @@ namespace atk
       Eigen::MatrixXd rotation_;
 
     private:
-
+#if USE_KALMAN
       void observeKalman(std::vector<double>& j_pos, std::vector<double>& j_vel)
       {
         for(int i = 0; i < chann_; i++)
@@ -337,21 +346,19 @@ namespace atk
               P(3*i,3*i) = F_.row(2*i).mean();
               P(3*i+1,3*i+1) = F_.row(2*i+1).mean();
             }         
-            
+
             j_kal_filter_ = new kalmancpp::KalmanFilter(dt,A,C,Q,R,P);
             // j_kal_filter_->variance(1E-6);
             j_kal_filter_->init();
             j_kal_init_ = true;
       }
+#endif
 
       const char* robot_description_;
       const char* srdf_group_;
       const char* target_frame_;
       const char* model_frame_;
-      bool j_kal_init_;
       unsigned int chann_;
-      unsigned int j_kal_init_counter_;
-      const unsigned int j_kal_init_obs_ = 500;
       const double update_rate_;
       double j_vel_[20] = {0};
       robot_state::JointModelGroup *joint_model_group_;
@@ -366,7 +373,12 @@ namespace atk
       atk::BaseIRFilter* j_pos_filter_;
       atk::BaseIRFilter* j_vel_filter_;
       atk::BaseSGFilter* j_acc_filter_;  
+#if USE_KALMAN
+      bool j_kal_init_;
+      unsigned int j_kal_init_counter_;
+      const unsigned int j_kal_init_obs_ = 500;
       kalmancpp::KalmanFilter* j_kal_filter_;
+#endif
   };
 }
 
