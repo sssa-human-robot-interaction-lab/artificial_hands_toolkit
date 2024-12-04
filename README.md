@@ -1,4 +1,4 @@
-# The Artificial Hands Toolkit (DO NOT USE IT - ROBOT CRASH SOMETIMES)
+# The Artificial Hands Toolkit (DEPRECATED)
 
 Metapackage for robot control in the ROS framework.
 
